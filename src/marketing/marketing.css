@@ -391,9 +391,10 @@
   font-size: clamp(1.0625rem, 2.1vw, 1.1875rem);
   line-height: 1.47;
   color: var(--muted);
-  max-width: 32ch;
+  max-width: 34ch;
   font-weight: 500;
   letter-spacing: -0.011em;
+  text-wrap: pretty;
 }
 
 /* Primary + secondary in one row; primary wins attention */
@@ -1409,6 +1410,23 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--muted-2);
+}
+
+.mkt-credit-link {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  text-underline-offset: 3px;
+  transition: color 140ms var(--ease-out), opacity 140ms var(--ease-out);
+}
+
+.mkt-credit-link:hover {
+  color: var(--accent-ink, var(--accent));
+  text-decoration: underline;
+}
+
+[data-theme='dark'] .mkt-credit-link:hover {
+  color: var(--accent);
 }
 
 @media (prefers-reduced-motion: reduce) {

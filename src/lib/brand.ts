@@ -1,9 +1,21 @@
 /** Shared marketing + auth brand voice */
 
-export const BRAND_LINES = ['Show up.', 'Write it down.', 'Repeat.'] as const
+/**
+ * Three-beat mantra — hero + login.
+ * Short parallel imperatives; middle line was “Write it down.” (longer, softer).
+ * Now: show up → log the work → loop. Even rhythm, product-native.
+ */
+export const BRAND_LINES = ['Show up.', 'Log the work.', 'Repeat.'] as const
 
 export const BRAND_TAGLINE = BRAND_LINES.join(' ')
 
-/** One-line pitch under the mantra — concise, plain language */
+/** Quiet category label above the mantra */
+export const BRAND_KICKER = 'Private training log'
+
+/** Pitch under the mantra — no echo of the three lines or kicker */
 export const BRAND_PITCH =
-  'Your private training journal for sessions, progressive overload, and recovery.'
+  'Sessions, progressive overload, and rest days — private by default.'
+
+/** Credit link — “Developed by Andrew” */
+export const DEVELOPER_NAME = 'Andrew'
+export const DEVELOPER_URL = 'https://andrewmarcello.me'

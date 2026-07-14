@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { BRAND_LINES, BRAND_PITCH } from '../lib/brand'
+import { BRAND_KICKER, BRAND_LINES, BRAND_PITCH, DEVELOPER_NAME, DEVELOPER_URL } from '../lib/brand'
 import { useTheme } from '../hooks/useTheme'
 import { MarketingNav } from './MarketingNav'
 import { PhoneHomeFrame, PhoneProgressFrame } from './ProductFrames'
@@ -48,7 +48,7 @@ export function MarketingPage() {
           <div className="mkt-hero-glow" aria-hidden />
           <div className="mkt-hero-layout">
             <div className="mkt-hero-copy">
-              <p className="mkt-kicker">Training journal</p>
+              <p className="mkt-kicker">{BRAND_KICKER}</p>
               <h1 id="mkt-hero-title" className="mkt-hero-title">
                 {BRAND_LINES.map((line, i) => (
                   <span
@@ -185,7 +185,17 @@ export function MarketingPage() {
           <div className="mkt-logo mkt-logo--sm">
             GRIND<span>.</span>
           </div>
-          <p className="mkt-footer-credit">Developed by Andrew</p>
+          <p className="mkt-footer-credit">
+            Developed by{' '}
+            <a
+              href={DEVELOPER_URL}
+              className="mkt-credit-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {DEVELOPER_NAME}
+            </a>
+          </p>
           <Link to="/app" className="mkt-text-link">
             Open app
           </Link>

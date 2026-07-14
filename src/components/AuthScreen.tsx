@@ -1,6 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { BRAND_LINES, BRAND_PITCH } from '../lib/brand'
+import {
+  BRAND_KICKER,
+  BRAND_LINES,
+  BRAND_PITCH,
+  DEVELOPER_NAME,
+  DEVELOPER_URL,
+} from '../lib/brand'
 import type { ThemePreference } from '../lib/theme'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { ThemeIconButton } from './ThemeControls'
@@ -114,7 +120,7 @@ export function AuthScreen({
           <div className="auth-brand-mark">
             GRIND<span>.</span>
           </div>
-          <p className="auth-brand-kicker">Training journal</p>
+          <p className="auth-brand-kicker">{BRAND_KICKER}</p>
         </div>
 
         <div className="auth-brand-mid">
@@ -143,7 +149,17 @@ export function AuthScreen({
           <Link to="/" className="auth-brand-home-link">
             ← Marketing site
           </Link>
-          <span>Developed by Andrew</span>
+          <span>
+            Developed by{' '}
+            <a
+              href={DEVELOPER_URL}
+              className="auth-credit-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {DEVELOPER_NAME}
+            </a>
+          </span>
         </div>
       </aside>
 
@@ -299,7 +315,17 @@ export function AuthScreen({
                 </form>
 
                 <div className="auth-footer">Private logs · photo proof · streaks that stick.</div>
-                <div className="auth-credit-mobile">Developed by Andrew</div>
+                <div className="auth-credit-mobile">
+                  Developed by{' '}
+                  <a
+                    href={DEVELOPER_URL}
+                    className="auth-credit-link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {DEVELOPER_NAME}
+                  </a>
+                </div>
               </>
             )}
           </div>
