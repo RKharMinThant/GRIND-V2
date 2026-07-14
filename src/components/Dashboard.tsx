@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { greetingForHour, todayHeading, weekSessionCount } from '../lib/dates'
 import type { StreakStats } from '../lib/streaks'
 import type { Log } from '../types/database'
@@ -17,6 +18,8 @@ type Props = {
   onLogDate: (date: string) => void
   onOpenDay: (date: string) => void
   onViewAll: () => void
+  /** One-tap rest day for today (or a given date). */
+  onRestDay: (date?: string) => Promise<void>
 }
 
 export function Dashboard({
@@ -30,11 +33,23 @@ export function Dashboard({
   onLogDate,
   onOpenDay,
   onViewAll,
+  onRestDay,
 }: Props) {
+  const [restBusy, setRestBusy] = useState(false)
   const recent = logs.slice(0, 6)
   const logDates = logs.map((l) => l.log_date)
   const weekCount = weekSessionCount(logDates)
   const firstName = displayName.split(' ')[0] || displayName
+
+  async function handleRest(date?: string) {
+    if (restBusy) return
+    setRestBusy(true)
+    try {
+      await onRestDay(date)
+    } finally {
+      setRestBusy(false)
+    }
+  }
 
   return (
     <div className="page">
@@ -63,6 +78,14 @@ export function Dashboard({
           </span>
           <button type="button" className="btn btn-primary" onClick={onLogToday}>
             + Log session
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-rest"
+            onClick={() => void handleRest()}
+            disabled={restBusy}
+          >
+            {restBusy ? 'Logging…' : 'Rest day'}
           </button>
         </div>
       </div>
@@ -106,9 +129,19 @@ export function Dashboard({
           <div className="empty-mark">G.</div>
           <h3>Start the journal</h3>
           <p>Your first session is the only one that feels hard. Log it and the rest follows.</p>
-          <button type="button" className="btn btn-primary" onClick={onLogToday}>
-            Log first session
-          </button>
+          <div className="empty-actions">
+            <button type="button" className="btn btn-primary" onClick={onLogToday}>
+              Log first session
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-rest"
+              onClick={() => void handleRest()}
+              disabled={restBusy}
+            >
+              {restBusy ? 'Logging…' : 'Rest day'}
+            </button>
+          </div>
         </div>
       ) : (
         <div className="logs-grid three-col">

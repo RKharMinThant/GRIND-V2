@@ -16,12 +16,6 @@ type Props = {
   onThemeCycle: () => void
 }
 
-const QUOTES = [
-  'Show up. Write it down. Repeat.',
-  'Consistency is a skill you train.',
-  'Proof lives in the log, not the mood.',
-]
-
 export function AuthScreen({
   onSignIn,
   onSignUp,
@@ -41,7 +35,6 @@ export function AuthScreen({
   const [localError, setLocalError] = useState<string | null>(null)
   const [confirmEmail, setConfirmEmail] = useState<string | null>(null)
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
-  const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)])
 
   const error = localError || authError
 
@@ -110,23 +103,40 @@ export function AuthScreen({
     }
   }
 
+  const PROOF_CHIPS = ['Streaks', 'Lifts', 'Proof', 'Recovery'] as const
+
   return (
     <div className="auth-screen">
       <aside className="auth-brand">
-        <div className="auth-brand-mark">
-          GRIND<span>.</span>
+        <div className="auth-brand-top">
+          <div className="auth-brand-mark">
+            GRIND<span>.</span>
+          </div>
+          <p className="auth-brand-kicker">Training journal</p>
         </div>
-        <div className="auth-brand-quote">
-          <p>{quote}</p>
-          <span>Personal training journal · private by default</span>
+
+        <div className="auth-brand-mid">
+          <div className="auth-brand-rule" aria-hidden />
+          <div className="auth-brand-quote">
+            <p className="auth-brand-headline">
+              <span className="auth-brand-line">Show up.</span>
+              <span className="auth-brand-line">Write it down.</span>
+              <span className="auth-brand-line">Repeat.</span>
+            </p>
+            <span className="auth-brand-sub">Personal by design. Private by default.</span>
+          </div>
+          <ul className="auth-proof-chips" aria-label="What you can track">
+            {PROOF_CHIPS.map((chip) => (
+              <li key={chip}>{chip}</li>
+            ))}
+          </ul>
         </div>
-        <div style={{ color: 'var(--muted-2)', fontSize: '0.8rem', position: 'relative' }}>
-          Powered by your Supabase project
-        </div>
+
+        <div className="auth-brand-credit">Developed by Andrew</div>
       </aside>
 
       <div className="auth-form-side">
-        <div style={{ width: '100%', maxWidth: 400 }}>
+        <div className="auth-form-wrap">
           <div className="theme-auth-row">
             <ThemeIconButton
               resolved={resolvedTheme}
@@ -145,7 +155,14 @@ export function AuthScreen({
             <div className="auth-logo-mobile">
               GRIND<span>.</span>
             </div>
-            <div className="auth-tag">Performance journal for sessions & fuel.</div>
+            <div className="auth-card-head">
+              <h1 className="auth-card-title">{mode === 'login' ? 'Welcome back' : 'Create account'}</h1>
+              <p className="auth-tag">
+                {mode === 'login'
+                  ? 'Sign in to continue your journal.'
+                  : 'Start logging sessions, lifts, and recovery.'}
+              </p>
+            </div>
 
             {confirmEmail ? (
               <div className="confirm-panel" role="status">
@@ -205,7 +222,7 @@ export function AuthScreen({
 
                 {error && <div className="auth-error">{error}</div>}
 
-                <form onSubmit={handleSubmit}>
+                <form className="auth-form" onSubmit={handleSubmit}>
                   {mode === 'register' && (
                     <div className="field">
                       <label htmlFor="displayName">Display name</label>
@@ -266,9 +283,8 @@ export function AuthScreen({
                   </button>
                 </form>
 
-                <div className="auth-footer">
-                  Private logs · photo proof · streaks that stick.
-                </div>
+                <div className="auth-footer">Private logs · photo proof · streaks that stick.</div>
+                <div className="auth-credit-mobile">Developed by Andrew</div>
               </>
             )}
           </div>

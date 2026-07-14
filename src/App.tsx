@@ -15,7 +15,8 @@ import { useAuth } from './hooks/useAuth'
 import { useLogs } from './hooks/useLogs'
 import { useTheme } from './hooks/useTheme'
 import { useTrackedLifts } from './hooks/useTrackedLifts'
-import type { Log, LogInsert, TrackedLift } from './types/database'
+import { toLocalDateString } from './lib/dates'
+import { isRestLog, REST_WORKOUT, type Log, type LogInsert, type TrackedLift } from './types/database'
 
 type LiftSheetState =
   | { mode: 'add'; group?: string }
@@ -88,6 +89,33 @@ export default function App() {
     setEditing(null)
     setFormDate(date)
     setFormOpen(true)
+  }
+
+  async function logRestDay(date?: string) {
+    const logDate = date || toLocalDateString()
+    const existing = logs.find((l) => l.log_date === logDate && isRestLog(l.workout))
+    if (existing) {
+      showToast('Rest already logged for that day')
+      openDetail(existing.id)
+      return
+    }
+    try {
+      await createLog({
+        log_date: logDate,
+        workout: REST_WORKOUT,
+        workout_type: null,
+        focus_areas: null,
+        duration: null,
+        meal: null,
+        notes: null,
+        protein_g: null,
+        creatine_g: null,
+      })
+      showToast('Rest day logged')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Could not log rest day', 'error')
+      throw e
+    }
   }
 
   function openEdit(log: Log) {
@@ -177,6 +205,7 @@ export default function App() {
                 onLogDate={(date) => openNew(date)}
                 onOpenDay={openDay}
                 onViewAll={() => setTab('history')}
+                onRestDay={logRestDay}
               />
             )}
             {tab === 'history' && (

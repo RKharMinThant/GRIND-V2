@@ -191,6 +191,14 @@ export function formatFocusAreas(value: string | null | undefined): string {
   return parseFocusAreas(value).join(' · ')
 }
 
+/** Canonical title for one-tap rest days (matches log wizard Rest split). */
+export const REST_WORKOUT = 'Rest'
+
+export function isRestLog(workout: string | null | undefined): boolean {
+  const w = workout?.trim().toLowerCase()
+  return w === 'rest' || w === 'rest day'
+}
+
 export function parseGrams(value: string): number | null {
   const t = value.trim()
   if (!t) return null

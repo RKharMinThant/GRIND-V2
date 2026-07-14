@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { friendlyDateShort } from '../lib/dates'
-import { formatGrams, parseFocusAreas, type Log } from '../types/database'
+import { formatGrams, isRestLog, parseFocusAreas, type Log } from '../types/database'
 
 type Props = {
   log: Log
@@ -24,7 +24,9 @@ export function LogCard({ log, photoUrl, onOpen, style, staggerMs }: Props) {
         ? focuses.join(' · ')
         : `${focuses.slice(0, 2).join(' · ')} +${focuses.length - 2}`
 
+  const rest = isRestLog(log.workout)
   const tags: { key: string; label: string; kind: string }[] = []
+  if (rest) tags.push({ key: 'rest', label: 'Rest', kind: 'rest' })
   if (log.workout_type) tags.push({ key: 'type', label: log.workout_type, kind: 'type' })
   if (protein) tags.push({ key: 'p', label: `P ${protein}`, kind: 'supp' })
   if (creatine) tags.push({ key: 'cr', label: `Cr ${creatine}`, kind: 'supp' })
@@ -33,24 +35,55 @@ export function LogCard({ log, photoUrl, onOpen, style, staggerMs }: Props) {
   const titleIsFocusList =
     focuses.length > 0 &&
     (log.workout === focuses.join(' · ') || log.workout === focuses.join(','))
-  if (!titleIsFocusList) {
+  if (!titleIsFocusList && !rest) {
     focuses.slice(0, 2).forEach((f) => tags.push({ key: f, label: f, kind: 'focus' }))
     if (focuses.length > 2) {
       tags.push({ key: 'more', label: `+${focuses.length - 2}`, kind: 'focus' })
     }
   }
 
+  const frameStyle = {
+    ...style,
+    ...(staggerMs != null ? { ['--stagger' as string]: `${staggerMs}ms` } : null),
+  } as CSSProperties
+
+  // Dedicated recovery card — not the empty “session” placeholder
+  if (rest && !hasPhoto) {
+    return (
+      <button
+        type="button"
+        className="log-card log-card--rest"
+        onClick={() => onOpen(log.id)}
+        style={frameStyle}
+      >
+        <div className="rest-card-glow" aria-hidden />
+        <div className="rest-card-inner">
+          <div className="rest-card-top">
+            <span className="rest-card-date">{friendlyDateShort(log.log_date)}</span>
+            <span className="rest-card-pill">Recovery</span>
+          </div>
+          <div className="rest-card-icon" aria-hidden>
+            <svg viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="18" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
+              <rect x="17" y="15" width="5" height="18" rx="1.5" fill="currentColor" />
+              <rect x="26" y="15" width="5" height="18" rx="1.5" fill="currentColor" />
+            </svg>
+          </div>
+          <div className="rest-card-title">Rest day</div>
+          <p className="rest-card-copy">Recovery counts. Come back stronger.</p>
+        </div>
+      </button>
+    )
+  }
+
   return (
     <button
       type="button"
-      className={`log-card ${hasPhoto ? 'log-card--photo' : 'log-card--plain'}`}
+      className={`log-card ${hasPhoto ? 'log-card--photo' : 'log-card--plain'}${
+        rest ? ' log-card--rest-photo' : ''
+      }`}
       onClick={() => onOpen(log.id)}
-      style={
-        {
-          ...style,
-          ...(staggerMs != null ? { ['--stagger' as string]: `${staggerMs}ms` } : null),
-        } as CSSProperties
-      }
+      style={frameStyle}
     >
       {hasPhoto ? (
         <div className="log-card-media">
