@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { BRAND_LINES, BRAND_PITCH } from '../lib/brand'
 import type { ThemePreference } from '../lib/theme'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { ThemeIconButton } from './ThemeControls'
@@ -120,11 +121,16 @@ export function AuthScreen({
           <div className="auth-brand-rule" aria-hidden />
           <div className="auth-brand-quote">
             <p className="auth-brand-headline">
-              <span className="auth-brand-line">Show up.</span>
-              <span className="auth-brand-line">Write it down.</span>
-              <span className="auth-brand-line">Repeat.</span>
+              {BRAND_LINES.map((line, i) => (
+                <span
+                  key={line}
+                  className={`auth-brand-line${i === BRAND_LINES.length - 1 ? ' auth-brand-line--accent' : ''}`}
+                >
+                  {line}
+                </span>
+              ))}
             </p>
-            <span className="auth-brand-sub">Personal by design. Private by default.</span>
+            <span className="auth-brand-sub">{BRAND_PITCH}</span>
           </div>
           <ul className="auth-proof-chips" aria-label="What you can track">
             {PROOF_CHIPS.map((chip) => (

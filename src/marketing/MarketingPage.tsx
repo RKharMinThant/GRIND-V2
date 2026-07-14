@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { BRAND_LINES, BRAND_PITCH } from '../lib/brand'
 import { useTheme } from '../hooks/useTheme'
 import { MarketingNav } from './MarketingNav'
 import { PhoneHomeFrame, PhoneProgressFrame } from './ProductFrames'
@@ -44,26 +45,30 @@ export function MarketingPage() {
 
       <main>
         <section className="mkt-hero" aria-labelledby="mkt-hero-title">
+          <div className="mkt-hero-glow" aria-hidden />
           <div className="mkt-hero-layout">
-            <div className="mkt-hero-inner">
+            <div className="mkt-hero-copy">
               <p className="mkt-kicker">Training journal</p>
               <h1 id="mkt-hero-title" className="mkt-hero-title">
-                Show up.
-                <br />
-                Write it down.
-                <br />
-                Repeat.
+                {BRAND_LINES.map((line, i) => (
+                  <span
+                    key={line}
+                    className={`mkt-hero-line${i === BRAND_LINES.length - 1 ? ' mkt-hero-line--accent' : ''}`}
+                  >
+                    {line}
+                  </span>
+                ))}
               </h1>
-              <p className="mkt-hero-sub">
-                Log sessions, track progressive overload, and recover on purpose — private by
-                default.
-              </p>
+              <p className="mkt-hero-sub">{BRAND_PITCH}</p>
               <div className="mkt-hero-actions">
                 <Link to="/app" className="mkt-btn mkt-btn--primary mkt-btn--lg">
-                  Start free →
+                  Start free
                 </Link>
-                <a href="#features" className="mkt-btn mkt-btn--ghost mkt-btn--lg">
+                <a href="#features" className="mkt-btn mkt-btn--text mkt-btn--lg">
                   See how it works
+                  <span className="mkt-btn-chevron" aria-hidden>
+                    ›
+                  </span>
                 </a>
               </div>
               <ul className="mkt-proof" aria-label="What you get">
@@ -72,11 +77,10 @@ export function MarketingPage() {
                 ))}
               </ul>
             </div>
-            <div className="mkt-hero-device">
+            <div className="mkt-hero-device" aria-hidden>
               <PhoneHomeFrame />
             </div>
           </div>
-          <div className="mkt-hero-glow" aria-hidden />
         </section>
 
         <section id="features" className="mkt-section" aria-labelledby="features-title">

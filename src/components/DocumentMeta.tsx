@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { BRAND_PITCH, BRAND_TAGLINE } from '../lib/brand'
 
 const SITE = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, '') || ''
 
@@ -13,9 +14,8 @@ type RouteMeta = {
 function metaForPath(pathname: string): RouteMeta {
   if (pathname === '/' || pathname === '') {
     return {
-      title: 'GRIND — Show up. Write it down. Repeat.',
-      description:
-        'Personal training journal for sessions, progressive overload, and recovery. Private by default.',
+      title: `GRIND — ${BRAND_TAGLINE}`,
+      description: BRAND_PITCH,
       path: '/',
       robots: 'index, follow',
     }

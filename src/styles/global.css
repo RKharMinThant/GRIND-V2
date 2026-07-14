@@ -4396,10 +4396,18 @@ img {
   color: var(--text);
 }
 
-/* Exactly 3 lines — never wrap inside a phrase */
+/* Exactly 3 lines — never wrap inside a phrase (shared with marketing hero) */
 .auth-brand-headline .auth-brand-line {
   display: block;
   white-space: nowrap;
+}
+
+.auth-brand-headline .auth-brand-line--accent {
+  color: var(--accent-ink, var(--accent));
+}
+
+[data-theme='dark'] .auth-brand-headline .auth-brand-line--accent {
+  color: var(--accent);
 }
 
 .auth-brand-sub {
@@ -4408,7 +4416,7 @@ img {
   font-size: 1.02rem;
   font-weight: 500;
   line-height: 1.45;
-  max-width: 32ch;
+  max-width: 36ch;
   letter-spacing: -0.01em;
 }
 
