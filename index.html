@@ -5,14 +5,32 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#07080A" />
-    <meta name="description" content="GRIND — performance journal for workouts & fuel" />
+    <meta
+      name="description"
+      content="GRIND — personal training journal for sessions, progressive overload, and recovery. Private by default."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="GRIND" />
+    <meta property="og:title" content="GRIND — Show up. Write it down. Repeat." />
+    <meta
+      property="og:description"
+      content="Personal training journal for sessions, progressive overload, and recovery. Private by default."
+    />
+    <meta property="og:image" content="/og.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="GRIND — Show up. Write it down. Repeat." />
+    <meta
+      name="twitter:description"
+      content="Personal training journal for sessions, progressive overload, and recovery."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
-    <title>GRIND — Performance Journal</title>
+    <title>GRIND — Show up. Write it down. Repeat.</title>
     <!-- Prevent theme flash before React boots -->
     <script>
       (function () {
@@ -26,7 +44,7 @@
           document.documentElement.setAttribute('data-theme', theme)
           document.documentElement.style.colorScheme = theme
           var meta = document.querySelector('meta[name="theme-color"]')
-          if (meta) meta.setAttribute('content', dark ? '#07080A' : '#F3F4F6')
+          if (meta) meta.setAttribute('content', dark ? '#07080A' : '#F3F5EC')
         } catch (e) {
           document.documentElement.setAttribute('data-theme', 'dark')
         }

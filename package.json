@@ -1,8 +1,8 @@
 {
   "name": "grind-habit-tracker",
   "private": true,
-  "version": "1.0.0",
-  "description": "GRIND — personal workout & meal habit tracker with Supabase",
+  "version": "2.2.0",
+  "description": "GRIND — training journal + marketing site (Supabase + React)",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,7 +14,8 @@
     "@supabase/supabase-js": "^2.110.2",
     "browser-image-compression": "^2.0.2",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
     "@types/node": "^24.13.2",

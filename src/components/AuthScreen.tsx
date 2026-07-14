@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import type { ThemePreference } from '../lib/theme'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { ThemeIconButton } from './ThemeControls'
@@ -132,12 +133,20 @@ export function AuthScreen({
           </ul>
         </div>
 
-        <div className="auth-brand-credit">Developed by Andrew</div>
+        <div className="auth-brand-credit">
+          <Link to="/" className="auth-brand-home-link">
+            ← Marketing site
+          </Link>
+          <span>Developed by Andrew</span>
+        </div>
       </aside>
 
       <div className="auth-form-side">
         <div className="auth-form-wrap">
           <div className="theme-auth-row">
+            <Link to="/" className="auth-site-link">
+              ← Site
+            </Link>
             <ThemeIconButton
               resolved={resolvedTheme}
               preference={themePreference}

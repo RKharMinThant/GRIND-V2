@@ -4442,10 +4442,28 @@ img {
 }
 
 .auth-brand-credit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--muted-2);
+}
+
+.auth-brand-home-link,
+.auth-site-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: color 140ms var(--ease-out);
+}
+
+.auth-brand-home-link:hover,
+.auth-site-link:hover {
+  color: var(--text);
 }
 
 .auth-form-side {
@@ -4760,7 +4778,9 @@ img {
 
 .theme-auth-row {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
 }
 

@@ -97,6 +97,7 @@ cp .env.example .env.local
 |----------|--------|
 | `VITE_SUPABASE_URL` | Project Settings → API → Project URL |
 | `VITE_SUPABASE_ANON_KEY` | Project Settings → API → `anon` `public` key |
+| `VITE_SITE_URL` | Optional — public site origin, e.g. `https://your-domain.com` (no trailing slash) |
 
 `.env.local` is gitignored (`*.local`). Do not commit secrets.
 
@@ -116,9 +117,32 @@ npm run lint
 
 ---
 
+## URL map
+
+| Path | What you get |
+|------|----------------|
+| **`/`** | Marketing landing |
+| **`/app`** | Product: auth + journal (Home, History, Progress, Calendar) |
+
+Local: open `http://localhost:5173/` for marketing, `http://localhost:5173/app` for the app.
+
+### SEO & share
+
+| Asset | Role |
+|-------|------|
+| `DocumentMeta` | Route title/description; `/app` is `noindex` |
+| `public/robots.txt` | Allow `/`, disallow `/app` |
+| `public/sitemap.xml` | Marketing home (set absolute URLs after deploy) |
+| `public/og.svg` | Default share image |
+| `VITE_SITE_URL` | Optional absolute origin for OG + canonical |
+
+After production DNS is final, update `sitemap.xml` `<loc>` values and the `Sitemap:` line in `robots.txt` to full `https://` URLs.
+
+---
+
 ## Deploy
 
-The app is a **static SPA**. Build once, host `dist/`, inject the same two env vars at **build time** (Vite inlines `VITE_*`).
+The project is a **static SPA**. Build once, host `dist/`, inject the same two env vars at **build time** (Vite inlines `VITE_*`). SPA fallback is configured for Vercel (`vercel.json`) and Netlify (`public/_redirects`).
 
 ### Option A — Vercel (recommended)
 
@@ -132,8 +156,8 @@ The app is a **static SPA**. Build once, host `dist/`, inject the same two env v
 4. Deploy. Build command: `npm run build`. Output: `dist`.  
 5. Supabase → **Authentication → URL configuration**:
 
-   - Site URL: `https://your-app.vercel.app`  
-   - Redirect URLs: `https://your-app.vercel.app/**`  
+   - Site URL: `https://your-domain.com`  
+   - Redirect URLs: `https://your-domain.com/**`, `https://your-domain.com/app/**`, plus localhost for dev  
 
 Redeploy after changing env vars so Vite picks them up.
 
@@ -142,15 +166,8 @@ Redeploy after changing env vars so Vite picks them up.
 1. New site from Git → this repo.  
 2. Build: `npm run build`. Publish directory: `dist`.  
 3. Site settings → Environment variables: same two `VITE_*` keys.  
-4. Optional `public/_redirects` for SPA fallback if deep links 404:
-
-   ```
-   /*    /index.html   200
-   ```
-
-   (Vite SPA: add this file under `public/` if you use client-side routes later.)
-
-5. Update Supabase Site URL / Redirect URLs to the Netlify domain.
+4. SPA fallback ships as `public/_redirects` (`/* → /index.html 200`).  
+5. Update Supabase Site URL / Redirect URLs to the Netlify domain (include `/app/**`).
 
 ### Option C — Cloudflare Pages
 
@@ -162,11 +179,22 @@ Redeploy after changing env vars so Vite picks them up.
 
 ### After deploy checklist
 
+- [ ] `/` shows marketing; `/app` shows auth or journal  
+- [ ] Supabase **Site URL** + **Redirect URLs** include apex and `/app/**` (and localhost for dev)  
 - [ ] Sign up / sign in works on the production domain  
 - [ ] Create a log with a photo  
 - [ ] Progress: add a lift, update weight/reps, open the detail sheet  
 - [ ] Second account cannot see the first account’s data  
 - [ ] Hard refresh keeps the session  
+- [ ] Optional: set `VITE_SITE_URL` and absolute `sitemap.xml` / robots Sitemap URL  
+
+### Lighthouse (marketing `/`)
+
+After deploy, run Lighthouse on the marketing URL:
+
+- Prefer **lazy `/app`** (already split) so first paint stays light  
+- Confirm contrast on CTAs (citrus on light is intentional; ink text on solid lime)  
+- Reduced-motion: section reveals should not force transforms
 
 ---
 
@@ -174,13 +202,17 @@ Redeploy after changing env vars so Vite picks them up.
 
 ```
 src/
-  App.tsx              # Shell, tabs, root-level sheets
-  components/          # Screens + sheets (log wizard, lifts, progress)
-  hooks/               # useAuth, useLogs, useTrackedLifts, useTheme, …
-  lib/                 # supabase client, dates, streaks, photos, overload
-  styles/global.css    # design tokens + layout
-  types/database.ts    # shared domain types
-supabase/migrations/   # ordered SQL (schema + RLS + storage)
+  main.tsx             # React Router: / marketing, /app product
+  App.tsx              # Journal shell (under /app)
+  marketing/           # Landing (Phase 0 placeholder → full page)
+  components/          # Screens + sheets
+  hooks/               # useAuth, useLogs, useTrackedLifts, …
+  lib/                 # supabase, dates, streaks, photos, overload
+  styles/global.css
+  types/database.ts
+supabase/migrations/
+vercel.json            # SPA rewrites
+public/_redirects      # Netlify SPA fallback
 ```
 
 ---
