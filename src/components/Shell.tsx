@@ -16,6 +16,8 @@ type Props = {
   onSignOut: () => void
   onNewLog: () => void
   onUpdateProfile: (patch: { display_name?: string; weekly_goal?: number }) => Promise<void>
+  isAdmin?: boolean
+  onAdminPanel?: () => void
   children: ReactNode
 }
 
@@ -66,6 +68,8 @@ export function Shell({
   onSignOut,
   onNewLog,
   onUpdateProfile,
+  isAdmin,
+  onAdminPanel,
   children,
 }: Props) {
   const initial = (displayName[0] || 'G').toUpperCase()
@@ -116,6 +120,19 @@ export function Shell({
           GRIND<span>.</span>
         </div>
         <div className="topbar-right">
+          {isAdmin && (
+            <button
+              type="button"
+              className="admin-topbar-btn"
+              onClick={onAdminPanel}
+              title="Admin Panel"
+              aria-label="Open admin panel"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </button>
+          )}
           <ThemeIconButton
             resolved={resolvedTheme}
             preference={themePreference}

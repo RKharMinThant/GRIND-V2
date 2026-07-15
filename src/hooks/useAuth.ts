@@ -65,8 +65,20 @@ export function useAuth() {
       email: string,
       password: string,
       displayName?: string,
+      inviteCode?: string,
     ): Promise<{ needsEmailConfirmation: boolean; email: string }> => {
       setAuthError(null)
+
+      // Validate + atomically redeem the invite code before creating the account
+      if (inviteCode) {
+        const { error: rpcError } = await supabase.rpc('redeem_invite', { p_code: inviteCode })
+        if (rpcError) {
+          const msg = rpcError.message || 'Invalid invite code'
+          setAuthError(msg)
+          throw new Error(msg)
+        }
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -127,6 +139,7 @@ export function useAuth() {
     'Athlete'
 
   const weeklyGoal = profile?.weekly_goal ?? DEFAULT_WEEKLY_GOAL
+  const isAdmin = user?.email === 'rkharmthant@gmail.com'
 
   return {
     session,
@@ -134,6 +147,7 @@ export function useAuth() {
     profile,
     displayName,
     weeklyGoal,
+    isAdmin,
     loading,
     authError,
     setAuthError,

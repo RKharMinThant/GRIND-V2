@@ -1,6 +1,6 @@
 import { lazy, StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { DocumentMeta } from './components/DocumentMeta'
 import { MarketingPage } from './marketing/MarketingPage'
 import './styles/global.css'
@@ -19,12 +19,19 @@ function AppFallback() {
   )
 }
 
+/** Pretty invite URL: /invite/:code → /app?invite=:code */
+function InviteRedirect() {
+  const { code } = useParams<{ code: string }>()
+  return <Navigate to={`/app?invite=${code ?? ''}`} replace />
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <DocumentMeta />
       <Routes>
         <Route path="/" element={<MarketingPage />} />
+        <Route path="/invite/:code" element={<InviteRedirect />} />
         <Route
           path="/app/*"
           element={

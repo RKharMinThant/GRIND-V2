@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { AdminPanel } from './components/AdminPanel'
 import { AnimatedPage } from './components/AnimatedPage'
 import { AuthScreen } from './components/AuthScreen'
 import { CalendarView } from './components/CalendarView'
@@ -30,6 +31,7 @@ export default function App() {
     user,
     displayName,
     weeklyGoal,
+    isAdmin,
     loading: authLoading,
     authError,
     setAuthError,
@@ -67,6 +69,7 @@ export default function App() {
   const [liftSheet, setLiftSheet] = useState<LiftSheetState>(null)
   const [progressLift, setProgressLift] = useState<TrackedLift | null>(null)
   const [toast, setToast] = useState<{ msg: string; variant: 'ok' | 'error' } | null>(null)
+  const [adminPanelOpen, setAdminPanelOpen] = useState(false)
 
   const showToast = useCallback((msg: string, variant: 'ok' | 'error' = 'ok') => {
     setToast({ msg, variant })
@@ -177,6 +180,8 @@ export default function App() {
         onTab={setTab}
         onSignOut={() => void signOut()}
         onNewLog={() => openNew()}
+        isAdmin={isAdmin}
+        onAdminPanel={() => setAdminPanelOpen(true)}
         onUpdateProfile={async (patch) => {
           await updateProfile(patch)
           showToast('Profile saved')
@@ -315,6 +320,11 @@ export default function App() {
         variant={toast?.variant}
         onDone={() => setToast(null)}
       />
+
+      {/* Admin Panel — only for rkharmthant@gmail.com */}
+      {isAdmin && adminPanelOpen && (
+        <AdminPanel onClose={() => setAdminPanelOpen(false)} />
+      )}
     </>
   )
 }

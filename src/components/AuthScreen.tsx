@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import {
   BRAND_KICKER,
@@ -15,7 +15,7 @@ type SignUpResult = { needsEmailConfirmation: boolean; email: string }
 
 type Props = {
   onSignIn: (email: string, password: string) => Promise<void>
-  onSignUp: (email: string, password: string, displayName?: string) => Promise<SignUpResult>
+  onSignUp: (email: string, password: string, displayName?: string, inviteCode?: string) => Promise<SignUpResult>
   onResendConfirmation: (email: string) => Promise<void>
   authError: string | null
   clearError: () => void
@@ -39,10 +39,21 @@ export function AuthScreen({
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [displayName, setDisplayName] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const [confirmEmail, setConfirmEmail] = useState<string | null>(null)
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+
+  // Pre-fill invite code from URL ?invite= param and switch to register tab
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('invite')
+    if (code) {
+      setInviteCode(code.trim())
+      setMode('register')
+    }
+  }, [])
 
   const error = localError || authError
 
@@ -67,7 +78,7 @@ export function AuthScreen({
       if (mode === 'login') {
         await onSignIn(email.trim(), password)
       } else {
-        const result = await onSignUp(email.trim(), password, displayName.trim() || undefined)
+        const result = await onSignUp(email.trim(), password, displayName.trim() || undefined, inviteCode.trim() || undefined)
         if (result.needsEmailConfirmation) {
           setConfirmEmail(result.email)
           setResendStatus('idle')
@@ -88,6 +99,8 @@ export function AuthScreen({
     clearError()
     setConfirmEmail(null)
     setResendStatus('idle')
+    // Clear invite code only when switching away from register (not when arriving)
+    if (next === 'login') setInviteCode('')
   }
 
   function goToSignIn() {
@@ -253,66 +266,93 @@ export function AuthScreen({
 
                 {error && <div className="auth-error">{error}</div>}
 
-                <form className="auth-form" onSubmit={handleSubmit}>
-                  {mode === 'register' && (
-                    <div className="field">
-                      <label htmlFor="displayName">Display name</label>
-                      <input
-                        id="displayName"
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        placeholder="How you show up"
-                        autoComplete="nickname"
-                      />
+                {mode === 'register' && !inviteCode ? (
+                  /* ── Invite gate: no form until a valid link is used ── */
+                  <div className="invite-gate">
+                    <div className="invite-gate-icon" aria-hidden>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
                     </div>
-                  )}
-
-                  <div className="field">
-                    <label htmlFor="email">Email</label>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@email.com"
-                      autoComplete="email"
-                      required
-                    />
+                    <h2 className="invite-gate-title">Invite only</h2>
+                    <p className="invite-gate-body">
+                      Registration is closed to the public. You need a personal invite link from the admin to create an account.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-full"
+                      onClick={() => switchMode('login')}
+                    >
+                      ← Back to sign in
+                    </button>
                   </div>
+                ) : (
+                  <form className="auth-form" onSubmit={handleSubmit}>
+                    {mode === 'register' && (
+                      <div className="field">
+                        <label htmlFor="displayName">Display name</label>
+                        <input
+                          id="displayName"
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          placeholder="How you show up"
+                          autoComplete="nickname"
+                        />
+                      </div>
+                    )}
 
-                  <div className="field">
-                    <label htmlFor="password">Password</label>
-                    <input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder={mode === 'register' ? 'min 6 characters' : '••••••••'}
-                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                      required
-                      minLength={6}
-                    />
-                  </div>
-
-                  {mode === 'register' && (
                     <div className="field">
-                      <label htmlFor="confirm">Confirm password</label>
+                      <label htmlFor="email">Email</label>
                       <input
-                        id="confirm"
-                        type="password"
-                        value={confirm}
-                        onChange={(e) => setConfirm(e.target.value)}
-                        placeholder="repeat password"
-                        autoComplete="new-password"
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@email.com"
+                        autoComplete="email"
                         required
                       />
                     </div>
-                  )}
 
-                  <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={busy}>
-                    {busy ? 'Please wait…' : mode === 'login' ? 'Sign In →' : 'Create Account →'}
-                  </button>
-                </form>
+                    <div className="field">
+                      <label htmlFor="password">Password</label>
+                      <input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder={mode === 'register' ? 'min 6 characters' : '••••••••'}
+                        autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+
+                    {mode === 'register' && (
+                      <div className="field">
+                        <label htmlFor="confirm">Confirm password</label>
+                        <input
+                          id="confirm"
+                          type="password"
+                          value={confirm}
+                          onChange={(e) => setConfirm(e.target.value)}
+                          placeholder="repeat password"
+                          autoComplete="new-password"
+                          required
+                        />
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="btn btn-primary btn-full btn-lg"
+                      disabled={busy}
+                    >
+                      {busy ? 'Please wait…' : mode === 'login' ? 'Sign In →' : 'Create Account →'}
+                    </button>
+                  </form>
+                )}
 
                 <div className="auth-footer">Private logs · photo proof · streaks that stick.</div>
                 <div className="auth-credit-mobile">
