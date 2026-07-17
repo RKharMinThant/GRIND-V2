@@ -1,0 +1,7 @@
+# GRIND — crawl the marketing site; leave the private app alone
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /app/
+
+Sitemap: /sitemap.xml
