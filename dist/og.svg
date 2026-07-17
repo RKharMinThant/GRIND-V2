@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="GRIND">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e8f5a8"/>
+      <stop offset="45%" stop-color="#f3f5ec"/>
+      <stop offset="100%" stop-color="#d4f0f4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="80" y="120" font-family="system-ui,Segoe UI,sans-serif" font-size="36" font-weight="800" letter-spacing="8" fill="#3a5800">GRIND.</text>
+  <text x="80" y="280" font-family="system-ui,Segoe UI,sans-serif" font-size="72" font-weight="900" fill="#12160c">Show up.</text>
+  <text x="80" y="360" font-family="system-ui,Segoe UI,sans-serif" font-size="72" font-weight="900" fill="#12160c">Log the work.</text>
+  <text x="80" y="440" font-family="system-ui,Segoe UI,sans-serif" font-size="72" font-weight="900" fill="#3a5800">Repeat.</text>
+  <text x="80" y="540" font-family="system-ui,Segoe UI,sans-serif" font-size="28" font-weight="500" fill="#4a5240">Sessions, progressive overload, and rest · private by default</text>
+</svg>
