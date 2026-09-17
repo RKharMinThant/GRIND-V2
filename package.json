@@ -10,7 +10,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "health:deploy": "npx supabase functions deploy health-oauth-start && npx supabase functions deploy health-oauth-callback --no-verify-jwt && npx supabase functions deploy health-data && npx supabase functions deploy health-disconnect",
+    "health:deploy": "npx supabase functions deploy health-oauth-start && npx supabase functions deploy health-oauth-callback --no-verify-jwt && npx supabase functions deploy health-data && npx supabase functions deploy health-body && npx supabase functions deploy health-disconnect",
     "health:secrets": "node scripts/push-health-secrets.mjs"
   },
   "dependencies": {
