@@ -208,7 +208,12 @@ After deploy, run Lighthouse on the marketing URL:
 
 ## Fitbit / Google Health (optional)
 
-Admin-only for now (`isAdmin` in `useAuth`). Adds a Fitbit row to the profile menu; once connected, Home shows a **workout detected** card and a **recovery** card (sleep, resting HR, HRV), the heatmap gets a **Sessions | Steps** switch, and sessions can carry tracker stats (calories, heart rate, zones).
+Admin-only for now (`isAdmin` in `useAuth`). Adds a Fitbit row to the profile menu. Once connected:
+
+- **Home:** a **Today** strip (steps ring against your daily step goal, zone minutes, distance, calories, sleep), a **workout detected** card, a **recovery** card, and a **Sessions | Steps** heatmap switch.
+- **Body tab** (takes Calendar's dock slot; Calendar opens from History): **Activity** (7/30-day steps vs goal, active minutes), **Heart** (resting HR and HRV trends, today's heart-rate curve, zone time), **Sleep** (14 nights, stage timeline), **Night vitals** (SpO2, breathing rate, skin temperature, weight).
+- **Sessions** can carry tracker stats (calories, heart rate, zones).
+- **Profile:** daily step goal (migration 015).
 
 Two data sources, chosen at build time:
 
@@ -221,7 +226,7 @@ Design: [`docs/superpowers/specs/2026-09-17-fitbit-health-integration-design.md`
 
 ### Demo mode
 
-1. Run migration **013** so tracker stats save onto sessions (without it, sessions still save, minus the stats).
+1. Run migrations **013** (tracker stats on sessions) and **015** (daily step goal). Without them the app still works, minus those fields.
 2. Profile menu → **Connect Fitbit**. Preview the expired state with `/app?health=expired`.
 
 Remove demo stats later (sessions are kept):
@@ -248,13 +253,13 @@ update public.logs
 
 **2. Supabase**
 
-Run migrations **013** and **014** (SQL editor), then with the [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started):
+Run migrations **013**, **014** and **015** (SQL editor), then with the [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started):
 
 ```bash
 npx supabase login
 npx supabase link --project-ref <project-ref>
 npm run health:secrets  # uploads GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ALLOWED_ORIGINS from .env.local (no VITE_ prefix)
-npm run health:deploy   # deploys all four; the callback with --no-verify-jwt
+npm run health:deploy   # deploys all five functions; the callback with --no-verify-jwt
 ```
 
 `ALLOWED_ORIGINS` controls CORS and where the OAuth flow may return to (no trailing slash).
@@ -281,7 +286,7 @@ src/
   styles/global.css
   types/database.ts
 supabase/migrations/
-supabase/functions/    # Edge Functions: health-oauth-*, health-data, health-disconnect
+supabase/functions/    # Edge Functions: health-oauth-*, health-data, health-body, health-disconnect
 vercel.json            # SPA rewrites
 public/_redirects      # Netlify SPA fallback
 ```
