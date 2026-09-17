@@ -1,5 +1,5 @@
-// Google Health API v4 calls. Filter field names come from the API reference and are not yet
-// verified against live responses — if a call returns 400, adjust the FILTERS below.
+// Google Health API v4 calls. FILTERS were verified against the live API (2026-09-17):
+// daily types need snake_case prefixes even though the reference shows camelCase.
 
 import type { GDataPoint, GRollupPoint } from './normalize.ts'
 
@@ -10,8 +10,9 @@ export class GoogleApiError extends Error {
   constructor(
     readonly status: number,
     readonly detail: string,
+    readonly dataType = '',
   ) {
-    super(`Google Health API ${status}: ${detail}`)
+    super(`Google Health API ${status} (${dataType}): ${detail}`)
     this.name = 'GoogleApiError'
   }
 }
@@ -20,11 +21,24 @@ export class GoogleApiError extends Error {
 export const FILTERS = {
   exercise: (from: string) => `exercise.interval.civil_start_time >= "${from}"`,
   sleep: (from: string) => `sleep.interval.civil_end_time >= "${from}"`,
-  dailyRestingHeartRate: (from: string) => `dailyRestingHeartRate.date >= "${from}"`,
-  dailyHeartRateVariability: (from: string) => `dailyHeartRateVariability.date >= "${from}"`,
+  dailyRestingHeartRate: (from: string) => `daily_resting_heart_rate.date >= "${from}"`,
+  dailyHeartRateVariability: (from: string) => `daily_heart_rate_variability.date >= "${from}"`,
 }
 
-async function call(accessToken: string, url: string, init?: RequestInit): Promise<GDataPoint> {
+/** Google's error message plus detailed reasons, compact. */
+function googleMessage(text: string): string {
+  try {
+    const e = JSON.parse(text)?.error
+    const reasons = (e?.details ?? [])
+      .map((d: { metadata?: { detailedReasons?: string } }) => d?.metadata?.detailedReasons)
+      .filter(Boolean)
+    return [e?.message, ...reasons].filter(Boolean).join(' | ').slice(0, 1000)
+  } catch {
+    return text.slice(0, 1000)
+  }
+}
+
+async function call(accessToken: string, url: string, init?: RequestInit, dataType = ''): Promise<GDataPoint> {
   const res = await fetch(url, {
     ...init,
     headers: {
@@ -34,7 +48,7 @@ async function call(accessToken: string, url: string, init?: RequestInit): Promi
     },
   })
   const text = await res.text()
-  if (!res.ok) throw new GoogleApiError(res.status, text.slice(0, 500))
+  if (!res.ok) throw new GoogleApiError(res.status, googleMessage(text), dataType)
   return text ? JSON.parse(text) : {}
 }
 
@@ -49,7 +63,7 @@ export async function listAll(
   for (let page = 0; page < maxPages; page++) {
     const params = new URLSearchParams({ filter, pageSize: '1000' })
     if (pageToken) params.set('pageToken', pageToken)
-    const data = await call(accessToken, `${BASE}/${dataType}/dataPoints?${params}`)
+    const data = await call(accessToken, `${BASE}/${dataType}/dataPoints?${params}`, undefined, dataType)
     out.push(...(data.dataPoints ?? []))
     pageToken = data.nextPageToken
     if (!pageToken) break
@@ -76,7 +90,7 @@ export async function dailyStepsRollUp(accessToken: string, from: string, to: st
       const data = await call(accessToken, `${BASE}/steps/dataPoints:dailyRollUp`, {
         method: 'POST',
         body: JSON.stringify({ range: { start: civil(start), end: civil(endExclusive) }, pageToken }),
-      })
+      }, 'steps:dailyRollUp')
       out.push(...(data.rollupDataPoints ?? []))
       pageToken = data.nextPageToken
     } while (pageToken)

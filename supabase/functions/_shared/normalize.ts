@@ -144,14 +144,23 @@ export function buildRecovery(
   rhr: GDataPoint[],
   hrv: GDataPoint[],
 ): HealthRecovery | null {
+  // Prefer Fitbit's main sleep for the night, then the longest
   const main = sleep
     .map((p) => p?.sleep)
     .filter((s) => s && sleepEndDate(s) === date)
-    .sort((a, b) => (toInt(b.summary?.minutesAsleep) ?? 0) - (toInt(a.summary?.minutesAsleep) ?? 0))[0]
+    .sort(
+      (a, b) =>
+        Number(b.metadata?.mainSleep === true) - Number(a.metadata?.mainSleep === true) ||
+        (toInt(b.summary?.minutesAsleep) ?? 0) - (toInt(a.summary?.minutesAsleep) ?? 0),
+    )[0]
 
   const rhrByDate = dailyValues(rhr, 'dailyRestingHeartRate', (o) => toInt(o.beatsPerMinute))
   const hrvByDate = dailyValues(hrv, 'dailyHeartRateVariability', (o) => {
-    const v = o.rootMeanSquareOfSuccessiveDifferencesMilliseconds ?? o.averageHeartRateVariabilityMilliseconds
+    // Fitbit's HRV is RMSSD during deep sleep; fall back to whole-night figures
+    const v =
+      o.deepSleepRootMeanSquareOfSuccessiveDifferencesMilliseconds ??
+      o.rootMeanSquareOfSuccessiveDifferencesMilliseconds ??
+      o.averageHeartRateVariabilityMilliseconds
     return v == null ? null : Math.round(Number(v))
   })
 

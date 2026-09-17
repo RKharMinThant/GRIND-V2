@@ -89,6 +89,8 @@ Deno.serve(async (req) => {
       await db.from('health_connections').update({ access_expires_at: null }).eq('user_id', user.id)
     }
     const detail = e instanceof GoogleApiError ? e.detail : (e as Error).message
-    return json(req, { error: 'google', detail }, 502)
+    const source = e instanceof GoogleApiError ? e.dataType : undefined
+    console.error('health-data google error', source, detail)
+    return json(req, { error: 'google', source, detail }, 502)
   }
 })

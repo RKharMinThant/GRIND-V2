@@ -149,6 +149,59 @@ describe('buildRecovery', () => {
     })
   })
 
+  it('handles the live Fitbit shapes: UTC offset end time, mainSleep flag, deep-sleep HRV', () => {
+    const live = [
+      {
+        // Longer nap that is NOT the main sleep
+        sleep: {
+          interval: { endTime: '2026-09-17T10:00:00Z', endUtcOffset: '14400s' },
+          metadata: { mainSleep: false },
+          summary: { minutesAsleep: '480' },
+        },
+      },
+      {
+        // Ends 2026-09-16T22:30Z = 2026-09-17 02:30 local (UTC+4)
+        sleep: {
+          interval: { endTime: '2026-09-16T22:30:00Z', endUtcOffset: '14400s' },
+          metadata: { mainSleep: true },
+          summary: {
+            minutesAsleep: '395',
+            stagesSummary: [
+              { type: 'AWAKE', minutes: '41', count: '12' },
+              { type: 'LIGHT', minutes: '220', count: '20' },
+              { type: 'DEEP', minutes: '75', count: '4' },
+              { type: 'REM', minutes: '100', count: '6' },
+            ],
+          },
+        },
+      },
+    ]
+    const liveHrv = [
+      {
+        dailyHeartRateVariability: {
+          date: d('2026-09-17'),
+          averageHeartRateVariabilityMilliseconds: 31.2,
+          deepSleepRootMeanSquareOfSuccessiveDifferencesMilliseconds: 44.6,
+        },
+      },
+      {
+        dailyHeartRateVariability: {
+          date: d('2026-09-16'),
+          averageHeartRateVariabilityMilliseconds: 30,
+        },
+      },
+    ]
+    expect(buildRecovery('2026-09-17', live, [], liveHrv)).toEqual({
+      date: '2026-09-17',
+      sleepMin: 395,
+      stages: { deep: 75, light: 220, rem: 100, awake: 41 },
+      restingHr: null,
+      restingHrAvg: null,
+      hrvMs: 45,
+      hrvAvg: 30,
+    })
+  })
+
   it('returns null when nothing is available', () => {
     expect(buildRecovery('2026-09-17', [], [], [])).toBeNull()
   })
