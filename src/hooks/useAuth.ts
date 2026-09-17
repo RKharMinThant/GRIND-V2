@@ -5,6 +5,36 @@ import type { Profile } from '../types/database'
 
 const DEFAULT_WEEKLY_GOAL = 4
 
+/**
+ * TEMPORARY dev-only login bypass. In `npm run dev`, if both vars are set in .env.local,
+ * sign in automatically instead of showing the login screen. Never active in production builds.
+ */
+// Read the vars only behind the DEV ternary so production builds strip them
+// (Vite also loads .env.local for `npm run build` — the password must never be inlined).
+const DEV_EMAIL = import.meta.env.DEV ? import.meta.env.VITE_DEV_AUTO_LOGIN_EMAIL : undefined
+const DEV_PASSWORD = import.meta.env.DEV ? import.meta.env.VITE_DEV_AUTO_LOGIN_PASSWORD : undefined
+const DEV_AUTO_LOGIN = Boolean(DEV_EMAIL && DEV_PASSWORD)
+/** Set on explicit sign-out so the bypass doesn't immediately sign back in (per tab). */
+const DEV_SKIP_KEY = 'grind_dev_skip_auto_login'
+
+function devAutoLoginSkipped(): boolean {
+  try {
+    return sessionStorage.getItem(DEV_SKIP_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** Shared across StrictMode double-mounts so we only sign in once. */
+let devAutoLoginPromise: Promise<string | null> | null = null
+
+function devAutoLogin(): Promise<string | null> {
+  devAutoLoginPromise ??= supabase.auth
+    .signInWithPassword({ email: DEV_EMAIL!, password: DEV_PASSWORD! })
+    .then(({ error }) => (error ? `Dev auto-login failed: ${error.message}` : null))
+  return devAutoLoginPromise
+}
+
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
@@ -23,9 +53,22 @@ export function useAuth() {
 
   useEffect(() => {
     let mounted = true
+    // Keep the boot screen up while a dev auto-login is in flight (no login-screen flash)
+    let autoLoginPending = DEV_AUTO_LOGIN && !devAutoLoginSkipped()
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (!mounted) return
+      if (!data.session && autoLoginPending) {
+        const err = await devAutoLogin()
+        autoLoginPending = false
+        if (!mounted) return
+        if (err) {
+          setAuthError(err)
+          setLoading(false)
+        }
+        return // success is handled by onAuthStateChange
+      }
+      autoLoginPending = false
       setSession(data.session)
       setUser(data.session?.user ?? null)
       if (data.session?.user) {
@@ -35,6 +78,7 @@ export function useAuth() {
     })
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+      if (!next && autoLoginPending) return
       setSession(next)
       setUser(next?.user ?? null)
       if (next?.user) {
@@ -112,6 +156,13 @@ export function useAuth() {
   }, [])
 
   const signOut = useCallback(async () => {
+    if (DEV_AUTO_LOGIN) {
+      try {
+        sessionStorage.setItem(DEV_SKIP_KEY, '1')
+      } catch {
+        /* ignore */
+      }
+    }
     await supabase.auth.signOut()
     setProfile(null)
   }, [])
