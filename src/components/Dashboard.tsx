@@ -9,6 +9,7 @@ import { GoalRing } from './GoalRing'
 import { Heatmap } from './Heatmap'
 import { LogCard } from './LogCard'
 import { RecoveryCard } from './RecoveryCard'
+import { TodayStrip } from './TodayStrip'
 import { WeekStrip } from './WeekStrip'
 import { WorkoutDetectedCard } from './WorkoutDetectedCard'
 
@@ -28,6 +29,8 @@ type Props = {
   health: HealthState
   /** Open the log form with a tracker workout attached */
   onLogWorkout: (workout: HealthWorkout) => void
+  stepGoal: number
+  onOpenBody: () => void
 }
 
 export function Dashboard({
@@ -44,6 +47,8 @@ export function Dashboard({
   onRestDay,
   health,
   onLogWorkout,
+  stepGoal,
+  onOpenBody,
 }: Props) {
   const [restBusy, setRestBusy] = useState(false)
   const recent = logs.slice(0, 6)
@@ -104,6 +109,10 @@ export function Dashboard({
           </button>
         </div>
       </div>
+
+      {health.isConnected && (
+        <TodayStrip today={health.today} recovery={health.recovery} stepGoal={stepGoal} onOpen={onOpenBody} />
+      )}
 
       {detected[0] && (
         <WorkoutDetectedCard

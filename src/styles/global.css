@@ -6422,7 +6422,7 @@ img {
 .tone-accent { --tone: var(--chart-ink); }
 .tone-accent-soft { --tone: var(--chart-ink-soft); }
 .tone-ice { --tone: var(--ice); }
-.tone-ice-soft { --tone: var(--ice-dim); }
+.tone-ice-soft { --tone: color-mix(in srgb, var(--ice) 55%, transparent); }
 .tone-danger { --tone: var(--danger); }
 .tone-rem { --tone: var(--chart-rem); }
 .tone-muted { --tone: var(--surface-3); }
@@ -6780,6 +6780,355 @@ img {
   .chart-ring-prog,
   .step-bar-fill,
   .hypnogram-seg {
+    animation: none;
+  }
+}
+
+/* ── Today strip (Home) ────────────────────────────────────────────────────── */
+.today-strip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 180ms var(--ease-out), transform 180ms var(--ease-out);
+}
+
+.today-strip:hover {
+  border-color: var(--border-strong);
+}
+
+.today-strip:active {
+  transform: scale(0.99);
+}
+
+.today-strip .health-card-kicker {
+  justify-content: space-between;
+}
+
+.today-strip-more {
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-weight: 600;
+  color: var(--muted-2);
+}
+
+.today-strip-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.today-strip-tiles {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.today-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 10px 9px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  min-width: 0;
+}
+
+.today-tile .label {
+  font-size: 0.6rem;
+  white-space: nowrap;
+}
+
+.today-tile-value {
+  font-family: var(--font-num);
+  font-size: 1.35rem;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 560px) {
+  .today-strip-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ── History calendar button ───────────────────────────────────────────────── */
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-calendar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-calendar-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sheet--calendar .cal-card {
+  margin: 0;
+}
+
+/* ── Body tab ──────────────────────────────────────────────────────────────── */
+.body-synced {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.body-section {
+  padding: 16px 18px 18px;
+}
+
+.body-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.body-section-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.body-section-note {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.body-section-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.body-skeleton {
+  display: grid;
+  gap: 10px;
+}
+
+.body-skeleton span {
+  display: block;
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: body-shimmer 1.4s linear infinite;
+}
+
+.body-skeleton span:first-child {
+  height: 96px;
+  border-radius: var(--radius);
+}
+
+.body-skeleton span:last-child {
+  width: 60%;
+}
+
+@keyframes body-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.body-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0 4px;
+}
+
+.body-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  min-width: 0;
+}
+
+.body-stats .label {
+  font-size: 0.6rem;
+  white-space: nowrap;
+}
+
+.body-stat-value {
+  font-family: var(--font-num);
+  font-size: 1.3rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.body-block {
+  margin-top: 16px;
+}
+
+.body-block-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.body-block-title span {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.body-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.body-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  min-width: 0;
+  text-align: left;
+  color: var(--text);
+}
+
+.body-tile-value {
+  font-family: var(--font-num);
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.body-tile-value small {
+  font-family: var(--font);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.body-tile .sparkline {
+  margin-top: 8px;
+}
+
+.sleep-nights {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 56px;
+  margin-bottom: 14px;
+}
+
+.sleep-night {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding: 0;
+  cursor: pointer;
+}
+
+.sleep-night-bar {
+  width: 100%;
+  min-height: 3px;
+  border-radius: 4px 4px 2px 2px;
+  background: color-mix(in srgb, var(--ice) 35%, transparent);
+  transition: background 160ms var(--ease-out);
+}
+
+.sleep-night.active .sleep-night-bar {
+  background: var(--ice);
+}
+
+.sleep-night:hover:not(.active) .sleep-night-bar {
+  background: color-mix(in srgb, var(--ice) 55%, transparent);
+}
+
+.vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.vitals-tile {
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: border-color 160ms var(--ease-out);
+}
+
+.vitals-tile.expanded {
+  grid-column: 1 / -1;
+  border-color: var(--border-strong);
+}
+
+.vitals-note {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.body-connect {
+  text-align: center;
+  padding: 28px 22px;
+}
+
+.body-connect h2 {
+  margin: 12px 0 6px;
+  font-size: 1.15rem;
+}
+
+.body-connect p {
+  margin: 0 auto 16px;
+  max-width: 34ch;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.body-connect-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+}
+
+.body-connect-mark svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: var(--chart-ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.body-foot {
+  text-align: center;
+  margin: 4px 0 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .body-skeleton span {
     animation: none;
   }
 }

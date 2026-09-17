@@ -3,6 +3,8 @@ import { AdminPanel } from './components/AdminPanel'
 import { AnimatedPage } from './components/AnimatedPage'
 import { AuthScreen } from './components/AuthScreen'
 import { CalendarView } from './components/CalendarView'
+import { BodyView } from './components/BodyView'
+import { CalendarSheet } from './components/CalendarSheet'
 import { Dashboard } from './components/Dashboard'
 import { HealthConnectRow } from './components/HealthConnectRow'
 import { LiftEditorSheet } from './components/LiftEditorSheet'
@@ -78,6 +80,7 @@ export default function App() {
   const [progressLift, setProgressLift] = useState<TrackedLift | null>(null)
   const [toast, setToast] = useState<{ msg: string; variant: 'ok' | 'error' } | null>(null)
   const [adminPanelOpen, setAdminPanelOpen] = useState(false)
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
   const showToast = useCallback((msg: string, variant: 'ok' | 'error' = 'ok') => {
     setToast({ msg, variant })
@@ -214,6 +217,7 @@ export default function App() {
         onAdminPanel={() => setAdminPanelOpen(true)}
         healthControls={health.enabled ? <HealthConnectRow health={health} /> : undefined}
         dailyStepGoal={health.enabled ? dailyStepGoal : undefined}
+        showBody={health.enabled}
         onUpdateProfile={async (patch) => {
           await updateProfile(patch)
           showToast('Profile saved')
@@ -245,10 +249,17 @@ export default function App() {
                 onRestDay={logRestDay}
                 health={health}
                 onLogWorkout={openFromWorkout}
+                stepGoal={dailyStepGoal}
+                onOpenBody={() => setTab('body')}
               />
             )}
             {tab === 'history' && (
-              <LogsList logs={logs} photoUrls={photoUrls} onOpenLog={openDetail} />
+              <LogsList
+                logs={logs}
+                photoUrls={photoUrls}
+                onOpenLog={openDetail}
+                onOpenCalendar={() => setCalendarOpen(true)}
+              />
             )}
             {tab === 'progress' && (
               <ProgressView
@@ -260,6 +271,7 @@ export default function App() {
                 onOpenLift={(lift) => setProgressLift(lift)}
               />
             )}
+            {tab === 'body' && <BodyView health={health} stepGoal={dailyStepGoal} />}
             {tab === 'calendar' && (
               <CalendarView
                 logs={logs}
@@ -272,6 +284,14 @@ export default function App() {
       </Shell>
 
       {/* Root-level sheets — same layer as Log, above dock / page transforms */}
+      <CalendarSheet
+        open={calendarOpen}
+        logs={logs}
+        onClose={() => setCalendarOpen(false)}
+        onOpenLog={openDetail}
+        onCreateForDate={(date) => openNew(date)}
+      />
+
       <LogFormSheet
         open={formOpen}
         initial={editing}

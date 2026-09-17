@@ -8,9 +8,11 @@ type Props = {
   logs: Log[]
   onOpenLog: (id: string) => void
   onCreateForDate: (date: string) => void
+  /** Inside a sheet: no page wrapper or title */
+  embedded?: boolean
 }
 
-export function CalendarView({ logs, onOpenLog, onCreateForDate }: Props) {
+export function CalendarView({ logs, onOpenLog, onCreateForDate, embedded }: Props) {
   const today = toLocalDateString()
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
@@ -77,10 +79,12 @@ export function CalendarView({ logs, onOpenLog, onCreateForDate }: Props) {
   const selectedLogs = selected ? byDate.get(selected) ?? [] : []
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <div className="page-title">Calendar</div>
-      </div>
+    <div className={embedded ? undefined : 'page'}>
+      {!embedded && (
+        <div className="page-header">
+          <div className="page-title">Calendar</div>
+        </div>
+      )}
       <div className="cal-card">
         <div className="cal-nav">
           <button type="button" className="btn btn-icon" onClick={() => changeMonth(-1)} aria-label="Previous month">

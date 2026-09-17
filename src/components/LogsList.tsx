@@ -8,9 +8,10 @@ type Props = {
   logs: Log[]
   photoUrls: Record<string, string>
   onOpenLog: (id: string) => void
+  onOpenCalendar?: () => void
 }
 
-export function LogsList({ logs, photoUrls, onOpenLog }: Props) {
+export function LogsList({ logs, photoUrls, onOpenLog, onOpenCalendar }: Props) {
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('all')
 
@@ -43,8 +44,24 @@ export function LogsList({ logs, photoUrls, onOpenLog }: Props) {
     <div className="page">
       <div className="page-header">
         <div className="page-title">History</div>
-        <div className="label">
-          {filtered.length} entr{filtered.length === 1 ? 'y' : 'ies'}
+        <div className="page-header-actions">
+          <div className="label">
+            {filtered.length} entr{filtered.length === 1 ? 'y' : 'ies'}
+          </div>
+          {onOpenCalendar && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm history-calendar-btn"
+              onClick={onOpenCalendar}
+              aria-label="Open calendar"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden>
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M16 3v4M8 3v4M3 11h18" />
+              </svg>
+              Calendar
+            </button>
+          )}
         </div>
       </div>
 

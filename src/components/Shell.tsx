@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { ThemePreference } from '../lib/theme'
 import { ThemeIconButton, ThemeSegment } from './ThemeControls'
 
-export type Tab = 'home' | 'history' | 'progress' | 'calendar'
+export type Tab = 'home' | 'history' | 'progress' | 'calendar' | 'body'
 
 type Props = {
   tab: Tab
@@ -22,6 +22,8 @@ type Props = {
   onAdminPanel?: () => void
   /** Fitbit connect row, rendered in the profile menu when health is enabled */
   healthControls?: ReactNode
+  /** Body tab takes Calendar's dock slot (Fitbit-enabled accounts) */
+  showBody?: boolean
   children: ReactNode
 }
 
@@ -51,6 +53,14 @@ function IconProgress() {
   )
 }
 
+function IconBody() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M3 12h4l2-6 4 12 2-6h6" />
+    </svg>
+  )
+}
+
 function IconCalendar() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden>
@@ -76,6 +86,7 @@ export function Shell({
   isAdmin,
   onAdminPanel,
   healthControls,
+  showBody,
   children,
 }: Props) {
   const initial = (displayName[0] || 'G').toUpperCase()
@@ -285,17 +296,31 @@ export function Shell({
             <span className="dock-slot-label">Progress</span>
           </button>
 
-          <button
-            type="button"
-            className={`dock-slot ${tab === 'calendar' ? 'active' : ''}`}
-            onClick={() => onTab('calendar')}
-            aria-current={tab === 'calendar' ? 'page' : undefined}
-          >
-            <span className="dock-slot-icon">
-              <IconCalendar />
-            </span>
-            <span className="dock-slot-label">Calendar</span>
-          </button>
+          {showBody ? (
+            <button
+              type="button"
+              className={`dock-slot ${tab === 'body' ? 'active' : ''}`}
+              onClick={() => onTab('body')}
+              aria-current={tab === 'body' ? 'page' : undefined}
+            >
+              <span className="dock-slot-icon">
+                <IconBody />
+              </span>
+              <span className="dock-slot-label">Body</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`dock-slot ${tab === 'calendar' ? 'active' : ''}`}
+              onClick={() => onTab('calendar')}
+              aria-current={tab === 'calendar' ? 'page' : undefined}
+            >
+              <span className="dock-slot-icon">
+                <IconCalendar />
+              </span>
+              <span className="dock-slot-label">Calendar</span>
+            </button>
+          )}
         </nav>
       </div>
     </div>
