@@ -150,12 +150,13 @@ export function normalizeHeart(input: {
   const zoneList = zonePoint?.timeInHeartRateZone?.timeInHeartRateZones
   let zonesToday: HeartSection['zonesToday'] = null
   if (Array.isArray(zoneList)) {
-    zonesToday = { light: 0, moderate: 0, vigorous: 0, peak: 0 }
+    const zones = { light: 0, moderate: 0, vigorous: 0, peak: 0 }
     for (const z of zoneList) {
-      const key = String(z?.heartRateZone ?? '').toLowerCase() as keyof typeof zonesToday
+      const key = String(z?.heartRateZone ?? '').toLowerCase() as keyof typeof zones
       const s = parseDurationSeconds(z?.duration)
-      if (key in zonesToday && s != null) zonesToday[key] = Math.round(s / 60)
+      if (key in zones && s != null) zones[key] = Math.round(s / 60)
     }
+    zonesToday = zones
   }
 
   const dayStart = Date.parse(input.dayStartIso)

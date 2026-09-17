@@ -1,9 +1,10 @@
-// POST { from, to } (user JWT) → { workouts, recovery, steps, lastSyncedAt }
+// POST { from, to } (user JWT) → { workouts, recovery, steps, today, lastSyncedAt }
 // 404 not_connected · 409 expired · 502 google
+import { normalizeToday } from '../_shared/bodyNormalize.ts'
 import { adminClient, requireUser } from '../_shared/clients.ts'
+import { getAccessToken, invalidateAccessToken } from '../_shared/connection.ts'
 import { json, preflight } from '../_shared/cors.ts'
-import { ExpiredGrantError, refreshAccessToken } from '../_shared/google.ts'
-import { dailyStepsRollUp, FILTERS, GoogleApiError, listAll } from '../_shared/googleApi.ts'
+import { dailyRollUpRange, dailyStepsRollUp, FILTERS, GoogleApiError, listAll } from '../_shared/googleApi.ts'
 import { buildRecovery, normalizeExercise, normalizeStepsRollup } from '../_shared/normalize.ts'
 import type { HealthWorkout } from '../_shared/types.ts'
 
@@ -30,44 +31,20 @@ Deno.serve(async (req) => {
   }
 
   const db = adminClient()
-  const { data: conn } = await db
-    .from('health_connections')
-    .select('refresh_token, access_token, access_expires_at, status')
-    .eq('user_id', user.id)
-    .maybeSingle()
-  if (!conn) return json(req, { error: 'not_connected' }, 404)
-  if (conn.status === 'expired') return json(req, { error: 'expired' }, 409)
-
-  let accessToken: string = conn.access_token
-  if (!accessToken || !conn.access_expires_at || Date.parse(conn.access_expires_at) < Date.now() + 60_000) {
-    try {
-      const t = await refreshAccessToken(conn.refresh_token)
-      accessToken = t.access_token
-      await db
-        .from('health_connections')
-        .update({
-          access_token: t.access_token,
-          access_expires_at: new Date(Date.now() + t.expires_in * 1000).toISOString(),
-          ...(t.refresh_token ? { refresh_token: t.refresh_token } : {}),
-        })
-        .eq('user_id', user.id)
-    } catch (e) {
-      if (e instanceof ExpiredGrantError) {
-        await db.from('health_connections').update({ status: 'expired' }).eq('user_id', user.id)
-        return json(req, { error: 'expired' }, 409)
-      }
-      return json(req, { error: 'token_refresh_failed', detail: (e as Error).message }, 502)
-    }
-  }
+  const accessToken = await getAccessToken(req, db, user.id)
+  if (accessToken instanceof Response) return accessToken
 
   const recoveryFrom = addDaysIso(to, -7)
   try {
-    const [exercise, sleep, rhr, hrv, stepsRollup] = await Promise.all([
+    const [exercise, sleep, rhr, hrv, stepsRollup, todayDistance, todayAzm, todayCalories] = await Promise.all([
       listAll(accessToken, 'exercise', FILTERS.exercise(from)),
       listAll(accessToken, 'sleep', FILTERS.sleep(recoveryFrom)),
       listAll(accessToken, 'daily-resting-heart-rate', FILTERS.dailyRestingHeartRate(recoveryFrom)),
       listAll(accessToken, 'daily-heart-rate-variability', FILTERS.dailyHeartRateVariability(recoveryFrom)),
       dailyStepsRollUp(accessToken, from, to),
+      dailyRollUpRange(accessToken, 'distance', to, to),
+      dailyRollUpRange(accessToken, 'active-zone-minutes', to, to),
+      dailyRollUpRange(accessToken, 'total-calories', to, to),
     ])
 
     const workouts = exercise
@@ -81,13 +58,16 @@ Deno.serve(async (req) => {
       workouts,
       recovery: buildRecovery(to, sleep, rhr, hrv),
       steps: normalizeStepsRollup(stepsRollup),
+      today: normalizeToday(to, {
+        steps: stepsRollup,
+        distance: todayDistance,
+        azm: todayAzm,
+        calories: todayCalories,
+      }),
       lastSyncedAt,
     })
   } catch (e) {
-    if (e instanceof GoogleApiError && e.status === 401) {
-      // Access token rejected — force a refresh next time
-      await db.from('health_connections').update({ access_expires_at: null }).eq('user_id', user.id)
-    }
+    if (e instanceof GoogleApiError && e.status === 401) await invalidateAccessToken(db, user.id)
     const detail = e instanceof GoogleApiError ? e.detail : (e as Error).message
     const source = e instanceof GoogleApiError ? e.dataType : undefined
     console.error('health-data google error', source, detail)

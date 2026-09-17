@@ -23,6 +23,18 @@ export const FILTERS = {
   sleep: (from: string) => `sleep.interval.civil_end_time >= "${from}"`,
   dailyRestingHeartRate: (from: string) => `daily_resting_heart_rate.date >= "${from}"`,
   dailyHeartRateVariability: (from: string) => `daily_heart_rate_variability.date >= "${from}"`,
+  dailyOxygenSaturation: (from: string) => `daily_oxygen_saturation.date >= "${from}"`,
+  dailyRespiratoryRate: (from: string) => `daily_respiratory_rate.date >= "${from}"`,
+  dailySleepTemperature: (from: string) => `daily_sleep_temperature_derivations.date >= "${from}"`,
+  weight: (from: string) => `weight.sample_time.civil_time >= "${from}"`,
+}
+
+/** Roll-up range limits: these types allow 14 days per request, others 90. */
+export const ROLLUP_MAX_DAYS: Record<string, number> = {
+  'heart-rate': 14,
+  'active-minutes': 14,
+  'total-calories': 14,
+  'calories-in-heart-rate-zone': 14,
 }
 
 /** Google's error message plus detailed reasons, compact. */
@@ -80,20 +92,63 @@ function addDaysIso(date: string, delta: number): string {
   return new Date(Date.parse(`${date}T00:00:00Z`) + delta * 86_400_000).toISOString().slice(0, 10)
 }
 
-/** Daily step totals for [from, to] inclusive, in ≤90-day windows. */
-export async function dailyStepsRollUp(accessToken: string, from: string, to: string): Promise<GRollupPoint[]> {
+/** Daily totals for [from, to] inclusive (civil dates), chunked to the type's range limit. */
+export async function dailyRollUpRange(
+  accessToken: string,
+  dataType: string,
+  from: string,
+  to: string,
+): Promise<GRollupPoint[]> {
+  const chunk = ROLLUP_MAX_DAYS[dataType] ?? MAX_ROLLUP_DAYS
   const out: GRollupPoint[] = []
-  for (let start = from; start <= to; start = addDaysIso(start, MAX_ROLLUP_DAYS)) {
-    const endExclusive = [addDaysIso(start, MAX_ROLLUP_DAYS), addDaysIso(to, 1)].sort()[0]
+  for (let start = from; start <= to; start = addDaysIso(start, chunk)) {
+    const endExclusive = [addDaysIso(start, chunk), addDaysIso(to, 1)].sort()[0]
     let pageToken: string | undefined
     do {
-      const data = await call(accessToken, `${BASE}/steps/dataPoints:dailyRollUp`, {
-        method: 'POST',
-        body: JSON.stringify({ range: { start: civil(start), end: civil(endExclusive) }, pageToken }),
-      }, 'steps:dailyRollUp')
+      const data = await call(
+        accessToken,
+        `${BASE}/${dataType}/dataPoints:dailyRollUp`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ range: { start: civil(start), end: civil(endExclusive) }, pageToken }),
+        },
+        `${dataType}:dailyRollUp`,
+      )
       out.push(...(data.rollupDataPoints ?? []))
       pageToken = data.nextPageToken
     } while (pageToken)
   }
+  return out
+}
+
+/** Daily step totals for [from, to] inclusive. */
+export function dailyStepsRollUp(accessToken: string, from: string, to: string): Promise<GRollupPoint[]> {
+  return dailyRollUpRange(accessToken, 'steps', from, to)
+}
+
+/** Fixed-window aggregates (e.g. 5-minute heart rate) over a physical time range. */
+export async function rollUpWindow(
+  accessToken: string,
+  dataType: string,
+  startIso: string,
+  endIso: string,
+  windowSize: string,
+): Promise<GRollupPoint[]> {
+  const out: GRollupPoint[] = []
+  let pageToken: string | undefined
+  let pages = 0
+  do {
+    const data = await call(
+      accessToken,
+      `${BASE}/${dataType}/dataPoints:rollUp`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ range: { startTime: startIso, endTime: endIso }, windowSize, pageSize: 1440, pageToken }),
+      },
+      `${dataType}:rollUp`,
+    )
+    out.push(...(data.rollupDataPoints ?? []))
+    pageToken = data.nextPageToken
+  } while (pageToken && ++pages < 5)
   return out
 }
