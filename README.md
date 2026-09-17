@@ -119,6 +119,7 @@ Open the URL Vite prints (typically `http://localhost:5173`).
 npm run build    # typecheck + production bundle → dist/
 npm run preview  # serve dist/ locally
 npm run lint
+npm test         # Vitest (health logic + Google response parsing)
 ```
 
 ---
@@ -204,6 +205,70 @@ After deploy, run Lighthouse on the marketing URL:
 
 ---
 
+## Fitbit / Google Health (optional)
+
+Admin-only for now (`isAdmin` in `useAuth`). Adds a Fitbit row to the profile menu; once connected, Home shows a **workout detected** card and a **recovery** card (sleep, resting HR, HRV), the heatmap gets a **Sessions | Steps** switch, and sessions can carry tracker stats (calories, heart rate, zones).
+
+Two data sources, chosen at build time:
+
+| `VITE_HEALTH_PROVIDER` | Data |
+|---|---|
+| unset (default) | **Demo** — seeded fake data, no backend needed. Saved stats are tagged `health_source = 'demo'`. |
+| `google` | **Real** — Google Health API through Supabase Edge Functions |
+
+Design: [`docs/superpowers/specs/2026-09-17-fitbit-health-integration-design.md`](docs/superpowers/specs/2026-09-17-fitbit-health-integration-design.md)
+
+### Demo mode
+
+1. Run migration **013** so tracker stats save onto sessions (without it, sessions still save, minus the stats).
+2. Profile menu → **Connect Fitbit**. Preview the expired state with `/app?health=expired`.
+
+Remove demo stats later (sessions are kept):
+
+```sql
+update public.logs
+   set health_source = null, health_workout_id = null, calories_kcal = null,
+       avg_hr = null, max_hr = null, hr_zone_minutes = null
+ where health_source = 'demo';
+```
+
+### Real data (Google Health API)
+
+**1. Google Cloud**
+
+1. Create or pick a project at [console.cloud.google.com](https://console.cloud.google.com) and enable **Google Health API**.
+2. **Google Auth Platform → Audience**: External, keep *Testing*, add your Google account under **Test users**.
+3. **Data Access**: add the scopes `googlehealth.activity_and_fitness.readonly`, `googlehealth.health_metrics_and_measurements.readonly`, `googlehealth.sleep.readonly`.
+4. **Clients → Create client → Web application**. Authorized redirect URI:
+   `https://<project-ref>.supabase.co/functions/v1/health-oauth-callback`
+5. Copy the client ID and secret.
+
+> In *Testing*, Google refresh tokens expire after **7 days** — the app shows **Reconnect** when that happens. Publishing past Testing requires Google's review of these restricted scopes.
+
+**2. Supabase**
+
+Run migrations **013** and **014** (SQL editor), then with the [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started):
+
+```bash
+supabase login
+supabase link --project-ref <project-ref>
+supabase secrets set GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... ALLOWED_ORIGINS=https://your-domain.com,http://localhost:5173
+supabase functions deploy health-oauth-start
+supabase functions deploy health-oauth-callback --no-verify-jwt
+supabase functions deploy health-data
+supabase functions deploy health-disconnect
+```
+
+`ALLOWED_ORIGINS` controls CORS and where the OAuth flow may return to (no trailing slash).
+
+**3. App**
+
+Set `VITE_HEALTH_PROVIDER=google` in `.env.local` and/or Vercel (then redeploy), open the profile menu → **Connect Fitbit**, and approve on Google's screen. You return to `/app?health=connected`.
+
+**Troubleshooting**: `health-data` returns `502 {error:'google', detail}` with Google's message. Filter field names live in `supabase/functions/_shared/googleApi.ts` (`FILTERS`) and response parsing in `_shared/normalize.ts` (unit-tested: `npm test`).
+
+---
+
 ## Project layout
 
 ```
@@ -214,9 +279,11 @@ src/
   components/          # Screens + sheets
   hooks/               # useAuth, useLogs, useTrackedLifts, …
   lib/                 # supabase, dates, streaks, photos, overload
+  health/              # Fitbit: types, logic, mock + Google providers, useHealth
   styles/global.css
   types/database.ts
 supabase/migrations/
+supabase/functions/    # Edge Functions: health-oauth-*, health-data, health-disconnect
 vercel.json            # SPA rewrites
 public/_redirects      # Netlify SPA fallback
 ```
