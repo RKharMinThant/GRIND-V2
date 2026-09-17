@@ -2,7 +2,7 @@
 
 **Personal training journal** — log sessions, stay consistent, and track progressive overload without a custom backend.
 
-GRIND is a client-only web app: **Vite + React + TypeScript** on the frontend, **Supabase** for auth, Postgres, and private photo storage. Your data is scoped per user with Row Level Security (RLS). No Node API, no server you have to operate beyond Supabase + a static host.
+GRIND is a client-only web app: **Vite + React + TypeScript** on the frontend, **Supabase** for auth, Postgres, and private photo storage. Your data is scoped per user with Row Level Security (RLS). No Node API, no server you have to operate beyond Supabase + a static host. The optional Fitbit integration adds a few Supabase Edge Functions that talk to the Google Health API.
 
 ---
 
@@ -13,12 +13,15 @@ GRIND is a client-only web app: **Vite + React + TypeScript** on the frontend, *
 | **Sessions** | Log workouts with focus areas, duration, meal/notes, protein/creatine, and optional proof photos (compressed in the browser). |
 | **Consistency** | Streaks, weekly goal ring, week strip, activity heatmap, history filters, calendar. |
 | **Progress** | Self-managed lift board by muscle group. One working weight, **per-set reps** (e.g. `15 · 12 · 10 @ 60kg`). Compare to the last log (↑ weight / reps / volume) and a volume trend over saves. |
-| **Account** | Email/password auth; profile display name and weekly session goal. |
+| **Fitbit** *(optional)* | Connect a Fitbit (e.g. Fitbit Air) through Google Health: Today strip on Home, **Body** tab (activity, heart, sleep, night vitals), workout-detected prompt that pre-fills the log form, recovery card, steps heatmap. [Setup →](#fitbit--google-health-optional) |
+| **Account** | Invite-only email/password sign-up; profile display name, weekly session goal, and daily step goal. |
+| **Admin** | Admin panel to create, expire and revoke invite links and list users. |
 
 **Mental model**
 
 - **Home / History / Calendar / Log** — *when* you trained and what the session looked like.  
-- **Progress** — *what loads* you are progressing on (not tied to each log entry; you update lifts when you want).
+- **Progress** — *what loads* you are progressing on (not tied to each log entry; you update lifts when you want).  
+- **Body** — what your *tracker* saw: steps, heart, sleep and vitals (Fitbit-connected accounts; Calendar then opens from History).
 
 This is v2 of the original habit-tracker idea: redesigned UI (light/dark citrus sport), multi-step log wizard, and a dedicated progressive-overload surface.
 
@@ -28,14 +31,23 @@ This is v2 of the original habit-tracker idea: redesigned UI (light/dark citrus 
 
 ```
 Browser (SPA)
-  ├── Supabase Auth   (session, email/password)
-  ├── Supabase Postgres + RLS  (profiles, logs, tracked_lifts, lift_history)
-  └── Supabase Storage         (log-photos, private)
+  ├── Supabase Auth   (session, email/password, invite codes)
+  ├── Supabase Postgres + RLS  (profiles, logs, tracked_lifts, lift_history, invites)
+  ├── Supabase Storage         (log-photos, private)
+  └── Supabase Edge Functions  (optional — Fitbit)
+        ├── health-oauth-start / health-oauth-callback / health-disconnect
+        ├── health-data   (Home: workouts, recovery, steps, today)
+        └── health-body   (Body tab sections)
+              └── Google Health API v4 (tokens in service-role-only tables)
+
+GitHub Actions
+  └── supabase-keepalive  (daily ping so the free Supabase project doesn't pause)
 ```
 
 - Env vars are `VITE_*` only; the **anon** key is public by design. Never ship `service_role`.
 - Photos are resized client-side (`browser-image-compression`) before upload.
 - Migrations live in `supabase/migrations/` and are applied manually in the Supabase SQL editor (or via Supabase CLI if you prefer).
+- Google client ID/secret and Fitbit refresh tokens stay server-side (Edge Function secrets and RLS-locked tables); the browser never sees them.
 
 ---
 
@@ -44,6 +56,9 @@ Browser (SPA)
 - [Vite](https://vitejs.dev/) + React 19 + TypeScript  
 - [@supabase/supabase-js](https://supabase.com/docs/reference/javascript)  
 - browser-image-compression  
+- [Vitest](https://vitest.dev/) for health logic and Google response parsing  
+- Supabase Edge Functions (Deno) + [Google Health API](https://developers.google.com/health) for Fitbit data  
+- Hand-built SVG charts (no chart library)  
 
 ---
 
@@ -105,8 +120,11 @@ cp .env.example .env.local
 | `VITE_SUPABASE_URL` | Project Settings → API → Project URL |
 | `VITE_SUPABASE_ANON_KEY` | Project Settings → API → `anon` `public` key |
 | `VITE_SITE_URL` | Optional — public site origin, e.g. `https://your-domain.com` (no trailing slash) |
+| `VITE_HEALTH_PROVIDER` | Optional — `google` for real Fitbit data via Edge Functions; unset = demo data |
+| `VITE_DEV_AUTO_LOGIN_EMAIL` / `VITE_DEV_AUTO_LOGIN_PASSWORD` | Optional, **`npm run dev` only** — skip the login screen locally. Stripped from production builds. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `ALLOWED_ORIGINS` | Optional, **no `VITE_` prefix** (never bundled) — uploaded to Supabase with `npm run health:secrets` |
 
-`.env.local` is gitignored (`*.local`). Do not commit secrets.
+`.env.local` is gitignored (`*.local`). Do not commit secrets. Downloaded Google OAuth credential JSON files are gitignored too.
 
 ### 5. Run
 
@@ -121,6 +139,8 @@ npm run build    # typecheck + production bundle → dist/
 npm run preview  # serve dist/ locally
 npm run lint
 npm test         # Vitest (health logic + Google response parsing)
+npm run health:secrets  # upload Google secrets from .env.local to Supabase
+npm run health:deploy   # deploy the Fitbit Edge Functions
 ```
 
 ---
@@ -130,7 +150,8 @@ npm test         # Vitest (health logic + Google response parsing)
 | Path | What you get |
 |------|----------------|
 | **`/`** | Marketing landing |
-| **`/app`** | Product: auth + journal (Home, History, Progress, Calendar) |
+| **`/app`** | Product: auth + journal (Home, History, Progress, Calendar or Body) |
+| **`/invite/:code`** | Invite link → `/app?invite=:code` with sign-up pre-filled |
 
 Local: open `http://localhost:5173/` for marketing, `http://localhost:5173/app` for the app.
 
@@ -195,6 +216,13 @@ Redeploy after changing env vars so Vite picks them up.
 - [ ] Second account cannot see the first account’s data  
 - [ ] Hard refresh keeps the session  
 - [ ] Optional: set `VITE_SITE_URL` and absolute `sitemap.xml` / robots Sitemap URL  
+- [ ] Optional (Fitbit): `VITE_HEALTH_PROVIDER=google` set in the host, production origin in `ALLOWED_ORIGINS`, Connect Fitbit works on the production domain  
+
+### Keep the Supabase project awake
+
+Free Supabase projects pause after 7 days without activity. [`.github/workflows/supabase-keepalive.yml`](.github/workflows/supabase-keepalive.yml) queries the database daily (03:17 UTC) and re-enables itself so GitHub's 60-day inactivity rule never turns it off.
+
+Add two repository secrets (**Settings → Secrets and variables → Actions**): `SUPABASE_URL` and `SUPABASE_ANON_KEY` (same values as the `VITE_*` ones). Run it once from the **Actions** tab to confirm. A failed run emails you; if the project already paused, restore it in the Supabase dashboard.
 
 ### Lighthouse (marketing `/`)
 
@@ -280,13 +308,18 @@ src/
   App.tsx              # Journal shell (under /app)
   marketing/           # Landing (Phase 0 placeholder → full page)
   components/          # Screens + sheets
+    body/              # Body tab sections (Activity, Heart, Sleep, Night vitals)
+    charts/            # SVG charts: Ring, StepBars, Sparkline, DayCurve, Hypnogram, StackedBar
   hooks/               # useAuth, useLogs, useTrackedLifts, …
   lib/                 # supabase, dates, streaks, photos, overload
-  health/              # Fitbit: types, logic, mock + Google providers, useHealth
+  health/              # Fitbit: types, logic, mock + Google providers, useHealth, useBodySection
   styles/global.css
   types/database.ts
 supabase/migrations/
-supabase/functions/    # Edge Functions: health-oauth-*, health-data, health-body, health-disconnect
+supabase/functions/    # Edge Functions: health-oauth-*, health-data, health-body, health-disconnect (+ _shared)
+scripts/               # push-health-secrets.mjs
+docs/superpowers/      # Design specs and implementation plans
+.github/workflows/     # supabase-keepalive
 vercel.json            # SPA rewrites
 public/_redirects      # Netlify SPA fallback
 ```
@@ -299,6 +332,8 @@ public/_redirects      # Netlify SPA fallback
 - Storage bucket policies restrict photos to the authenticated owner.  
 - Frontend only uses the **anon** key; RLS is the real authorization boundary.  
 - Do not expose `service_role` in this repo or any static host config.
+- `health_connections` and `health_oauth_states` have RLS **with no policies**: only Edge Functions (service role) can read tokens. The browser gets non-secret status through `health_connection_status()`.
+- Fitbit Edge Functions verify the caller's Supabase JWT (except the OAuth callback, which validates a one-time `state`) and only answer CORS for `ALLOWED_ORIGINS`.
 
 ---
 
