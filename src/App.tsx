@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AdminPanel } from './components/AdminPanel'
 import { AnimatedPage } from './components/AnimatedPage'
 import { AuthScreen } from './components/AuthScreen'
@@ -81,6 +81,19 @@ export default function App() {
   const showToast = useCallback((msg: string, variant: 'ok' | 'error' = 'ok') => {
     setToast({ msg, variant })
   }, [])
+
+  // Returning from Google's consent screen (/app?health=connected|error)
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    const result = url.searchParams.get('health')
+    if (result !== 'connected' && result !== 'error') return
+    showToast(
+      result === 'connected' ? 'Fitbit connected' : "Couldn't connect Fitbit",
+      result === 'connected' ? 'ok' : 'error',
+    )
+    url.searchParams.delete('health')
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
+  }, [showToast])
 
   const detailLog = detailId ? logs.find((l) => l.id === detailId) ?? null : null
 
