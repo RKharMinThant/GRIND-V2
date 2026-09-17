@@ -1,7 +1,15 @@
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import type { HealthProvider } from './provider'
-import type { DailySteps, HealthConnection, HealthRecovery, HealthWorkout } from './types'
+import type {
+  BodySectionData,
+  BodySectionId,
+  DailySteps,
+  HealthConnection,
+  HealthRecovery,
+  HealthWorkout,
+  TodaySummary,
+} from './types'
 
 /** The stored Google grant expired or was revoked — the user must reconnect. */
 export class HealthExpiredError extends Error {
@@ -15,6 +23,7 @@ type Bundle = {
   workouts: HealthWorkout[]
   recovery: HealthRecovery | null
   steps: DailySteps[]
+  today: TodaySummary | null
   lastSyncedAt: string
 }
 
@@ -95,6 +104,22 @@ export function createGoogleProvider(): HealthProvider {
 
     async markSynced() {
       // health-data records last_synced_at server-side
+    },
+
+    async getToday(date) {
+      // Reuse the sync's request when it ends on this date
+      if (inflight && inflight.to === date && Date.now() - inflight.at < 5_000) {
+        return (await inflight.promise).today ?? null
+      }
+      return (await bundle(date, date)).today ?? null
+    },
+
+    async getBodySection<S extends BodySectionId>(section: S, date: string) {
+      return invoke<BodySectionData[S]>('health-body', {
+        section,
+        date,
+        tzOffsetMin: -new Date().getTimezoneOffset(),
+      })
     },
   }
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { addDays, toLocalDateString } from '../lib/dates'
 import type { Log } from '../types/database'
 import { createGoogleProvider } from './googleProvider'
+import type { HealthProvider } from './provider'
 import { createMockProvider } from './mockProvider'
 import { readJson, writeJson } from './storage'
 import type {
@@ -10,6 +11,7 @@ import type {
   HealthRecovery,
   HealthSource,
   HealthWorkout,
+  TodaySummary,
 } from './types'
 
 const DISMISSED_KEY = 'grind_health_dismissed'
@@ -27,6 +29,10 @@ export type HealthState = {
   workouts: HealthWorkout[]
   recovery: HealthRecovery | null
   steps: DailySteps[]
+  today: TodaySummary | null
+  /** Increments on every sync so Body sections refetch */
+  syncVersion: number
+  provider: HealthProvider
   loading: boolean
   connecting: boolean
   error: string | null
@@ -56,6 +62,8 @@ export function useHealth(enabled: boolean, logs: Log[], logsLoading: boolean): 
   const [workouts, setWorkouts] = useState<HealthWorkout[]>([])
   const [recovery, setRecovery] = useState<HealthRecovery | null>(null)
   const [steps, setSteps] = useState<DailySteps[]>([])
+  const [today, setToday] = useState<TodaySummary | null>(null)
+  const [syncVersion, setSyncVersion] = useState(0)
   const [loading, setLoading] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -69,15 +77,18 @@ export function useHealth(enabled: boolean, logs: Log[], logsLoading: boolean): 
     setLoading(true)
     setError(null)
     try {
-      const [w, r, s] = await Promise.all([
+      const [w, r, s, t] = await Promise.all([
         provider.getWorkouts(from, today),
         provider.getRecovery(today),
         provider.getDailySteps(from, today),
+        provider.getToday(today),
       ])
       await provider.markSynced()
       setWorkouts(w)
       setRecovery(r)
       setSteps(s)
+      setToday(t)
+      setSyncVersion((v) => v + 1)
       setConnection(await provider.getConnection())
     } catch (e) {
       // Expired or disconnected elsewhere: show Reconnect instead of an error card
@@ -133,6 +144,7 @@ export function useHealth(enabled: boolean, logs: Log[], logsLoading: boolean): 
     setWorkouts([])
     setRecovery(null)
     setSteps([])
+    setToday(null)
     setError(null)
   }, [provider])
 
@@ -152,6 +164,9 @@ export function useHealth(enabled: boolean, logs: Log[], logsLoading: boolean): 
     workouts,
     recovery,
     steps,
+    today,
+    syncVersion,
+    provider,
     loading,
     connecting,
     error,

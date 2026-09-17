@@ -70,4 +70,39 @@ describe('mockProvider', () => {
     expect(steps[0].date).toBe('2026-09-11')
     expect(steps).toEqual(await make().getDailySteps('2026-09-11', '2026-09-17'))
   })
+
+  it('Today and Body sections are deterministic and plausible', async () => {
+    const p = make()
+    const today = await p.getToday('2026-09-17')
+    expect(today).toEqual(await make().getToday('2026-09-17'))
+    const steps = await p.getDailySteps('2026-09-17', '2026-09-17')
+    expect(today?.steps).toBe(steps[0].steps)
+
+    const activity = await p.getBodySection('activity', '2026-09-17')
+    expect(activity).toHaveLength(30)
+    expect(activity.at(-1)?.date).toBe('2026-09-17')
+    expect(activity).toEqual(await make().getBodySection('activity', '2026-09-17'))
+
+    const heart = await p.getBodySection('heart', '2026-09-17')
+    expect(heart.restingHr).toHaveLength(30)
+    expect(heart.daily).toHaveLength(14)
+    // now = 15:00 → curve stops before 900 minutes
+    expect(heart.curveToday.at(-1)!.minute).toBeLessThan(900)
+    expect(heart.curveToday.every((c) => c.bpm > 30 && c.bpm < 220)).toBe(true)
+
+    const sleep = await p.getBodySection('sleep', '2026-09-17')
+    expect(sleep.nights).toHaveLength(14)
+    const night = sleep.nights.at(-1)!
+    const total = (Date.parse(night.end) - Date.parse(night.start)) / 60_000
+    expect(night.segments[0].startMin).toBe(0)
+    expect(night.segments.at(-1)!.endMin).toBe(total)
+    for (let i = 1; i < night.segments.length; i++) {
+      expect(night.segments[i].startMin).toBe(night.segments[i - 1].endMin)
+    }
+
+    const vitals = await p.getBodySection('vitals', '2026-09-17')
+    expect(vitals.spo2).toHaveLength(30)
+    expect(vitals.spo2.every((v) => v.avg >= 95 && v.avg <= 100)).toBe(true)
+    expect(vitals.weight.length).toBeGreaterThan(0)
+  })
 })

@@ -60,3 +60,62 @@ export const EMPTY_HEALTH_FIELDS: LogHealthFields = {
   max_hr: null,
   hr_zone_minutes: null,
 }
+
+// ── Body tab (spec 2026-09-17-fitbit-body-tab-design.md §4) ────────────────
+
+export type TodaySummary = {
+  date: string
+  steps: number | null
+  distanceKm: number | null
+  zoneMinutes: number | null
+  calories: number | null
+}
+
+export type DailyActivity = {
+  date: string
+  steps: number | null
+  distanceKm: number | null
+  azm: { fatBurn: number; cardio: number; peak: number } | null
+  activeMin: { light: number; moderate: number; vigorous: number } | null
+  calories: number | null
+  floors: number | null
+}
+
+export type HeartSection = {
+  restingHr: { date: string; bpm: number }[]
+  hrv: { date: string; ms: number }[]
+  daily: { date: string; min: number; avg: number; max: number }[]
+  zonesToday: { light: number; moderate: number; vigorous: number; peak: number } | null
+  curveToday: { minute: number; bpm: number }[]
+}
+
+export type SleepSegment = { stage: 'awake' | 'light' | 'deep' | 'rem'; startMin: number; endMin: number }
+
+export type SleepNight = {
+  date: string
+  start: string
+  end: string
+  asleepMin: number | null
+  awakeMin: number | null
+  toFallAsleepMin: number | null
+  stages: SleepStages | null
+  segments: SleepSegment[]
+}
+
+export type SleepSection = { nights: SleepNight[] }
+
+export type VitalsSection = {
+  spo2: { date: string; avg: number; low: number | null; high: number | null }[]
+  breathing: { date: string; bpm: number }[]
+  skinTemp: { date: string; deltaC: number }[]
+  weight: { date: string; kg: number }[]
+}
+
+export type BodySectionId = 'activity' | 'heart' | 'sleep' | 'vitals'
+
+export type BodySectionData = {
+  activity: DailyActivity[]
+  heart: HeartSection
+  sleep: SleepSection
+  vitals: VitalsSection
+}
