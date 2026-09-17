@@ -34,6 +34,7 @@ export default function App() {
     user,
     displayName,
     weeklyGoal,
+    dailyStepGoal,
     isAdmin,
     loading: authLoading,
     authError,
@@ -212,6 +213,7 @@ export default function App() {
         isAdmin={isAdmin}
         onAdminPanel={() => setAdminPanelOpen(true)}
         healthControls={health.enabled ? <HealthConnectRow health={health} /> : undefined}
+        dailyStepGoal={health.enabled ? dailyStepGoal : undefined}
         onUpdateProfile={async (patch) => {
           await updateProfile(patch)
           showToast('Profile saved')

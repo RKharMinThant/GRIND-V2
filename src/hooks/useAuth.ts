@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import type { Profile } from '../types/database'
 
 const DEFAULT_WEEKLY_GOAL = 4
+const DEFAULT_DAILY_STEP_GOAL = 10000
 
 /**
  * TEMPORARY dev-only login bypass. In `npm run dev`, if both vars are set in .env.local,
@@ -168,7 +169,7 @@ export function useAuth() {
   }, [])
 
   const updateProfile = useCallback(
-    async (patch: { display_name?: string; weekly_goal?: number }) => {
+    async (patch: { display_name?: string; weekly_goal?: number; daily_step_goal?: number }) => {
       if (!user) throw new Error('Not signed in')
       const { data, error } = await supabase
         .from('profiles')
@@ -190,6 +191,7 @@ export function useAuth() {
     'Athlete'
 
   const weeklyGoal = profile?.weekly_goal ?? DEFAULT_WEEKLY_GOAL
+  const dailyStepGoal = profile?.daily_step_goal ?? DEFAULT_DAILY_STEP_GOAL
   const isAdmin = user?.email === 'rkharmthant@gmail.com'
 
   return {
@@ -198,6 +200,7 @@ export function useAuth() {
     profile,
     displayName,
     weeklyGoal,
+    dailyStepGoal,
     isAdmin,
     loading,
     authError,

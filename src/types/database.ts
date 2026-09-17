@@ -4,6 +4,8 @@ export type Profile = {
   id: string
   display_name: string | null
   weekly_goal?: number | null
+  /** Steps ring goal (migration 015) */
+  daily_step_goal?: number | null
   created_at: string
 }
 

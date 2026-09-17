@@ -15,7 +15,9 @@ type Props = {
   onTab: (t: Tab) => void
   onSignOut: () => void
   onNewLog: () => void
-  onUpdateProfile: (patch: { display_name?: string; weekly_goal?: number }) => Promise<void>
+  onUpdateProfile: (patch: { display_name?: string; weekly_goal?: number; daily_step_goal?: number }) => Promise<void>
+  /** Shown (and saved) only when Fitbit is enabled */
+  dailyStepGoal?: number
   isAdmin?: boolean
   onAdminPanel?: () => void
   /** Fitbit connect row, rendered in the profile menu when health is enabled */
@@ -62,6 +64,7 @@ export function Shell({
   tab,
   displayName,
   weeklyGoal,
+  dailyStepGoal,
   themePreference,
   resolvedTheme,
   onThemeChange,
@@ -79,6 +82,7 @@ export function Shell({
   const [menuOpen, setMenuOpen] = useState(false)
   const [nameDraft, setNameDraft] = useState(displayName)
   const [goalDraft, setGoalDraft] = useState(String(weeklyGoal))
+  const [stepGoalDraft, setStepGoalDraft] = useState(String(dailyStepGoal ?? 10000))
   const [saving, setSaving] = useState(false)
   const [menuError, setMenuError] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -86,7 +90,8 @@ export function Shell({
   useEffect(() => {
     setNameDraft(displayName)
     setGoalDraft(String(weeklyGoal))
-  }, [displayName, weeklyGoal])
+    if (dailyStepGoal != null) setStepGoalDraft(String(dailyStepGoal))
+  }, [displayName, weeklyGoal, dailyStepGoal])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -107,6 +112,9 @@ export function Shell({
       await onUpdateProfile({
         display_name: nameDraft.trim() || displayName,
         weekly_goal: goal,
+        ...(dailyStepGoal != null
+          ? { daily_step_goal: Math.min(100000, Math.max(1000, Math.round((Number(stepGoalDraft) || 10000) / 500) * 500)) }
+          : {}),
       })
       setMenuOpen(false)
     } catch (e) {
@@ -179,6 +187,21 @@ export function Shell({
                     onChange={(e) => setGoalDraft(e.target.value)}
                   />
                 </div>
+                {dailyStepGoal != null && (
+                  <div className="field">
+                    <label htmlFor="dailyStepGoal">Daily step goal</label>
+                    <input
+                      id="dailyStepGoal"
+                      type="number"
+                      inputMode="numeric"
+                      min={1000}
+                      max={100000}
+                      step={500}
+                      value={stepGoalDraft}
+                      onChange={(e) => setStepGoalDraft(e.target.value)}
+                    />
+                  </div>
+                )}
                 {menuError && <div className="auth-error">{menuError}</div>}
                 <div className="menu-actions">
                   <button

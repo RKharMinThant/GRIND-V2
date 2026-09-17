@@ -84,6 +84,7 @@ npm install
 | 12 | [`012_profiles_admin_select.sql`](supabase/migrations/012_profiles_admin_select.sql) | Admin can list profiles |
 | 13 | [`013_log_health_fields.sql`](supabase/migrations/013_log_health_fields.sql) | Fitbit workout stats on logs |
 | 14 | [`014_health_connections.sql`](supabase/migrations/014_health_connections.sql) | Google Health tokens (Edge Functions only) |
+| 15 | [`015_daily_step_goal.sql`](supabase/migrations/015_daily_step_goal.sql) | Daily step goal for the Fitbit steps ring |
 
 Fresh projects: run all of them in order. Existing DBs: only apply migrations you have not run yet.
 
