@@ -5966,3 +5966,68 @@ img {
   .admin-chip-label { min-width: 56px; font-size: 0.68rem; }
 }
 
+
+/* ── Fitbit / health ───────────────────────────────────────────────────────── */
+.health-row {
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.health-row-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.health-row-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.health-row-meta {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.health-row-meta.warn,
+.health-row-error {
+  color: var(--danger);
+}
+
+.health-row-error {
+  font-size: 0.72rem;
+  margin-top: 8px;
+}
+
+.health-row-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.health-row-actions .btn {
+  flex: 1;
+}
+
+.health-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted-2);
+}
+
+.health-dot[data-status='connected'] {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.health-dot[data-status='expired'] {
+  background: var(--danger);
+}

@@ -4,6 +4,7 @@ import { AnimatedPage } from './components/AnimatedPage'
 import { AuthScreen } from './components/AuthScreen'
 import { CalendarView } from './components/CalendarView'
 import { Dashboard } from './components/Dashboard'
+import { HealthConnectRow } from './components/HealthConnectRow'
 import { LiftEditorSheet } from './components/LiftEditorSheet'
 import { LiftProgressSheet } from './components/LiftProgressSheet'
 import { LogDetail } from './components/LogDetail'
@@ -12,6 +13,7 @@ import { LogsList } from './components/LogsList'
 import { ProgressView } from './components/ProgressView'
 import { Shell, type Tab } from './components/Shell'
 import { Toast } from './components/Toast'
+import { useHealth } from './health/useHealth'
 import { useAuth } from './hooks/useAuth'
 import { useLogs } from './hooks/useLogs'
 import { useTheme } from './hooks/useTheme'
@@ -60,6 +62,9 @@ export default function App() {
     removeLift,
     fetchHistory,
   } = useTrackedLifts(user?.id)
+
+  // Fitbit (Phase 1: mock data, admin only)
+  const health = useHealth(isAdmin, logs, logsLoading)
 
   const [tab, setTab] = useState<Tab>('home')
   const [formOpen, setFormOpen] = useState(false)
@@ -182,6 +187,7 @@ export default function App() {
         onNewLog={() => openNew()}
         isAdmin={isAdmin}
         onAdminPanel={() => setAdminPanelOpen(true)}
+        healthControls={health.enabled ? <HealthConnectRow health={health} /> : undefined}
         onUpdateProfile={async (patch) => {
           await updateProfile(patch)
           showToast('Profile saved')

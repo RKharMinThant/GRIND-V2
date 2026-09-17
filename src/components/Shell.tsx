@@ -18,6 +18,8 @@ type Props = {
   onUpdateProfile: (patch: { display_name?: string; weekly_goal?: number }) => Promise<void>
   isAdmin?: boolean
   onAdminPanel?: () => void
+  /** Fitbit connect row, rendered in the profile menu when health is enabled */
+  healthControls?: ReactNode
   children: ReactNode
 }
 
@@ -70,6 +72,7 @@ export function Shell({
   onUpdateProfile,
   isAdmin,
   onAdminPanel,
+  healthControls,
   children,
 }: Props) {
   const initial = (displayName[0] || 'G').toUpperCase()
@@ -155,6 +158,7 @@ export function Shell({
                   <label>Appearance</label>
                 </div>
                 <ThemeSegment preference={themePreference} onChange={onThemeChange} />
+                {healthControls}
                 <div className="field">
                   <label htmlFor="profileName">Display name</label>
                   <input
