@@ -1,3 +1,5 @@
+import type { LogHealthFields } from '../health/types'
+
 export type Profile = {
   id: string
   display_name: string | null
@@ -23,7 +25,7 @@ export type Log = {
   photo_path: string | null
   created_at: string
   updated_at: string
-}
+} & LogHealthFields
 
 export type LogInsert = {
   log_date: string
@@ -36,7 +38,7 @@ export type LogInsert = {
   protein_g?: number | null
   creatine_g?: number | null
   photo_path?: string | null
-}
+} & Partial<LogHealthFields>
 
 export type LogUpdate = Partial<LogInsert>
 

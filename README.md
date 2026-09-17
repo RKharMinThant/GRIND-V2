@@ -78,8 +78,13 @@ npm install
 | 6 | [`006_tracked_lifts.sql`](supabase/migrations/006_tracked_lifts.sql) | Progress lift board |
 | 7 | [`007_lift_sets_detail.sql`](supabase/migrations/007_lift_sets_detail.sql) | Per-set reps/weight JSON |
 | 8 | [`008_lift_history.sql`](supabase/migrations/008_lift_history.sql) | Volume trend snapshots |
+| 9 | [`009_invites.sql`](supabase/migrations/009_invites.sql) | Invite-only sign-up (`invites`, `redeem_invite`) |
+| 10 | [`010_fix_invites_rls.sql`](supabase/migrations/010_fix_invites_rls.sql) | Admin invite policy via JWT email |
+| 11 | [`011_invites_created_by_default.sql`](supabase/migrations/011_invites_created_by_default.sql) | `created_by` defaults to `auth.uid()` |
+| 12 | [`012_profiles_admin_select.sql`](supabase/migrations/012_profiles_admin_select.sql) | Admin can list profiles |
+| 13 | [`013_log_health_fields.sql`](supabase/migrations/013_log_health_fields.sql) | Fitbit workout stats on logs |
 
-Fresh projects: run all eight. Existing DBs: only apply migrations you have not run yet.
+Fresh projects: run all of them in order. Existing DBs: only apply migrations you have not run yet.
 
 ### 3. Auth (dev-friendly)
 

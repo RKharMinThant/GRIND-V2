@@ -3,17 +3,41 @@ import { createId } from '../lib/id'
 import { deleteLogPhoto, getPhotoUrl, uploadLogPhoto } from '../lib/photos'
 import { supabase } from '../lib/supabase'
 import { calcStreakStats } from '../lib/streaks'
+import { pickHealthFields } from '../health/logic'
+import type { LogHealthFields } from '../health/types'
 import type { Log, LogInsert, LogUpdate } from '../types/database'
 
-const OPTIONAL_COLUMNS = ['focus_areas', 'protein_g', 'creatine_g'] as const
+const HEALTH_COLUMNS = [
+  'health_source',
+  'health_workout_id',
+  'calories_kcal',
+  'avg_hr',
+  'max_hr',
+  'hr_zone_minutes',
+] as const satisfies readonly (keyof LogHealthFields)[]
+
+const OPTIONAL_COLUMNS = ['focus_areas', 'protein_g', 'creatine_g', ...HEALTH_COLUMNS] as const
 
 function normalizeLog(row: Log, overrides?: Partial<Log>): Log {
   return {
     ...row,
+    ...pickHealthFields(row),
     focus_areas: overrides?.focus_areas ?? row.focus_areas ?? null,
     protein_g: overrides?.protein_g ?? row.protein_g ?? null,
     creatine_g: overrides?.creatine_g ?? row.creatine_g ?? null,
   }
+}
+
+/** Friendly message for the partial unique index on (user_id, health_workout_id). */
+function healthDuplicateError(err: { code?: string; message: string }): Error | null {
+  return err.code === '23505' && /health_workout/i.test(err.message)
+    ? new Error('That workout is already logged')
+    : null
+}
+
+/** Health values that were actually sent (columns stripped for missing migrations are dropped). */
+function sentHealthFields(row: Record<string, unknown>): Partial<LogHealthFields> {
+  return Object.fromEntries(HEALTH_COLUMNS.filter((c) => c in row).map((c) => [c, row[c]]))
 }
 
 /** Drop optional columns mentioned in a Postgres/PostgREST error and retry. */
@@ -120,6 +144,12 @@ export function useLogs(userId: string | undefined) {
         protein_g: input.protein_g ?? null,
         creatine_g: input.creatine_g ?? null,
         photo_path,
+        health_source: input.health_source ?? null,
+        health_workout_id: input.health_workout_id ?? null,
+        calories_kcal: input.calories_kcal ?? null,
+        avg_hr: input.avg_hr ?? null,
+        max_hr: input.max_hr ?? null,
+        hr_zone_minutes: input.hr_zone_minutes ?? null,
       }
 
       let { data, error: err } = await supabase.from('logs').insert(row).select().single()
@@ -136,10 +166,10 @@ export function useLogs(userId: string | undefined) {
 
       if (err) {
         if (photo_path) await deleteLogPhoto(photo_path)
-        throw err
+        throw healthDuplicateError(err) ?? err
       }
 
-      const created = normalizeLog(data as Log, {
+      const created = normalizeLog({ ...(data as Log), ...sentHealthFields(row) }, {
         focus_areas: input.focus_areas ?? null,
         protein_g: input.protein_g ?? null,
         creatine_g: input.creatine_g ?? null,
@@ -187,6 +217,9 @@ export function useLogs(userId: string | undefined) {
         creatine_g,
         photo_path,
       }
+      for (const col of HEALTH_COLUMNS) {
+        patch[col] = input[col] !== undefined ? input[col] : (existing[col] ?? null)
+      }
 
       let { data, error: err } = await supabase
         .from('logs')
@@ -211,8 +244,11 @@ export function useLogs(userId: string | undefined) {
         err = retry.error
       }
 
-      if (err) throw err
-      const updated = normalizeLog(data as Log, { focus_areas, protein_g, creatine_g })
+      if (err) throw healthDuplicateError(err) ?? err
+      const updated = normalizeLog(
+        { ...(data as Log), ...sentHealthFields(patch) },
+        { focus_areas, protein_g, creatine_g },
+      )
       setLogs((prev) => prev.map((l) => (l.id === id ? updated : l)))
       if (photoFile || removePhoto) {
         setPhotoUrls((prev) => {
