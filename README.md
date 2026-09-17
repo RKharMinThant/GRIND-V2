@@ -83,6 +83,7 @@ npm install
 | 11 | [`011_invites_created_by_default.sql`](supabase/migrations/011_invites_created_by_default.sql) | `created_by` defaults to `auth.uid()` |
 | 12 | [`012_profiles_admin_select.sql`](supabase/migrations/012_profiles_admin_select.sql) | Admin can list profiles |
 | 13 | [`013_log_health_fields.sql`](supabase/migrations/013_log_health_fields.sql) | Fitbit workout stats on logs |
+| 14 | [`014_health_connections.sql`](supabase/migrations/014_health_connections.sql) | Google Health tokens (Edge Functions only) |
 
 Fresh projects: run all of them in order. Existing DBs: only apply migrations you have not run yet.
 
