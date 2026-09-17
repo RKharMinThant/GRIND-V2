@@ -26,3 +26,7 @@ dist-ssr
 # Supabase CLI local state
 supabase/.temp
 supabase/.branches
+
+# Google OAuth client credential downloads (contain the client secret)
+Grind-V2-Google-Health-Api.json
+client_secret*.json
