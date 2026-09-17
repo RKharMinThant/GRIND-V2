@@ -1,4 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  activityToWorkoutType,
+  pickHealthFields,
+  roundDurationToOptions,
+  workoutLocalDate,
+  workoutToHealthFields,
+} from '../health/logic'
+import {
+  EMPTY_HEALTH_FIELDS,
+  type HealthSource,
+  type HealthWorkout,
+  type LogHealthFields,
+} from '../health/types'
 import { usePresence } from '../hooks/usePresence'
 import { friendlyDate, toLocalDateString } from '../lib/dates'
 import {
@@ -21,6 +34,7 @@ import {
   serializeFocusAreas,
   WORKOUT_TYPES,
 } from '../types/database'
+import { HealthStats } from './HealthStats'
 
 type Props = {
   open: boolean
@@ -30,6 +44,11 @@ type Props = {
   logs?: Log[]
   onClose: () => void
   onSave: (data: LogInsert, photoFile: File | null, removePhoto: boolean) => Promise<void>
+  /** Tracker workouts available to attach (empty when Fitbit is off) */
+  healthWorkouts?: HealthWorkout[]
+  healthSource?: HealthSource
+  /** Open a new log pre-filled from this tracker workout */
+  attachWorkout?: HealthWorkout | null
 }
 
 const STEPS = [
@@ -57,6 +76,9 @@ export function LogFormSheet({
   logs = [],
   onClose,
   onSave,
+  healthWorkouts,
+  healthSource = 'demo',
+  attachWorkout,
 }: Props) {
   const [step, setStep] = useState(0)
   const [dir, setDir] = useState<'forward' | 'back'>('forward')
@@ -79,6 +101,7 @@ export function LogFormSheet({
   const [error, setError] = useState<string | null>(null)
   const [drag, setDrag] = useState(false)
   const [isRest, setIsRest] = useState(false)
+  const [health, setHealth] = useState<LogHealthFields>(EMPTY_HEALTH_FIELDS)
   const fileRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const { mounted, visible } = usePresence(open, 380)
@@ -87,6 +110,11 @@ export function LogFormSheet({
   const current = STEPS[step] ?? STEPS[0]
   const isLast = step === STEPS.length - 1
   const isFirst = step === 0
+
+  const dayWorkouts = useMemo(
+    () => (healthWorkouts ?? []).filter((w) => workoutLocalDate(w) === logDate),
+    [healthWorkouts, logDate],
+  )
 
   /** Keep minutes options including a parsed non-standard value when editing. */
   const minuteOptions = useMemo(() => {
@@ -125,6 +153,7 @@ export function LogFormSheet({
       setCreatine(initial.creatine_g != null ? String(initial.creatine_g) : '')
       setPreview(existingPhotoUrl ?? null)
       setRemovePhoto(false)
+      setHealth(pickHealthFields(initial))
     } else {
       setLogDate(defaultDate || toLocalDateString())
       setSessionName('')
@@ -139,12 +168,16 @@ export function LogFormSheet({
       setPreview(null)
       setRemovePhoto(false)
       setIsRest(false)
+      setHealth(EMPTY_HEALTH_FIELDS)
+      if (attachWorkout) applyWorkout(attachWorkout)
     }
     setPhotoFile(null)
     setCompressing(false)
     setError(null)
     setBusy(false)
-  }, [open, initial, existingPhotoUrl, defaultDate])
+    // applyWorkout only uses setters and healthSource
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initial, existingPhotoUrl, defaultDate, attachWorkout])
 
   useEffect(() => {
     if (!photoFile) return
@@ -238,6 +271,22 @@ export function LogFormSheet({
     )
   }
 
+  /** Attach a tracker workout: date, duration, type (if unset) and its stats. */
+  function applyWorkout(w: HealthWorkout) {
+    const d = roundDurationToOptions(w.durationMin)
+    setLogDate(workoutLocalDate(w))
+    setDurHours(d.hours)
+    setDurMinutes(d.minutes)
+    setWorkoutType((t) => t || activityToWorkoutType(w.activity))
+    setIsRest(false)
+    setSessionName((name) => (name === 'Rest' ? '' : name))
+    setHealth(workoutToHealthFields(w, healthSource))
+  }
+
+  function linkedElsewhere(workoutId: string): boolean {
+    return logs.some((l) => l.health_workout_id === workoutId && l.id !== initial?.id)
+  }
+
   function applySplit(p: SplitPattern) {
     if (p.rest) {
       setIsRest(true)
@@ -307,6 +356,7 @@ export function LogFormSheet({
           notes: notes.trim() || null,
           protein_g: parseGrams(protein),
           creatine_g: parseGrams(creatine),
+          ...(isRest ? EMPTY_HEALTH_FIELDS : health),
         },
         photoFile,
         removePhoto,
@@ -424,6 +474,55 @@ export function LogFormSheet({
                       : 'Optional — leave at 0 if you skip duration'}
                   </p>
                 </div>
+
+                {!isRest && health.health_workout_id && (
+                  <div className="field">
+                    <label>From Fitbit</label>
+                    <div className="health-attached">
+                      <HealthStats fields={health} compact />
+                      <button
+                        type="button"
+                        className="btn btn-icon"
+                        aria-label="Detach Fitbit workout"
+                        title="Detach"
+                        onClick={() => setHealth(EMPTY_HEALTH_FIELDS)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {!isRest && !health.health_workout_id && dayWorkouts.length > 0 && (
+                  <div className="field">
+                    <label>Fitbit workouts on this day</label>
+                    <div className="fitbit-pick">
+                      {dayWorkouts.map((w) => {
+                        const taken = linkedElsewhere(w.id)
+                        const time = new Date(w.start).toLocaleTimeString(undefined, {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })
+                        return (
+                          <button
+                            key={w.id}
+                            type="button"
+                            className="fitbit-pick-row"
+                            disabled={taken}
+                            onClick={() => applyWorkout(w)}
+                          >
+                            <strong>{w.activity}</strong>
+                            <span>
+                              {time} · {w.durationMin} min
+                              {w.calories != null ? ` · ${w.calories} kcal` : ''}
+                            </span>
+                            {taken ? <em>Logged</em> : <em className="attach">Attach</em>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
@@ -677,6 +776,15 @@ export function LogFormSheet({
                   </span>
                   <span className="review-edit">Edit</span>
                 </button>
+                {!isRest && health.health_workout_id && (
+                  <button type="button" className="review-row" onClick={() => goToStep(0)}>
+                    <span className="review-label">Fitbit</span>
+                    <span className="review-value">
+                      <HealthStats fields={health} compact />
+                    </span>
+                    <span className="review-edit">Edit</span>
+                  </button>
+                )}
                 <button type="button" className="review-row" onClick={() => goToStep(1)}>
                   <span className="review-label">Train</span>
                   <span className="review-value">

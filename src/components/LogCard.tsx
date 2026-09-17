@@ -31,6 +31,13 @@ export function LogCard({ log, photoUrl, onOpen, style, staggerMs }: Props) {
   if (protein) tags.push({ key: 'p', label: `P ${protein}`, kind: 'supp' })
   if (creatine) tags.push({ key: 'cr', label: `Cr ${creatine}`, kind: 'supp' })
   if (log.meal) tags.push({ key: 'meal', label: 'Meal', kind: 'meal' })
+  const healthLabel = [
+    log.avg_hr != null ? `♥ ${log.avg_hr}` : null,
+    log.calories_kcal != null ? `${log.calories_kcal} kcal` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  if (healthLabel) tags.push({ key: 'health', label: healthLabel, kind: 'health' })
   // Only list focuses in tags when there's no long title already from focuses
   const titleIsFocusList =
     focuses.length > 0 &&

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { pickHealthFields } from '../health/logic'
 import { usePresence } from '../hooks/usePresence'
 import { friendlyDate } from '../lib/dates'
 import { formatFocusAreas, formatGrams, parseFocusAreas, type Log } from '../types/database'
+import { HealthStats } from './HealthStats'
 
 type Props = {
   log: Log | null
@@ -94,6 +96,15 @@ export function LogDetail({ log, photoUrl, onClose, onEdit, onDelete }: Props) {
               {focusLabel && current.workout !== focusLabel && (
                 <p style={{ marginTop: 8, color: 'var(--muted)', fontSize: '0.85rem' }}>{focusLabel}</p>
               )}
+            </div>
+          )}
+
+          {current.health_workout_id && (
+            <div className="detail-block">
+              <div className="label">Fitbit</div>
+              <div style={{ marginTop: 6 }}>
+                <HealthStats fields={pickHealthFields(current)} />
+              </div>
             </div>
           )}
 

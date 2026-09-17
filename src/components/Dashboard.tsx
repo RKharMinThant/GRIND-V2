@@ -1,11 +1,16 @@
 import { useState } from 'react'
-import { greetingForHour, todayHeading, weekSessionCount } from '../lib/dates'
+import { unlinkedWorkouts } from '../health/logic'
+import type { HealthWorkout } from '../health/types'
+import type { HealthState } from '../health/useHealth'
+import { greetingForHour, toLocalDateString, todayHeading, weekSessionCount } from '../lib/dates'
 import type { StreakStats } from '../lib/streaks'
-import type { Log } from '../types/database'
+import { isRestLog, type Log } from '../types/database'
 import { GoalRing } from './GoalRing'
 import { Heatmap } from './Heatmap'
 import { LogCard } from './LogCard'
+import { RecoveryCard } from './RecoveryCard'
 import { WeekStrip } from './WeekStrip'
+import { WorkoutDetectedCard } from './WorkoutDetectedCard'
 
 type Props = {
   logs: Log[]
@@ -20,6 +25,9 @@ type Props = {
   onViewAll: () => void
   /** One-tap rest day for today (or a given date). */
   onRestDay: (date?: string) => Promise<void>
+  health: HealthState
+  /** Open the log form with a tracker workout attached */
+  onLogWorkout: (workout: HealthWorkout) => void
 }
 
 export function Dashboard({
@@ -34,12 +42,19 @@ export function Dashboard({
   onOpenDay,
   onViewAll,
   onRestDay,
+  health,
+  onLogWorkout,
 }: Props) {
   const [restBusy, setRestBusy] = useState(false)
   const recent = logs.slice(0, 6)
   const logDates = logs.map((l) => l.log_date)
   const weekCount = weekSessionCount(logDates)
   const firstName = displayName.split(' ')[0] || displayName
+  const today = toLocalDateString()
+  const detected = health.isConnected
+    ? unlinkedWorkouts(health.workouts, logs, health.dismissedIds, today)
+    : []
+  const restLoggedToday = logs.some((l) => l.log_date === today && isRestLog(l.workout))
 
   async function handleRest(date?: string) {
     if (restBusy) return
@@ -90,6 +105,26 @@ export function Dashboard({
         </div>
       </div>
 
+      {detected[0] && (
+        <WorkoutDetectedCard
+          workout={detected[0]}
+          moreCount={detected.length - 1}
+          onLog={onLogWorkout}
+          onDismiss={health.dismiss}
+        />
+      )}
+
+      {health.isConnected && (
+        <RecoveryCard
+          recovery={health.recovery}
+          restLoggedToday={restLoggedToday}
+          restBusy={restBusy}
+          onRestDay={() => void handleRest()}
+          error={health.error}
+          onRetry={() => void health.sync()}
+        />
+      )}
+
       <WeekStrip
         logDates={logDates}
         onDayClick={(date, hasLog) => {
@@ -113,7 +148,7 @@ export function Dashboard({
         </div>
       </div>
 
-      <Heatmap logDates={logDates} />
+      <Heatmap logDates={logDates} steps={health.isConnected ? health.steps : undefined} />
 
       <div className="page-header">
         <div className="page-title">Recent</div>

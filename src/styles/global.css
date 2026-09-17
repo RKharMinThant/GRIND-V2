@@ -6031,3 +6031,372 @@ img {
 .health-dot[data-status='expired'] {
   background: var(--danger);
 }
+
+.health-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top-color: var(--highlight);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-card);
+  animation: fade-up var(--dur-page) var(--ease-out) both;
+}
+
+.health-card-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.detect-card {
+  border-color: var(--accent-dim);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--hero-mid) 100%);
+}
+
+.detect-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.detect-card-copy {
+  min-width: 0;
+}
+
+.detect-card-title {
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.detect-card-facts {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+.detect-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.rec-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.rec-tile {
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  min-width: 0;
+}
+
+.rec-num {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+.rec-num small {
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.rec-delta {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.rec-delta.good {
+  color: var(--ice);
+}
+
+.rec-delta.bad {
+  color: var(--danger);
+}
+
+.sleep-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+  background: var(--surface-3);
+}
+
+.sleep-seg.deep {
+  background: var(--ice);
+}
+
+.sleep-seg.rem {
+  background: var(--accent);
+}
+
+.sleep-seg.light {
+  background: var(--ice-dim);
+}
+
+.sleep-seg.awake {
+  background: var(--danger-dim);
+}
+
+.sleep-legend {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 0.66rem;
+  color: var(--muted);
+}
+
+.sleep-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: 1px;
+}
+
+.sleep-legend .deep::before {
+  background: var(--ice);
+}
+
+.sleep-legend .rem::before {
+  background: var(--accent);
+}
+
+.rec-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.rec-hint.low {
+  color: var(--danger);
+}
+
+.rec-foot {
+  margin: 8px 0 0;
+  font-size: 0.66rem;
+  color: var(--muted-2);
+}
+
+.rec-card--error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.mode-seg {
+  display: inline-grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.mode-seg button {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.mode-seg button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-log);
+}
+
+.heatmap-cell.steps.l1,
+.heatmap-legend .swatch.steps-l1 {
+  background: color-mix(in srgb, var(--ice) 28%, transparent);
+}
+
+.heatmap-cell.steps.l2,
+.heatmap-legend .swatch.steps-l2 {
+  background: color-mix(in srgb, var(--ice) 60%, transparent);
+}
+
+.heatmap-cell.steps.l3,
+.heatmap-legend .swatch.steps-l3 {
+  background: var(--ice);
+}
+
+@media (max-width: 520px) {
+  .rec-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rec-tile--sleep {
+    grid-column: 1 / -1;
+  }
+
+  .detect-card-actions {
+    width: 100%;
+  }
+
+  .detect-card-actions .btn {
+    flex: 1;
+  }
+}
+
+.health-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.health-stats-facts {
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.health-stats.compact .health-stats-facts {
+  font-size: 0.82rem;
+}
+
+.health-stats-demo {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.zone-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface-3);
+}
+
+.zone-seg.fat {
+  background: var(--ice);
+}
+
+.zone-seg.cardio {
+  background: var(--accent);
+}
+
+.zone-seg.peak {
+  background: var(--danger);
+}
+
+.zone-legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.zone-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: 1px;
+}
+
+.zone-legend .fat::before {
+  background: var(--ice);
+}
+
+.zone-legend .cardio::before {
+  background: var(--accent);
+}
+
+.zone-legend .peak::before {
+  background: var(--danger);
+}
+
+.health-attached {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.fitbit-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fitbit-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.82rem;
+  transition: border-color 160ms var(--ease-out);
+}
+
+.fitbit-pick-row span {
+  color: var(--muted);
+  flex: 1;
+  min-width: 0;
+}
+
+.fitbit-pick-row em {
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted-2);
+}
+
+.fitbit-pick-row em.attach {
+  color: var(--text);
+}
+
+.fitbit-pick-row:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.fitbit-pick-row:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tag.health {
+  background: var(--ice-dim);
+  color: var(--ice);
+}

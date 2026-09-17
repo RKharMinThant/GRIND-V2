@@ -13,6 +13,7 @@ import { LogsList } from './components/LogsList'
 import { ProgressView } from './components/ProgressView'
 import { Shell, type Tab } from './components/Shell'
 import { Toast } from './components/Toast'
+import type { HealthWorkout } from './health/types'
 import { useHealth } from './health/useHealth'
 import { useAuth } from './hooks/useAuth'
 import { useLogs } from './hooks/useLogs'
@@ -70,6 +71,7 @@ export default function App() {
   const [formOpen, setFormOpen] = useState(false)
   const [formDate, setFormDate] = useState<string | undefined>()
   const [editing, setEditing] = useState<Log | null>(null)
+  const [attachWorkout, setAttachWorkout] = useState<HealthWorkout | null>(null)
   const [detailId, setDetailId] = useState<string | null>(null)
   const [liftSheet, setLiftSheet] = useState<LiftSheetState>(null)
   const [progressLift, setProgressLift] = useState<TrackedLift | null>(null)
@@ -95,6 +97,7 @@ export default function App() {
 
   function openNew(date?: string) {
     setEditing(null)
+    setAttachWorkout(null)
     setFormDate(date)
     setFormOpen(true)
   }
@@ -126,8 +129,16 @@ export default function App() {
     }
   }
 
+  function openFromWorkout(workout: HealthWorkout) {
+    setEditing(null)
+    setFormDate(undefined)
+    setAttachWorkout(workout)
+    setFormOpen(true)
+  }
+
   function openEdit(log: Log) {
     setDetailId(null)
+    setAttachWorkout(null)
     setEditing(log)
     setFormDate(undefined)
     setFormOpen(true)
@@ -217,6 +228,8 @@ export default function App() {
                 onOpenDay={openDay}
                 onViewAll={() => setTab('history')}
                 onRestDay={logRestDay}
+                health={health}
+                onLogWorkout={openFromWorkout}
               />
             )}
             {tab === 'history' && (
@@ -254,8 +267,12 @@ export default function App() {
           setFormOpen(false)
           setEditing(null)
           setFormDate(undefined)
+          setAttachWorkout(null)
         }}
         onSave={handleSave}
+        healthWorkouts={health.isConnected ? health.workouts : undefined}
+        healthSource={health.source}
+        attachWorkout={attachWorkout}
       />
 
       <LiftProgressSheet
