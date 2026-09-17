@@ -6400,3 +6400,386 @@ img {
   background: var(--ice-dim);
   color: var(--ice);
 }
+
+/* ── Charts (Fitbit Body) ──────────────────────────────────────────────────── */
+:root,
+[data-theme='dark'] {
+  --chart-ink: var(--accent);
+  --chart-ink-soft: rgba(200, 241, 53, 0.28);
+  --chart-rem: #a78bfa;
+  --chart-rem-soft: rgba(167, 139, 250, 0.3);
+  --chart-grid: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme='light'] {
+  --chart-ink: #5b8a00;
+  --chart-ink-soft: rgba(91, 138, 0, 0.22);
+  --chart-rem: #7c5cd6;
+  --chart-rem-soft: rgba(124, 92, 214, 0.22);
+  --chart-grid: rgba(28, 36, 12, 0.1);
+}
+
+.tone-accent { --tone: var(--chart-ink); }
+.tone-accent-soft { --tone: var(--chart-ink-soft); }
+.tone-ice { --tone: var(--ice); }
+.tone-ice-soft { --tone: var(--ice-dim); }
+.tone-danger { --tone: var(--danger); }
+.tone-rem { --tone: var(--chart-rem); }
+.tone-muted { --tone: var(--surface-3); }
+
+.chart-empty {
+  margin: 8px 0;
+  font-size: 0.8rem;
+  color: var(--muted-2);
+}
+
+.chart-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.chart-readout-value {
+  font-family: var(--font-num);
+  font-size: 2rem;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.chart-readout-value small {
+  font-family: var(--font);
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.chart-readout-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* Ring */
+.chart-ring {
+  position: relative;
+  flex: none;
+}
+
+.chart-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.chart-ring-track {
+  fill: none;
+  stroke: var(--surface-3);
+  stroke-width: 9;
+}
+
+.chart-ring-prog {
+  fill: none;
+  stroke: var(--chart-ink);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dashoffset: var(--ring-offset);
+  animation: ring-fill 900ms var(--ease-out) both;
+}
+
+.chart-ring-prog.done {
+  stroke: var(--accent);
+}
+
+[data-theme='light'] .chart-ring-prog.done {
+  stroke: var(--chart-ink);
+}
+
+@keyframes ring-fill {
+  from { stroke-dashoffset: var(--ring-full); }
+  to { stroke-dashoffset: var(--ring-offset); }
+}
+
+.chart-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.chart-ring-label {
+  font-family: var(--font-num);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.chart-ring-sub {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  margin-top: 2px;
+}
+
+/* Step bars */
+.step-bars-plot {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 128px;
+  padding-top: 6px;
+}
+
+.step-bars-plot.dense {
+  gap: 3px;
+}
+
+.step-bars-goal {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1.5px dashed var(--border-strong);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.step-bars-goal span {
+  position: absolute;
+  right: 0;
+  top: -16px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--muted-2);
+}
+
+.step-bar {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding: 0;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.step-bar-fill {
+  width: 100%;
+  border-radius: 6px 6px 3px 3px;
+  background: var(--chart-ink-soft);
+  transform-origin: bottom;
+  animation: bar-grow 600ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 18ms);
+  transition: background 160ms var(--ease-out), opacity 160ms var(--ease-out);
+}
+
+.step-bars-plot.dense .step-bar-fill {
+  border-radius: 3px 3px 1px 1px;
+}
+
+.step-bar.hit .step-bar-fill {
+  background: var(--chart-ink);
+}
+
+.step-bars-plot:has(.step-bar.active) .step-bar:not(.active) .step-bar-fill {
+  opacity: 0.55;
+}
+
+@keyframes bar-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+.step-bars-axis {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.step-bars-axis span {
+  flex: 1;
+  text-align: center;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--muted-2);
+}
+
+/* Sparkline */
+.sparkline {
+  position: relative;
+  width: 100%;
+}
+
+.sparkline svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.sparkline-line {
+  fill: none;
+  stroke: var(--tone, var(--chart-ink));
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sparkline-dot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--tone, var(--chart-ink));
+  box-shadow: 0 0 0 3px var(--surface-2);
+}
+
+/* Day curve */
+.day-curve-plot {
+  position: relative;
+  height: 110px;
+  touch-action: pan-y;
+  cursor: crosshair;
+  background-image: linear-gradient(to right, var(--chart-grid) 1px, transparent 1px);
+  background-size: 25% 100%;
+  border-radius: 6px;
+}
+
+.day-curve-plot svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.day-curve-area {
+  fill: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+.day-curve-line {
+  fill: none;
+  stroke: var(--danger);
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+}
+
+.day-curve-cursor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--text);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.day-curve-axis,
+.hypnogram-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--muted-2);
+}
+
+/* Hypnogram */
+.hypnogram-plot {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hypnogram-lane {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.hypnogram-lane-label {
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hypnogram-track {
+  position: relative;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--surface-2);
+}
+
+.hypnogram-seg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  animation: chart-fade 500ms var(--ease-out) both;
+}
+
+.stage-awake { background: var(--danger); }
+.stage-rem { background: var(--chart-rem); }
+.stage-light { background: color-mix(in srgb, var(--ice) 55%, transparent); }
+.stage-deep { background: var(--ice); }
+
+.hypnogram-axis {
+  padding-left: 52px;
+}
+
+@keyframes chart-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Stacked bar */
+.stacked-bar-track {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface-3);
+}
+
+.stacked-bar-part {
+  background: var(--tone);
+  min-width: 3px;
+}
+
+.stacked-bar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 8px;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.stacked-bar-legend i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: 1px;
+  background: var(--tone);
+}
+
+.stacked-bar-legend b {
+  color: var(--text);
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-ring-prog,
+  .step-bar-fill,
+  .hypnogram-seg {
+    animation: none;
+  }
+}
