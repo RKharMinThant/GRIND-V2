@@ -252,7 +252,7 @@ Run migrations **013** and **014** (SQL editor), then with the [Supabase CLI](ht
 ```bash
 npx supabase login
 npx supabase link --project-ref <project-ref>
-npx supabase secrets set GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... ALLOWED_ORIGINS=https://your-domain.com,http://localhost:5173
+npm run health:secrets  # uploads GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ALLOWED_ORIGINS from .env.local (no VITE_ prefix)
 npm run health:deploy   # deploys all four; the callback with --no-verify-jwt
 ```
 
