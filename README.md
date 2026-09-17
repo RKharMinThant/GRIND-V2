@@ -250,13 +250,10 @@ update public.logs
 Run migrations **013** and **014** (SQL editor), then with the [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started):
 
 ```bash
-supabase login
-supabase link --project-ref <project-ref>
-supabase secrets set GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... ALLOWED_ORIGINS=https://your-domain.com,http://localhost:5173
-supabase functions deploy health-oauth-start
-supabase functions deploy health-oauth-callback --no-verify-jwt
-supabase functions deploy health-data
-supabase functions deploy health-disconnect
+npx supabase login
+npx supabase link --project-ref <project-ref>
+npx supabase secrets set GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... ALLOWED_ORIGINS=https://your-domain.com,http://localhost:5173
+npm run health:deploy   # deploys all four; the callback with --no-verify-jwt
 ```
 
 `ALLOWED_ORIGINS` controls CORS and where the OAuth flow may return to (no trailing slash).

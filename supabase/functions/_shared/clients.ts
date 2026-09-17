@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { json } from './cors.ts'
 
 export function adminClient(): SupabaseClient {
