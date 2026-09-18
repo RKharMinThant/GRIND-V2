@@ -3,8 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#07080A" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"
+    />
+    <!-- Status bar blends into the app when installed to the Home Screen -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="GRIND" />
+    <meta name="theme-color" content="#F3F5EC" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#07080A" media="(prefers-color-scheme: dark)" />
     <meta
       name="description"
       content="Sessions, progressive overload, and rest days — private by default."
@@ -43,8 +54,15 @@
           var theme = dark ? 'dark' : 'light'
           document.documentElement.setAttribute('data-theme', theme)
           document.documentElement.style.colorScheme = theme
-          var meta = document.querySelector('meta[name="theme-color"]')
-          if (meta) meta.setAttribute('content', dark ? '#07080A' : '#F3F5EC')
+          // Own tag (no media) so the light/dark defaults above stay intact;
+          // the last matching theme-color wins, and this one follows the app's theme.
+          var meta = document.querySelector('meta[name="theme-color"]:not([media])')
+          if (!meta) {
+            meta = document.createElement('meta')
+            meta.setAttribute('name', 'theme-color')
+            document.head.appendChild(meta)
+          }
+          meta.setAttribute('content', dark ? '#07080A' : '#F3F5EC')
         } catch (e) {
           document.documentElement.setAttribute('data-theme', 'dark')
         }

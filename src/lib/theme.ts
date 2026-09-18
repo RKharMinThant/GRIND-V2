@@ -35,10 +35,14 @@ function setThemeAttributes(resolved: ResolvedTheme): void {
   document.documentElement.setAttribute('data-theme', resolved)
   document.documentElement.style.colorScheme = resolved
 
-  const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) {
-    meta.setAttribute('content', resolved === 'dark' ? '#07080A' : '#F3F4F6')
+  // Own tag (no media), so the light/dark defaults in index.html stay intact
+  let meta = document.querySelector('meta[name="theme-color"]:not([media])')
+  if (!meta) {
+    meta = document.createElement('meta')
+    meta.setAttribute('name', 'theme-color')
+    document.head.appendChild(meta)
   }
+  meta.setAttribute('content', resolved === 'dark' ? '#07080A' : '#F3F5EC')
 }
 
 function prefersReducedMotion(): boolean {

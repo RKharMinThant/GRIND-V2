@@ -7132,3 +7132,37 @@ img {
     animation: none;
   }
 }
+
+/* ── Installed to the Home Screen (standalone) ─────────────────────────────── */
+@media (display-mode: standalone) {
+  /* The status bar is translucent, so the app paints behind it */
+  .topbar {
+    height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .mkt-nav {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* No browser to bounce against */
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+
+  /* Taps shouldn't feel like a web page */
+  .dock-slot,
+  .dock-log,
+  .btn,
+  .log-card,
+  .step-bar,
+  .sleep-night,
+  .heatmap-cell,
+  .cal-cell,
+  .week-day {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
