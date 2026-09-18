@@ -21,7 +21,10 @@ export function SectionFrame({ title, meta, loading, error, empty, onRetry, chil
       </div>
       {error ? (
         <div className="body-section-error">
-          <span>Couldn't load {title.toLowerCase()}</span>
+          <span>
+            Couldn't load {title.toLowerCase()}
+            <small>{error}</small>
+          </span>
           <button type="button" className="btn btn-ghost btn-sm" onClick={onRetry}>
             Retry
           </button>

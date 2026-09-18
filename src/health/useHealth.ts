@@ -124,6 +124,20 @@ export function useHealth(enabled: boolean, logs: Log[], logsLoading: boolean): 
     }
   }, [enabled, logsLoading, provider, sync])
 
+  // Phones suspend the app: when it returns (or the network does), retry a failed sync
+  useEffect(() => {
+    if (!enabled || !error || connection?.status !== 'connected') return
+    const retry = () => {
+      if (document.visibilityState === 'visible') void sync()
+    }
+    document.addEventListener('visibilitychange', retry)
+    window.addEventListener('online', retry)
+    return () => {
+      document.removeEventListener('visibilitychange', retry)
+      window.removeEventListener('online', retry)
+    }
+  }, [enabled, error, connection?.status, sync])
+
   const connect = useCallback(async () => {
     setConnecting(true)
     setError(null)

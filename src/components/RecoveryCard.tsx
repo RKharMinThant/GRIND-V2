@@ -38,7 +38,10 @@ export function RecoveryCard({ recovery, restLoggedToday, restBusy, onRestDay, e
   if (error) {
     return (
       <section className="health-card rec-card--error" aria-label="Recovery">
-        <span>Couldn't reach Fitbit</span>
+        <span>
+          Couldn't reach Fitbit
+          <small>{error}</small>
+        </span>
         <button type="button" className="btn btn-ghost btn-sm" onClick={onRetry}>
           Retry
         </button>

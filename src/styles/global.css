@@ -7166,3 +7166,11 @@ img {
     user-select: none;
   }
 }
+
+.rec-card--error small,
+.body-section-error small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  color: var(--muted-2);
+}
