@@ -218,7 +218,7 @@ Redeploy after changing env vars so Vite picks them up.
 - [ ] Second account cannot see the first account’s data  
 - [ ] Hard refresh keeps the session  
 - [ ] Optional: set `VITE_SITE_URL` and absolute `sitemap.xml` / robots Sitemap URL  
-- [ ] Optional (Fitbit): `VITE_HEALTH_PROVIDER=google` set in the host, production origin in `ALLOWED_ORIGINS`, Connect Fitbit works on the production domain  
+- [ ] Optional (Fitbit): `VITE_HEALTH_PROVIDER=google` set in the host, **every** serving origin (custom domain included) in `ALLOWED_ORIGINS`, Connect Fitbit works on the production domain  
 
 ### Keep the Supabase project awake
 
@@ -292,7 +292,13 @@ npm run health:secrets  # uploads GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ALLOWE
 npm run health:deploy   # deploys all five functions; the callback with --no-verify-jwt
 ```
 
-`ALLOWED_ORIGINS` controls CORS and where the OAuth flow may return to (no trailing slash).
+`ALLOWED_ORIGINS` controls CORS and where the OAuth flow may return to. List **every origin the app is served from** — custom domain first, then the host's default domain and `http://localhost:5173`:
+
+```
+ALLOWED_ORIGINS=https://grind.example.com,https://your-app.vercel.app,http://localhost:5173
+```
+
+Entries are read as origins (scheme + host + port), so a stray path, space or trailing slash is ignored. If an origin is missing, the browser blocks every Fitbit call and the app shows "Couldn't reach Fitbit" while the connection itself is fine. Re-run `npm run health:secrets` and `npm run health:deploy` after changing it.
 
 **3. App**
 
