@@ -192,3 +192,28 @@ export function normalizeStepsRollup(points: GRollupPoint[]): DailySteps[] {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, steps]) => ({ date, steps }))
 }
+
+/**
+ * Main-sleep minutes keyed by the date each night ended.
+ * Fitbit can report naps too, so prefer the night it flags as the main sleep.
+ */
+export function sleepMinutesByNight(sleep: GDataPoint[]): Map<string, number> {
+  const byDate = new Map<string, { minutes: number; main: boolean }>()
+  for (const p of sleep) {
+    const s = p?.sleep
+    const date = s ? sleepEndDate(s) : null
+    const minutes = s ? toInt(s.summary?.minutesAsleep) : null
+    if (!date || minutes == null) continue
+    const main = s.metadata?.mainSleep === true
+    const existing = byDate.get(date)
+    if (!existing || (main && !existing.main) || (main === existing.main && minutes > existing.minutes)) {
+      byDate.set(date, { minutes, main })
+    }
+  }
+  return new Map([...byDate].map(([date, v]) => [date, v.minutes]))
+}
+
+/** Resting heart rate keyed by date. */
+export function restingHeartRateByDate(rhr: GDataPoint[]): Map<string, number> {
+  return dailyValues(rhr, 'dailyRestingHeartRate', (o) => toInt(o.beatsPerMinute))
+}

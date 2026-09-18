@@ -1,0 +1,60 @@
+# Evaluate notification rules and send any that are due.
+#
+# Runs hourly because the rules are written in the user's LOCAL time — the function
+# works out whose evening it currently is. Cheap to run this often: the repo is public,
+# so Actions minutes are free, and a run with nothing to send is four small queries.
+# (If this repo ever goes private, '7 */2 * * *' halves the usage and still hits every
+# rule window, which is at least three hours wide.)
+#
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL       e.g. https://<project-ref>.supabase.co  (already set for keep-alive)
+#   PUSH_CRON_SECRET   same value as the Supabase Edge Function secret of that name
+
+name: Push notifications
+
+on:
+  schedule:
+    - cron: '7 * * * *' # hourly, at 7 past
+  workflow_dispatch:
+
+permissions:
+  actions: write # re-enable this workflow so GitHub's 60-day inactivity rule never disables it
+
+concurrency:
+  # A slow run must not overlap the next one
+  group: push-notifications
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate and send due notifications
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          PUSH_CRON_SECRET: ${{ secrets.PUSH_CRON_SECRET }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$PUSH_CRON_SECRET" ]; then
+            echo "::error::SUPABASE_URL / PUSH_CRON_SECRET secrets are not set"
+            exit 1
+          fi
+          body=$(mktemp)
+          status=$(curl -s -o "$body" -w '%{http_code}' -m 120 -X POST \
+            "$SUPABASE_URL/functions/v1/push-dispatch" \
+            -H "x-cron-secret: $PUSH_CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "HTTP $status"
+          # The summary is counts only — no message text, no user ids
+          cat "$body"
+          echo
+          if [ "$status" != "200" ]; then
+            echo "::error::push-dispatch returned HTTP $status"
+            exit 1
+          fi
+
+      - name: Keep scheduled workflow enabled
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/push-notifications.yml/enable"

@@ -1,6 +1,6 @@
-import { FunctionsHttpError } from '@supabase/supabase-js'
+import { invokeFunction } from '../lib/invokeFunction'
 import { supabase } from '../lib/supabase'
-import { functionErrorMessage, isAuthFailure, type FunctionErrorPayload } from './functionError'
+import { functionErrorMessage } from './functionError'
 import type { HealthProvider } from './provider'
 import type {
   BodySectionData,
@@ -28,31 +28,13 @@ type Bundle = {
   lastSyncedAt: string
 }
 
-/**
- * Calls an Edge Function with the current Supabase login.
- *
- * Phones suspend the app, so its access token is often stale on resume and the
- * gateway answers 401 ("Invalid JWT"). Refresh once and retry before surfacing that.
- */
-async function invoke<T>(name: string, body?: unknown, isRetry = false): Promise<T> {
-  // Returns a fresh token when the current one is expiring
-  await supabase.auth.getSession()
-
-  const { data, error } = await supabase.functions.invoke(name, { body: body ?? {} })
-  if (!error) return data as T
-
-  if (error instanceof FunctionsHttpError) {
-    const status = error.context.status
-    const payload = (await error.context.json().catch(() => null)) as FunctionErrorPayload
-    if (status === 409) throw new HealthExpiredError()
-    if (!isRetry && isAuthFailure(status, payload)) {
-      const { error: refreshError } = await supabase.auth.refreshSession()
-      if (!refreshError) return invoke<T>(name, body, true)
-      throw new Error('Your session expired — sign in again')
-    }
-    throw new Error(functionErrorMessage(status, payload))
-  }
-  throw new Error("Couldn't reach Fitbit")
+/** Calls a health Edge Function, mapping 409 to the "reconnect Fitbit" case. */
+function invoke<T>(name: string, body?: unknown): Promise<T> {
+  return invokeFunction<T>(name, body, {
+    offline: "Couldn't reach Fitbit",
+    describe: functionErrorMessage,
+    map: (status) => (status === 409 ? new HealthExpiredError() : null),
+  })
 }
 
 /**
