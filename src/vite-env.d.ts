@@ -9,6 +9,8 @@ interface ImportMetaEnv {
   readonly VITE_HEALTH_PROVIDER?: string
 }
 
+declare const __APP_VERSION__: string
+
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }

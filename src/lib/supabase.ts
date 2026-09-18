@@ -20,3 +20,4 @@ export const supabase = createClient(url ?? '', anonKey ?? '', {
 export const isSupabaseConfigured = Boolean(url && anonKey)
 
 export const PHOTO_BUCKET = 'log-photos'
+

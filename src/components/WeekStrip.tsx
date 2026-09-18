@@ -1,23 +1,24 @@
 import type { CSSProperties } from 'react'
-import { addDays, parseLocalDate, startOfWeekSunday, toLocalDateString } from '../lib/dates'
-
-const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+import { addDays, parseLocalDate, startOfWeek, toLocalDateString, weekdayLabels } from '../lib/dates'
+import { DEFAULT_WEEK_START, type WeekStart } from '../lib/units'
 
 type Props = {
   logDates: string[]
   onDayClick: (date: string, hasLog: boolean) => void
+  weekStart?: WeekStart
 }
 
-export function WeekStrip({ logDates, onDayClick }: Props) {
+export function WeekStrip({ logDates, onDayClick, weekStart = DEFAULT_WEEK_START }: Props) {
   const today = toLocalDateString()
-  const start = startOfWeekSunday(today)
+  const start = startOfWeek(today, weekStart)
+  const labels = weekdayLabels(weekStart)
   const set = new Set(logDates)
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(start, i)
     return {
       date,
-      label: DOW[i],
+      label: labels[i],
       n: parseLocalDate(date).getDate(),
       logged: set.has(date),
       isToday: date === today,

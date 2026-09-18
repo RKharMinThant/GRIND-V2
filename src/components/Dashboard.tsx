@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { unlinkedWorkouts } from '../health/logic'
 import type { HealthWorkout } from '../health/types'
 import type { HealthState } from '../health/useHealth'
+import { DEFAULT_DISTANCE_UNIT, DEFAULT_WEEK_START, type DistanceUnit, type WeekStart } from '../lib/units'
 import { greetingForHour, toLocalDateString, todayHeading, weekSessionCount } from '../lib/dates'
 import type { StreakStats } from '../lib/streaks'
 import { isRestLog, type Log } from '../types/database'
@@ -31,6 +32,8 @@ type Props = {
   onLogWorkout: (workout: HealthWorkout) => void
   stepGoal: number
   onOpenBody: () => void
+  weekStart?: WeekStart
+  distanceUnit?: DistanceUnit
 }
 
 export function Dashboard({
@@ -49,13 +52,15 @@ export function Dashboard({
   onLogWorkout,
   stepGoal,
   onOpenBody,
+  weekStart = DEFAULT_WEEK_START,
+  distanceUnit = DEFAULT_DISTANCE_UNIT,
 }: Props) {
   const [restBusy, setRestBusy] = useState(false)
   const recent = logs.slice(0, 6)
   const logDates = logs.map((l) => l.log_date)
-  const weekCount = weekSessionCount(logDates)
-  const firstName = displayName.split(' ')[0] || displayName
   const today = toLocalDateString()
+  const weekCount = weekSessionCount(logDates, today, weekStart)
+  const firstName = displayName.split(' ')[0] || displayName
   const detected = health.isConnected
     ? unlinkedWorkouts(health.workouts, logs, health.dismissedIds, today)
     : []
@@ -111,7 +116,13 @@ export function Dashboard({
       </div>
 
       {health.isConnected && (
-        <TodayStrip today={health.today} recovery={health.recovery} stepGoal={stepGoal} onOpen={onOpenBody} />
+        <TodayStrip
+          today={health.today}
+          recovery={health.recovery}
+          stepGoal={stepGoal}
+          distanceUnit={distanceUnit}
+          onOpen={onOpenBody}
+        />
       )}
 
       {detected[0] && (
@@ -135,6 +146,7 @@ export function Dashboard({
       )}
 
       <WeekStrip
+        weekStart={weekStart}
         logDates={logDates}
         onDayClick={(date, hasLog) => {
           if (hasLog) onOpenDay(date)
@@ -157,7 +169,11 @@ export function Dashboard({
         </div>
       </div>
 
-      <Heatmap logDates={logDates} steps={health.isConnected ? health.steps : undefined} />
+      <Heatmap
+        logDates={logDates}
+        weekStart={weekStart}
+        steps={health.isConnected ? health.steps : undefined}
+      />
 
       <div className="page-header">
         <div className="page-title">Recent</div>

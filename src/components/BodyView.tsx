@@ -1,5 +1,6 @@
 import { relativeSync } from '../health/logic'
 import type { HealthState } from '../health/useHealth'
+import { DEFAULT_DISTANCE_UNIT, type DistanceUnit } from '../lib/units'
 import { ActivitySection } from './body/ActivitySection'
 import { HeartSection } from './body/HeartSection'
 import { SleepSection } from './body/SleepSection'
@@ -8,10 +9,11 @@ import { VitalsSection } from './body/VitalsSection'
 type Props = {
   health: HealthState
   stepGoal: number
+  distanceUnit?: DistanceUnit
 }
 
 /** Fitbit Body tab: activity, heart, sleep and night vitals. */
-export function BodyView({ health, stepGoal }: Props) {
+export function BodyView({ health, stepGoal, distanceUnit = DEFAULT_DISTANCE_UNIT }: Props) {
   const status = health.connection?.status
 
   return (
@@ -56,7 +58,7 @@ export function BodyView({ health, stepGoal }: Props) {
         </section>
       ) : (
         <>
-          <ActivitySection health={health} stepGoal={stepGoal} />
+          <ActivitySection health={health} stepGoal={stepGoal} distanceUnit={distanceUnit} />
           <HeartSection health={health} />
           <SleepSection health={health} />
           <VitalsSection health={health} />

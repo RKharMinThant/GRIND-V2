@@ -1,3 +1,5 @@
+import { DEFAULT_WEEK_START, type WeekStart } from './units'
+
 /** Local calendar date helpers — avoid UTC off-by-one from toISOString(). */
 
 export function pad2(n: number): string {
@@ -50,9 +52,21 @@ export function addDays(dateStr: string, delta: number): string {
 }
 
 export function startOfWeekSunday(dateStr: string): string {
+  return startOfWeek(dateStr, 0)
+}
+
+/** First day of the week containing `dateStr`. weekStart: 0 = Sunday, 1 = Monday. */
+export function startOfWeek(dateStr: string, weekStart: WeekStart = DEFAULT_WEEK_START): string {
   const d = parseLocalDate(dateStr)
-  d.setDate(d.getDate() - d.getDay())
+  d.setDate(d.getDate() - ((d.getDay() - weekStart + 7) % 7))
   return toLocalDateString(d)
+}
+
+const DOW_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+
+/** Single-letter weekday labels starting at the chosen day. */
+export function weekdayLabels(weekStart: WeekStart = DEFAULT_WEEK_START): string[] {
+  return Array.from({ length: 7 }, (_, i) => DOW_LABELS[(i + weekStart) % 7])
 }
 
 export function monthKey(dateStr: string): string {
@@ -94,9 +108,13 @@ export function monthLabelFromKey(key: string): string {
   })
 }
 
-/** Unique session days in the local week containing `today` (Sun–Sat). */
-export function weekSessionCount(logDates: string[], today = toLocalDateString()): number {
-  const start = startOfWeekSunday(today)
+/** Unique session days in the local week containing `today`. */
+export function weekSessionCount(
+  logDates: string[],
+  today = toLocalDateString(),
+  weekStart: WeekStart = DEFAULT_WEEK_START,
+): number {
+  const start = startOfWeek(today, weekStart)
   const set = new Set(logDates)
   let n = 0
   for (let i = 0; i < 7; i++) {

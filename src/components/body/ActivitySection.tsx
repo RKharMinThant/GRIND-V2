@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { formatKm, lastNDays } from '../../health/bodyLogic'
+import { lastNDays } from '../../health/bodyLogic'
+import { DEFAULT_DISTANCE_UNIT, formatDistance, type DistanceUnit } from '../../lib/units'
 import type { HealthState } from '../../health/useHealth'
 import { useBodySection } from '../../health/useBodySection'
 import { toLocalDateString } from '../../lib/dates'
@@ -7,9 +8,9 @@ import { StackedBar } from '../charts/StackedBar'
 import { StepBars } from '../charts/StepBars'
 import { SectionFrame } from './SectionFrame'
 
-type Props = { health: HealthState; stepGoal: number }
+type Props = { health: HealthState; stepGoal: number; distanceUnit?: DistanceUnit }
 
-export function ActivitySection({ health, stepGoal }: Props) {
+export function ActivitySection({ health, stepGoal, distanceUnit = DEFAULT_DISTANCE_UNIT }: Props) {
   const { data, loading, error, retry } = useBodySection(health, 'activity')
   const [range, setRange] = useState<7 | 30>(7)
   const today = toLocalDateString()
@@ -51,7 +52,7 @@ export function ActivitySection({ health, stepGoal }: Props) {
         </div>
         <div>
           <span className="label">Distance</span>
-          <span className="body-stat-value">{formatKm(present.length ? Math.round(totalKm * 10) / 10 : null)}</span>
+          <span className="body-stat-value">{formatDistance(present.length ? Math.round(totalKm * 10) / 10 : null, distanceUnit)}</span>
         </div>
         <div>
           <span className="label">Zone min</span>

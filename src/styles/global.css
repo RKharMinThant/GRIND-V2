@@ -7174,3 +7174,101 @@ img {
   font-size: 0.7rem;
   color: var(--muted-2);
 }
+
+/* ── Settings ──────────────────────────────────────────────────────────────── */
+.settings-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top-color: var(--highlight);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px 18px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-card);
+  animation: fade-up var(--dur-page) var(--ease-out) both;
+}
+
+.settings-title {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.setting-row:last-of-type {
+  border-bottom: none;
+}
+
+.setting-row-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.settings-note {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.settings-about {
+  margin-top: 14px;
+}
+
+.settings-about a {
+  color: var(--muted);
+  text-decoration: underline;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.settings-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--danger-dim);
+  color: var(--danger);
+  font-size: 0.78rem;
+}
+
+.settings-card .field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.user-chip.active {
+  border-color: var(--accent);
+}
+
+@media (max-width: 520px) {
+  .settings-card .field-row {
+    grid-template-columns: 1fr;
+  }
+}

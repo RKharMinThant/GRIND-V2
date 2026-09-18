@@ -14,6 +14,7 @@ GRIND is a client-only web app: **Vite + React + TypeScript** on the frontend, *
 | **Consistency** | Streaks, weekly goal ring, week strip, activity heatmap, history filters, calendar. |
 | **Progress** | Self-managed lift board by muscle group. One working weight, **per-set reps** (e.g. `15 · 12 · 10 @ 60kg`). Compare to the last log (↑ weight / reps / volume) and a volume trend over saves. |
 | **Fitbit** *(optional)* | Connect a Fitbit (e.g. Fitbit Air) through Google Health: Today strip on Home, **Body** tab (activity, heart, sleep, night vitals), workout-detected prompt that pre-fills the log form, recovery card, steps heatmap. [Setup →](#fitbit--google-health-optional) |
+| **Settings** | Tap your name for a full settings screen: profile and goals, appearance, units (km/mi, kg/lb), week start, Fitbit connection, data export (JSON / CSV), account. |
 | **Account** | Invite-only email/password sign-up; profile display name, weekly session goal, and daily step goal. |
 | **Admin** | Admin panel to create, expire and revoke invite links and list users. |
 
@@ -100,6 +101,7 @@ npm install
 | 13 | [`013_log_health_fields.sql`](supabase/migrations/013_log_health_fields.sql) | Fitbit workout stats on logs |
 | 14 | [`014_health_connections.sql`](supabase/migrations/014_health_connections.sql) | Google Health tokens (Edge Functions only) |
 | 15 | [`015_daily_step_goal.sql`](supabase/migrations/015_daily_step_goal.sql) | Daily step goal for the Fitbit steps ring |
+| 16 | [`016_preferences.sql`](supabase/migrations/016_preferences.sql) | Units (km/mi, kg/lb) and week start |
 
 Fresh projects: run all of them in order. Existing DBs: only apply migrations you have not run yet.
 
@@ -241,7 +243,7 @@ Admin-only for now (`isAdmin` in `useAuth`). Adds a Fitbit row to the profile me
 - **Home:** a **Today** strip (steps ring against your daily step goal, zone minutes, distance, calories, sleep), a **workout detected** card, a **recovery** card, and a **Sessions | Steps** heatmap switch.
 - **Body tab** (takes Calendar's dock slot; Calendar opens from History): **Activity** (7/30-day steps vs goal, active minutes), **Heart** (resting HR and HRV trends, today's heart-rate curve, zone time), **Sleep** (14 nights, stage timeline), **Night vitals** (SpO2, breathing rate, skin temperature, weight).
 - **Sessions** can carry tracker stats (calories, heart rate, zones).
-- **Profile:** daily step goal (migration 015).
+- **Profile:** daily step goal (migration 015), plus units and week start (migration 016) in Settings.
 
 Two data sources, chosen at build time:
 

@@ -5,12 +5,14 @@ import {
   getLiftSets,
   formatSetsDetail,
 } from '../lib/overload'
+import { DEFAULT_WEEK_START, type WeekStart } from '../lib/units'
 import { buildProgressInsights } from '../lib/progress'
 import type { Log, TrackedLift } from '../types/database'
 
 type Props = {
   logs: Log[]
   weeklyGoal: number
+  weekStart?: WeekStart
   byMuscle: { group: string; lifts: TrackedLift[] }[]
   liftsLoading?: boolean
   onOpenAdd: (group?: string) => void
@@ -25,8 +27,9 @@ export function ProgressView({
   liftsLoading,
   onOpenAdd,
   onOpenLift,
+  weekStart = DEFAULT_WEEK_START,
 }: Props) {
-  const insights = buildProgressInsights(logs, weeklyGoal)
+  const insights = buildProgressInsights(logs, weeklyGoal, weekStart)
   const maxWeek = Math.max(1, ...insights.last4Weeks.map((w) => w.count), weeklyGoal)
   const totalLifts = byMuscle.reduce((n, g) => n + g.lifts.length, 0)
 

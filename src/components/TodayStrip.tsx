@@ -1,4 +1,5 @@
-import { formatKm, stepGoalProgress } from '../health/bodyLogic'
+import { stepGoalProgress } from '../health/bodyLogic'
+import { DEFAULT_DISTANCE_UNIT, formatDistance, type DistanceUnit } from '../lib/units'
 import { formatSleep } from '../health/logic'
 import type { HealthRecovery, TodaySummary } from '../health/types'
 import { Ring } from './charts/Ring'
@@ -7,17 +8,18 @@ type Props = {
   today: TodaySummary | null
   recovery: HealthRecovery | null
   stepGoal: number
+  distanceUnit?: DistanceUnit
   onOpen: () => void
 }
 
 /** Home glance: steps ring plus zone minutes, distance, calories and last night's sleep. */
-export function TodayStrip({ today, recovery, stepGoal, onOpen }: Props) {
+export function TodayStrip({ today, recovery, stepGoal, distanceUnit = DEFAULT_DISTANCE_UNIT, onOpen }: Props) {
   const steps = today?.steps ?? null
   const progress = stepGoalProgress(steps, stepGoal)
   const goalLabel = stepGoal >= 1000 ? `of ${Math.round(stepGoal / 100) / 10}k` : `of ${stepGoal}`
   const tiles = [
     { label: 'Zone min', value: today?.zoneMinutes != null ? String(today.zoneMinutes) : '—' },
-    { label: 'Distance', value: formatKm(today?.distanceKm ?? null) },
+    { label: 'Distance', value: formatDistance(today?.distanceKm ?? null, distanceUnit) },
     { label: 'Calories', value: today?.calories != null ? today.calories.toLocaleString() : '—' },
     { label: 'Sleep', value: recovery?.sleepMin != null ? formatSleep(recovery.sleepMin) : '—' },
   ]

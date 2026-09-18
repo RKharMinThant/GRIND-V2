@@ -1,3 +1,4 @@
+import type { DistanceUnit, WeekStart, WeightUnit } from '../lib/units'
 import type { LogHealthFields } from '../health/types'
 
 export type Profile = {
@@ -6,6 +7,10 @@ export type Profile = {
   weekly_goal?: number | null
   /** Steps ring goal (migration 015) */
   daily_step_goal?: number | null
+  /** Display preferences (migration 016) */
+  distance_unit?: DistanceUnit | null
+  weight_unit?: WeightUnit | null
+  week_start?: WeekStart | null
   created_at: string
 }
 

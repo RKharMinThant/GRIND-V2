@@ -3,6 +3,7 @@ import { stepTier } from '../health/logic'
 import { readJson, writeJson } from '../health/storage'
 import type { DailySteps } from '../health/types'
 import { toLocalDateString } from '../lib/dates'
+import { DEFAULT_WEEK_START, type WeekStart } from '../lib/units'
 import { countByDate } from '../lib/streaks'
 
 type Mode = 'sessions' | 'steps'
@@ -11,11 +12,12 @@ const MODE_KEY = 'grind_heatmap_mode'
 
 type Props = {
   logDates: string[]
+  weekStart?: WeekStart
   /** Daily steps from the tracker; the Sessions | Steps switch shows only when present */
   steps?: DailySteps[]
 }
 
-export function Heatmap({ logDates, steps }: Props) {
+export function Heatmap({ logDates, steps, weekStart = DEFAULT_WEEK_START }: Props) {
   const today = toLocalDateString()
   const counts = useMemo(() => countByDate(logDates), [logDates])
   const stepsByDate = useMemo(() => new Map(steps?.map((s) => [s.date, s.steps])), [steps])
@@ -32,7 +34,7 @@ export function Heatmap({ logDates, steps }: Props) {
   const columns = useMemo(() => {
     const start = new Date()
     start.setDate(start.getDate() - 111)
-    while (start.getDay() !== 0) start.setDate(start.getDate() - 1)
+    while (start.getDay() !== weekStart) start.setDate(start.getDate() - 1)
 
     const cols: { date: string; count: number }[][] = []
     const cursor = new Date(start)
@@ -47,7 +49,7 @@ export function Heatmap({ logDates, steps }: Props) {
       if (col.length) cols.push(col)
     }
     return cols
-  }, [counts, today])
+  }, [counts, today, weekStart])
 
   return (
     <div className="section-block">
