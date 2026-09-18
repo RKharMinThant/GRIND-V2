@@ -308,6 +308,76 @@ Set `VITE_HEALTH_PROVIDER=google` in `.env.local` and/or Vercel (then redeploy),
 
 ---
 
+## Notifications (optional)
+
+Web Push to the installed app — no App Store, no Apple developer account. Five opt-in
+types, each toggled per user in **Settings → Notifications**:
+
+| Type | When it fires (user's local time) | Needs Fitbit |
+|---|---|---|
+| `fitbit_expired` | Connection dropped · 08:00–21:00, at most every 3 days | connection status only |
+| `streak_risk` | Live streak of 2+ days with nothing logged today · 18:00–21:00 | no |
+| `inactivity` | 3+ days since the last session · 09:00–11:00, at most every 3 days | no |
+| `step_goal` | Between 60% and 99% of the daily step goal · 18:00–20:00 | yes |
+| `recovery_milestone` | Best sleep in 30 days, or resting HR 2+ bpm below its 30-day average · 08:00–10:00, at most weekly | yes |
+
+**iPhone requires the app to be on the Home Screen.** Safari tabs cannot receive push.
+Settings shows an explanation instead of the toggles until that is done.
+
+### Setup
+
+**1. Keys** — generate a VAPID pair once and put it in `.env.local`:
+
+```
+VITE_VAPID_PUBLIC_KEY=<public>   # public by design; safe in the browser bundle
+VAPID_PUBLIC_KEY=<public>
+VAPID_PRIVATE_KEY=<private>      # server only — never prefixed with VITE_
+VAPID_SUBJECT=mailto:you@example.com
+PUSH_CRON_SECRET=<32 random bytes, base64url>
+```
+
+**2. Database + functions**
+
+```bash
+npm run health:secrets   # uploads VAPID_*, PUSH_CRON_SECRET (and the Google keys)
+npm run push:deploy      # push-subscribe, push-unsubscribe, push-test, push-dispatch
+```
+
+Apply `supabase/migrations/017_push_notifications.sql`. Set `VITE_VAPID_PUBLIC_KEY` in
+Vercel too, or the UI stays hidden in production.
+
+**3. Scheduler** — add two repo secrets (Settings → Secrets and variables → Actions):
+`SUPABASE_URL` (already there for keep-alive) and `PUSH_CRON_SECRET`, matching the
+Supabase secret exactly. `.github/workflows/push-notifications.yml` then runs hourly.
+
+### How it works
+
+`push-dispatch` is the only scheduled piece. It loads every subscription, works out each
+user's local day and hour from the time zone their browser reported at subscribe time,
+and asks `_shared/notifyRules.ts` what is due. That module is pure — no clock, no
+database — so every rule is unit-tested (`npm test`).
+
+A Fitbit read only happens for users whose local hour has actually opened a Fitbit rule's
+window, so it costs at most one Google call per user per day rather than one per run.
+
+Before sending, the dispatcher inserts into `notification_sends`, whose primary key is
+`(user_id, type, local_day)`. A duplicate insert fails, so an overlapping or retried run
+is a no-op instead of a second buzz. If nothing was delivered the row is released so a
+later run can retry.
+
+### Troubleshooting
+
+- **Nothing arrives** — tap **Send a test** in Settings. That isolates delivery from the
+  rules. `push-test` returns `404 not_subscribed` if this device was never registered.
+- **Toggles but no button** — the device is registered; permission lives on the device,
+  the toggles on the account.
+- **Stopped after reinstalling** — deleting the Home Screen app discards its subscription.
+  Enable it again; the old row is pruned on its next failed send.
+- **Workflow is green but nothing sends** — the response prints `{users, evaluated, sent}`.
+  `evaluated: 0` means no rule's hour window was open, which is normal for most runs.
+
+---
+
 ## Project layout
 
 ```
@@ -318,16 +388,16 @@ src/
   components/          # Screens + sheets
     body/              # Body tab sections (Activity, Heart, Sleep, Night vitals)
     charts/            # SVG charts: Ring, StepBars, Sparkline, DayCurve, Hypnogram, StackedBar
-  hooks/               # useAuth, useLogs, useTrackedLifts, …
-  lib/                 # supabase, dates, streaks, photos, overload
+  hooks/               # useAuth, useLogs, useTrackedLifts, usePush, …
+  lib/                 # supabase, dates, streaks, photos, overload, push
   health/              # Fitbit: types, logic, mock + Google providers, useHealth, useBodySection
   styles/global.css
   types/database.ts
 supabase/migrations/
-supabase/functions/    # Edge Functions: health-oauth-*, health-data, health-body, health-disconnect (+ _shared)
-scripts/               # push-health-secrets.mjs
+supabase/functions/    # Edge Functions: health-*, push-* (+ _shared)
+scripts/               # push-secrets.mjs (Edge Function secrets)
 docs/superpowers/      # Design specs and implementation plans
-.github/workflows/     # supabase-keepalive
+.github/workflows/     # supabase-keepalive, push-notifications
 vercel.json            # SPA rewrites
 public/_redirects      # Netlify SPA fallback
 ```
@@ -342,6 +412,9 @@ public/_redirects      # Netlify SPA fallback
 - Do not expose `service_role` in this repo or any static host config.
 - `health_connections` and `health_oauth_states` have RLS **with no policies**: only Edge Functions (service role) can read tokens. The browser gets non-secret status through `health_connection_status()`.
 - Fitbit Edge Functions verify the caller's Supabase JWT (except the OAuth callback, which validates a one-time `state`) and only answer CORS for `ALLOWED_ORIGINS`.
+- `push_subscriptions` and `notification_sends` have RLS **with no policies** — only Edge Functions touch them. Notification toggles live on `profiles`, which the user owns.
+- `push-dispatch` runs without a user JWT (the scheduler has none), so it is gated on the `PUSH_CRON_SECRET` header instead. Rotate it in both places at once.
+- Stored push endpoints must be public HTTPS URLs (`_shared/pushEndpoint.ts`): without that check a stolen login could point the sender at an internal address.
 
 ---
 

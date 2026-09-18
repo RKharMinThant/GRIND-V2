@@ -17,6 +17,7 @@ import { Shell, type Tab } from './components/Shell'
 import { Toast } from './components/Toast'
 import type { HealthWorkout } from './health/types'
 import { useHealth } from './health/useHealth'
+import { usePush } from './hooks/usePush'
 import { useAuth } from './hooks/useAuth'
 import { useLogs } from './hooks/useLogs'
 import { useTheme } from './hooks/useTheme'
@@ -40,6 +41,7 @@ export default function App() {
     distanceUnit,
     weightUnit,
     weekStart,
+    notificationPrefs,
     isAdmin,
     loading: authLoading,
     authError,
@@ -74,6 +76,9 @@ export default function App() {
   // Fitbit (Phase 1: mock data, admin only)
   const health = useHealth(isAdmin, logs, logsLoading)
 
+  // Web Push registration for this device (no-op until the user enables it)
+  const push = usePush(Boolean(user))
+
   const [tab, setTab] = useState<Tab>('home')
   const [formOpen, setFormOpen] = useState(false)
   const [formDate, setFormDate] = useState<string | undefined>()
@@ -89,6 +94,16 @@ export default function App() {
 
   const showToast = useCallback((msg: string, variant: 'ok' | 'error' = 'ok') => {
     setToast({ msg, variant })
+  }, [])
+
+  // Opened from a notification that wants Settings (/app?settings=1)
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('settings') !== '1') return
+    setSettingsFrom('home')
+    setTab('settings')
+    url.searchParams.delete('settings')
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
   }, [])
 
   // Returning from Google's consent screen (/app?health=connected|error)
@@ -286,6 +301,8 @@ export default function App() {
                 distanceUnit={distanceUnit}
                 weightUnit={weightUnit}
                 weekStart={weekStart}
+                notificationPrefs={notificationPrefs}
+                push={push}
                 themePreference={preference}
                 onThemeChange={setPreference}
                 onUpdateProfile={async (patch) => {

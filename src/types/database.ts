@@ -1,3 +1,4 @@
+import type { NotificationPrefs } from '../lib/push'
 import type { DistanceUnit, WeekStart, WeightUnit } from '../lib/units'
 import type { LogHealthFields } from '../health/types'
 
@@ -7,6 +8,8 @@ export type Profile = {
   weekly_goal?: number | null
   /** Steps ring goal (migration 015) */
   daily_step_goal?: number | null
+  /** Notification toggles (migration 017); a missing key means off */
+  notification_prefs?: NotificationPrefs | null
   /** Display preferences (migration 016) */
   distance_unit?: DistanceUnit | null
   weight_unit?: WeightUnit | null

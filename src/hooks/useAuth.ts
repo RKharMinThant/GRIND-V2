@@ -9,13 +9,20 @@ import {
   type WeekStart,
   type WeightUnit,
 } from '../lib/units'
+import type { NotificationPrefs } from '../lib/push'
 import type { Profile } from '../types/database'
 
 const DEFAULT_WEEKLY_GOAL = 4
 const DEFAULT_DAILY_STEP_GOAL = 10000
 
 /** Added by later migrations; dropped from an update when the column is missing. */
-const OPTIONAL_PROFILE_COLUMNS = ['daily_step_goal', 'distance_unit', 'weight_unit', 'week_start'] as const
+const OPTIONAL_PROFILE_COLUMNS = [
+  'daily_step_goal',
+  'distance_unit',
+  'weight_unit',
+  'week_start',
+  'notification_prefs',
+] as const
 
 /** Which migration adds each optional column, so the UI can say what to run. */
 const COLUMN_MIGRATION: Record<string, string> = {
@@ -23,6 +30,7 @@ const COLUMN_MIGRATION: Record<string, string> = {
   distance_unit: '016_preferences.sql',
   weight_unit: '016_preferences.sql',
   week_start: '016_preferences.sql',
+  notification_prefs: '017_push_notifications.sql',
 }
 
 /**
@@ -195,6 +203,7 @@ export function useAuth() {
       distance_unit?: DistanceUnit
       weight_unit?: WeightUnit
       week_start?: WeekStart
+      notification_prefs?: NotificationPrefs
     }) => {
       if (!user) throw new Error('Not signed in')
 
@@ -245,6 +254,7 @@ export function useAuth() {
   const distanceUnit: DistanceUnit = profile?.distance_unit ?? DEFAULT_DISTANCE_UNIT
   const weightUnit: WeightUnit = profile?.weight_unit ?? DEFAULT_WEIGHT_UNIT
   const weekStart: WeekStart = profile?.week_start ?? DEFAULT_WEEK_START
+  const notificationPrefs: NotificationPrefs = profile?.notification_prefs ?? {}
   const isAdmin = user?.email === 'rkharmthant@gmail.com'
 
   return {
@@ -257,6 +267,7 @@ export function useAuth() {
     distanceUnit,
     weightUnit,
     weekStart,
+    notificationPrefs,
     isAdmin,
     loading,
     authError,

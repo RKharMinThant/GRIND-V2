@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { relativeSync } from '../health/logic'
+import type { PushState } from '../hooks/usePush'
 import type { HealthState } from '../health/useHealth'
 import { buildExportJson, downloadText, exportFilename, logsToCsv } from '../lib/exportData'
+import type { NotificationPrefs } from '../lib/push'
 import type { DistanceUnit, WeekStart, WeightUnit } from '../lib/units'
 import type { Log, TrackedLift } from '../types/database'
+import { NotificationsCard } from './NotificationsCard'
 import { ThemeSegment } from './ThemeControls'
 import type { ThemePreference } from '../lib/theme'
 
@@ -14,6 +17,7 @@ export type ProfilePatch = {
   distance_unit?: DistanceUnit
   weight_unit?: WeightUnit
   week_start?: WeekStart
+  notification_prefs?: NotificationPrefs
 }
 
 type Props = {
@@ -24,6 +28,8 @@ type Props = {
   distanceUnit: DistanceUnit
   weightUnit: WeightUnit
   weekStart: WeekStart
+  notificationPrefs: NotificationPrefs
+  push: PushState
   themePreference: ThemePreference
   onThemeChange: (pref: ThemePreference) => void
   onUpdateProfile: (patch: ProfilePatch) => Promise<void>
@@ -78,6 +84,8 @@ export function SettingsView({
   distanceUnit,
   weightUnit,
   weekStart,
+  notificationPrefs,
+  push,
   themePreference,
   onThemeChange,
   onUpdateProfile,
@@ -271,6 +279,14 @@ export function SettingsView({
           )}
         </section>
       )}
+
+      {/* onChange goes straight to the profile update so a failure surfaces on the switch itself */}
+      <NotificationsCard
+        push={push}
+        prefs={notificationPrefs}
+        fitbitConnected={status === 'connected'}
+        onChange={(next) => onUpdateProfile({ notification_prefs: next })}
+      />
 
       <section className="settings-card" aria-label="Data">
         <h2 className="settings-title">Data</h2>
