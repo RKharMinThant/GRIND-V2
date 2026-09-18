@@ -15,6 +15,7 @@ type SectionState<S extends BodySectionId> = {
 
 /** Loads one Body tab section when connected; each section loads and fails independently. */
 export function useBodySection<S extends BodySectionId>(health: HealthState, section: S): SectionState<S> {
+  const { isConnected, provider, sync } = health
   const date = toLocalDateString()
   const key = `${health.source}:${section}:${date}:${health.syncVersion}`
   const [data, setData] = useState<BodySectionData[S] | null>(() => (cache.get(key) as BodySectionData[S]) ?? null)
@@ -23,7 +24,7 @@ export function useBodySection<S extends BodySectionId>(health: HealthState, sec
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
-    if (!health.isConnected) return
+    if (!isConnected) return
     const cached = cache.get(key) as BodySectionData[S] | undefined
     if (cached && attempt === 0) {
       setData(cached)
@@ -33,7 +34,7 @@ export function useBodySection<S extends BodySectionId>(health: HealthState, sec
     let cancelled = false
     setLoading(true)
     setError(null)
-    health.provider
+    provider
       .getBodySection(section, date)
       .then((result) => {
         if (cancelled) return
@@ -43,7 +44,7 @@ export function useBodySection<S extends BodySectionId>(health: HealthState, sec
       .catch((e: unknown) => {
         if (cancelled) return
         // Expired grant: a sync re-reads the connection so the page shows Reconnect
-        if (e instanceof Error && e.name === 'HealthExpiredError') void health.sync()
+        if (e instanceof Error && e.name === 'HealthExpiredError') void sync()
         setError(e instanceof Error ? e.message : "Couldn't reach Fitbit")
       })
       .finally(() => {
@@ -52,7 +53,7 @@ export function useBodySection<S extends BodySectionId>(health: HealthState, sec
     return () => {
       cancelled = true
     }
-  }, [health.isConnected, health.provider, health.sync, key, section, date, attempt])
+  }, [isConnected, provider, sync, key, section, date, attempt])
 
   const retry = useCallback(() => setAttempt((n) => n + 1), [])
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { DEFAULT_WEIGHT_UNIT, type WeightUnit } from '../lib/units'
 import { usePresence } from '../hooks/usePresence'
 import { formatSetsDetail, getLiftSets, getPrevLiftSets } from '../lib/overload'
 import {
@@ -17,6 +18,8 @@ export type LiftEditorSheetProps = {
   onClose: () => void
   onSave: (input: TrackedLiftInput) => Promise<void>
   onDelete?: () => Promise<void>
+  /** Unit new lifts start in (Settings → Units) */
+  defaultUnit?: WeightUnit
 }
 
 type SetDraft = {
@@ -95,6 +98,7 @@ export function LiftEditorSheet({
   onClose,
   onSave,
   onDelete,
+  defaultUnit = DEFAULT_WEIGHT_UNIT,
 }: LiftEditorSheetProps) {
   const { mounted, visible } = usePresence(open, 380)
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -107,7 +111,7 @@ export function LiftEditorSheet({
     newSetDraft('8'),
     newSetDraft('8'),
   ])
-  const [unit, setUnit] = useState<'kg' | 'lb'>('kg')
+  const [unit, setUnit] = useState<'kg' | 'lb'>(defaultUnit)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -131,7 +135,7 @@ export function LiftEditorSheet({
       setName('')
       setWeight('')
       setSetDrafts([newSetDraft('8'), newSetDraft('8'), newSetDraft('8')])
-      setUnit('kg')
+      setUnit(defaultUnit)
     }
     setError(null)
     setBusy(false)
@@ -139,7 +143,7 @@ export function LiftEditorSheet({
     requestAnimationFrame(() => {
       if (bodyRef.current) bodyRef.current.scrollTop = 0
     })
-  }, [open, lift, initialGroup])
+  }, [open, lift, initialGroup, defaultUnit])
 
   useEffect(() => {
     if (!open || !visible) return

@@ -1,27 +1,20 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { ThemePreference } from '../lib/theme'
-import { ThemeIconButton, ThemeSegment } from './ThemeControls'
+import { ThemeIconButton } from './ThemeControls'
 
-export type Tab = 'home' | 'history' | 'progress' | 'calendar' | 'body'
+export type Tab = 'home' | 'history' | 'progress' | 'calendar' | 'body' | 'settings'
 
 type Props = {
   tab: Tab
   displayName: string
-  weeklyGoal: number
   themePreference: ThemePreference
   resolvedTheme: 'light' | 'dark'
-  onThemeChange: (pref: ThemePreference) => void
   onThemeCycle: () => void
   onTab: (t: Tab) => void
-  onSignOut: () => void
   onNewLog: () => void
-  onUpdateProfile: (patch: { display_name?: string; weekly_goal?: number; daily_step_goal?: number }) => Promise<void>
-  /** Shown (and saved) only when Fitbit is enabled */
-  dailyStepGoal?: number
+  onOpenSettings: () => void
   isAdmin?: boolean
   onAdminPanel?: () => void
-  /** Fitbit connect row, rendered in the profile menu when health is enabled */
-  healthControls?: ReactNode
   /** Body tab takes Calendar's dock slot (Fitbit-enabled accounts) */
   showBody?: boolean
   children: ReactNode
@@ -73,67 +66,18 @@ function IconCalendar() {
 export function Shell({
   tab,
   displayName,
-  weeklyGoal,
-  dailyStepGoal,
   themePreference,
   resolvedTheme,
-  onThemeChange,
   onThemeCycle,
   onTab,
-  onSignOut,
   onNewLog,
-  onUpdateProfile,
+  onOpenSettings,
   isAdmin,
   onAdminPanel,
-  healthControls,
   showBody,
   children,
 }: Props) {
   const initial = (displayName[0] || 'G').toUpperCase()
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [nameDraft, setNameDraft] = useState(displayName)
-  const [goalDraft, setGoalDraft] = useState(String(weeklyGoal))
-  const [stepGoalDraft, setStepGoalDraft] = useState(String(dailyStepGoal ?? 10000))
-  const [saving, setSaving] = useState(false)
-  const [menuError, setMenuError] = useState<string | null>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    setNameDraft(displayName)
-    setGoalDraft(String(weeklyGoal))
-    if (dailyStepGoal != null) setStepGoalDraft(String(dailyStepGoal))
-  }, [displayName, weeklyGoal, dailyStepGoal])
-
-  useEffect(() => {
-    if (!menuOpen) return
-    function onDoc(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
-  }, [menuOpen])
-
-  async function saveProfile() {
-    setSaving(true)
-    setMenuError(null)
-    try {
-      const goal = Math.min(14, Math.max(1, Number(goalDraft) || 4))
-      await onUpdateProfile({
-        display_name: nameDraft.trim() || displayName,
-        weekly_goal: goal,
-        ...(dailyStepGoal != null
-          ? { daily_step_goal: Math.min(100000, Math.max(1000, Math.round((Number(stepGoalDraft) || 10000) / 500) * 500)) }
-          : {}),
-      })
-      setMenuOpen(false)
-    } catch (e) {
-      setMenuError(e instanceof Error ? e.message : 'Could not save. Run migration 002 if needed.')
-    } finally {
-      setSaving(false)
-    }
-  }
 
   return (
     <div className="app-shell">
@@ -160,83 +104,16 @@ export function Shell({
             preference={themePreference}
             onCycle={onThemeCycle}
           />
-          <div className="user-menu-wrap" ref={menuRef}>
-            <button
-              type="button"
-              className="user-chip"
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-expanded={menuOpen}
-              aria-haspopup="menu"
-            >
-              <div className="avatar">{initial}</div>
-              <span>{displayName}</span>
-            </button>
-            {menuOpen && (
-              <div className="menu-pop" role="menu">
-                <div className="field" style={{ marginBottom: 8 }}>
-                  <label>Appearance</label>
-                </div>
-                <ThemeSegment preference={themePreference} onChange={onThemeChange} />
-                {healthControls}
-                <div className="field">
-                  <label htmlFor="profileName">Display name</label>
-                  <input
-                    id="profileName"
-                    value={nameDraft}
-                    onChange={(e) => setNameDraft(e.target.value)}
-                    maxLength={40}
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="weeklyGoal">Weekly session goal</label>
-                  <input
-                    id="weeklyGoal"
-                    type="number"
-                    min={1}
-                    max={14}
-                    value={goalDraft}
-                    onChange={(e) => setGoalDraft(e.target.value)}
-                  />
-                </div>
-                {dailyStepGoal != null && (
-                  <div className="field">
-                    <label htmlFor="dailyStepGoal">Daily step goal</label>
-                    <input
-                      id="dailyStepGoal"
-                      type="number"
-                      inputMode="numeric"
-                      min={1000}
-                      max={100000}
-                      step={500}
-                      value={stepGoalDraft}
-                      onChange={(e) => setStepGoalDraft(e.target.value)}
-                    />
-                  </div>
-                )}
-                {menuError && <div className="auth-error">{menuError}</div>}
-                <div className="menu-actions">
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-full"
-                    onClick={() => void saveProfile()}
-                    disabled={saving}
-                  >
-                    {saving ? 'Saving…' : 'Save profile'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-full"
-                    onClick={() => {
-                      setMenuOpen(false)
-                      onSignOut()
-                    }}
-                  >
-                    Sign out
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <button
+            type="button"
+            className={`user-chip ${tab === 'settings' ? 'active' : ''}`}
+            onClick={onOpenSettings}
+            aria-label="Open settings"
+            aria-current={tab === 'settings' ? 'page' : undefined}
+          >
+            <div className="avatar">{initial}</div>
+            <span>{displayName}</span>
+          </button>
         </div>
       </header>
 

@@ -1,4 +1,5 @@
-import { addDays, startOfWeekSunday, toLocalDateString, weekSessionCount } from './dates'
+import { addDays, startOfWeek, toLocalDateString, weekSessionCount } from './dates'
+import { DEFAULT_WEEK_START, type WeekStart } from './units'
 import { parseFocusAreas } from '../types/database'
 import type { Log } from '../types/database'
 import { parseDuration } from './duration'
@@ -20,11 +21,16 @@ export type ProgressInsights = {
   restDays: number
 }
 
-export function buildProgressInsights(logs: Log[], weeklyGoal: number): ProgressInsights {
+export function buildProgressInsights(
+  logs: Log[],
+  weeklyGoal: number,
+  weekStart: WeekStart = DEFAULT_WEEK_START,
+): ProgressInsights {
   const today = toLocalDateString()
   const weekSessions = weekSessionCount(
     logs.map((l) => l.log_date),
     today,
+    weekStart,
   )
   const weekGoal = Math.max(1, weeklyGoal)
   const weekPct = Math.min(100, Math.round((weekSessions / weekGoal) * 100))
@@ -73,7 +79,7 @@ export function buildProgressInsights(logs: Log[], weeklyGoal: number): Progress
 
   // Last 4 weeks including current (Sun–Sat buckets)
   const last4Weeks: WeekBar[] = []
-  const thisWeekStart = startOfWeekSunday(today)
+  const thisWeekStart = startOfWeek(today, weekStart)
   for (let w = 3; w >= 0; w--) {
     const start = addDays(thisWeekStart, -7 * w)
     const end = addDays(start, 6)

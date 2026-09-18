@@ -6,13 +6,13 @@ import { CalendarView } from './components/CalendarView'
 import { BodyView } from './components/BodyView'
 import { CalendarSheet } from './components/CalendarSheet'
 import { Dashboard } from './components/Dashboard'
-import { HealthConnectRow } from './components/HealthConnectRow'
 import { LiftEditorSheet } from './components/LiftEditorSheet'
 import { LiftProgressSheet } from './components/LiftProgressSheet'
 import { LogDetail } from './components/LogDetail'
 import { LogFormSheet } from './components/LogFormSheet'
 import { LogsList } from './components/LogsList'
 import { ProgressView } from './components/ProgressView'
+import { SettingsView } from './components/SettingsView'
 import { Shell, type Tab } from './components/Shell'
 import { Toast } from './components/Toast'
 import type { HealthWorkout } from './health/types'
@@ -37,6 +37,9 @@ export default function App() {
     displayName,
     weeklyGoal,
     dailyStepGoal,
+    distanceUnit,
+    weightUnit,
+    weekStart,
     isAdmin,
     loading: authLoading,
     authError,
@@ -59,6 +62,7 @@ export default function App() {
   } = useLogs(user?.id)
 
   const {
+    lifts,
     byMuscle,
     loading: liftsLoading,
     addLift,
@@ -81,6 +85,7 @@ export default function App() {
   const [toast, setToast] = useState<{ msg: string; variant: 'ok' | 'error' } | null>(null)
   const [adminPanelOpen, setAdminPanelOpen] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [settingsFrom, setSettingsFrom] = useState<Tab>('home')
 
   const showToast = useCallback((msg: string, variant: 'ok' | 'error' = 'ok') => {
     setToast({ msg, variant })
@@ -205,23 +210,18 @@ export default function App() {
       <Shell
         tab={tab}
         displayName={displayName}
-        weeklyGoal={weeklyGoal}
         themePreference={preference}
         resolvedTheme={resolved}
-        onThemeChange={setPreference}
         onThemeCycle={toggleLightDark}
         onTab={setTab}
-        onSignOut={() => void signOut()}
         onNewLog={() => openNew()}
+        onOpenSettings={() => {
+          setSettingsFrom(tab === 'settings' ? 'home' : tab)
+          setTab('settings')
+        }}
         isAdmin={isAdmin}
         onAdminPanel={() => setAdminPanelOpen(true)}
-        healthControls={health.enabled ? <HealthConnectRow health={health} /> : undefined}
-        dailyStepGoal={health.enabled ? dailyStepGoal : undefined}
         showBody={health.enabled}
-        onUpdateProfile={async (patch) => {
-          await updateProfile(patch)
-          showToast('Profile saved')
-        }}
       >
         {logsLoading && logs.length === 0 ? (
           <div className="page" style={{ display: 'grid', placeItems: 'center', minHeight: '50vh' }}>
@@ -249,6 +249,8 @@ export default function App() {
                 onRestDay={logRestDay}
                 health={health}
                 onLogWorkout={openFromWorkout}
+                weekStart={weekStart}
+                distanceUnit={distanceUnit}
                 stepGoal={dailyStepGoal}
                 onOpenBody={() => setTab('body')}
               />
@@ -265,13 +267,39 @@ export default function App() {
               <ProgressView
                 logs={logs}
                 weeklyGoal={weeklyGoal}
+                weekStart={weekStart}
                 byMuscle={byMuscle}
                 liftsLoading={liftsLoading}
                 onOpenAdd={(group) => setLiftSheet({ mode: 'add', group })}
                 onOpenLift={(lift) => setProgressLift(lift)}
               />
             )}
-            {tab === 'body' && <BodyView health={health} stepGoal={dailyStepGoal} />}
+            {tab === 'body' && (
+              <BodyView health={health} stepGoal={dailyStepGoal} distanceUnit={distanceUnit} />
+            )}
+            {tab === 'settings' && (
+              <SettingsView
+                email={user.email ?? ''}
+                displayName={displayName}
+                weeklyGoal={weeklyGoal}
+                dailyStepGoal={dailyStepGoal}
+                distanceUnit={distanceUnit}
+                weightUnit={weightUnit}
+                weekStart={weekStart}
+                themePreference={preference}
+                onThemeChange={setPreference}
+                onUpdateProfile={async (patch) => {
+                  await updateProfile(patch)
+                }}
+                health={health}
+                logs={logs}
+                lifts={lifts}
+                isAdmin={isAdmin}
+                onAdminPanel={() => setAdminPanelOpen(true)}
+                onSignOut={() => void signOut()}
+                onBack={() => setTab(settingsFrom)}
+              />
+            )}
             {tab === 'calendar' && (
               <CalendarView
                 logs={logs}
@@ -328,6 +356,7 @@ export default function App() {
       <LiftEditorSheet
         open={liftSheet != null}
         mode={liftSheet?.mode ?? 'add'}
+        defaultUnit={weightUnit}
         initialGroup={liftSheet?.mode === 'add' ? liftSheet.group : undefined}
         lift={liftSheet?.mode === 'edit' ? liftSheet.lift : null}
         onClose={() => setLiftSheet(null)}

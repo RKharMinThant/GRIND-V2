@@ -1,10 +1,29 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import {
+  DEFAULT_DISTANCE_UNIT,
+  DEFAULT_WEEK_START,
+  DEFAULT_WEIGHT_UNIT,
+  type DistanceUnit,
+  type WeekStart,
+  type WeightUnit,
+} from '../lib/units'
 import type { Profile } from '../types/database'
 
 const DEFAULT_WEEKLY_GOAL = 4
 const DEFAULT_DAILY_STEP_GOAL = 10000
+
+/** Added by later migrations; dropped from an update when the column is missing. */
+const OPTIONAL_PROFILE_COLUMNS = ['daily_step_goal', 'distance_unit', 'weight_unit', 'week_start'] as const
+
+/** Which migration adds each optional column, so the UI can say what to run. */
+const COLUMN_MIGRATION: Record<string, string> = {
+  daily_step_goal: '015_daily_step_goal.sql',
+  distance_unit: '016_preferences.sql',
+  weight_unit: '016_preferences.sql',
+  week_start: '016_preferences.sql',
+}
 
 /**
  * TEMPORARY dev-only login bypass. In `npm run dev`, if both vars are set in .env.local,
@@ -169,14 +188,45 @@ export function useAuth() {
   }, [])
 
   const updateProfile = useCallback(
-    async (patch: { display_name?: string; weekly_goal?: number; daily_step_goal?: number }) => {
+    async (patch: {
+      display_name?: string
+      weekly_goal?: number
+      daily_step_goal?: number
+      distance_unit?: DistanceUnit
+      weight_unit?: WeightUnit
+      week_start?: WeekStart
+    }) => {
       if (!user) throw new Error('Not signed in')
-      const { data, error } = await supabase
+
+      // Columns from newer migrations are dropped and retried, so the app keeps
+      // working on a database where 015 / 016 have not been applied yet.
+      let body: Record<string, unknown> = { ...patch }
+      let { data, error } = await supabase
         .from('profiles')
-        .update(patch)
+        .update(body)
         .eq('id', user.id)
         .select()
         .single()
+
+      while (error) {
+        const missing = OPTIONAL_PROFILE_COLUMNS.find(
+          (col) => col in body && new RegExp(col, 'i').test(error!.message),
+        )
+        if (!missing) break
+        delete body[missing]
+        if (Object.keys(body).length === 0) {
+          throw new Error(`Run migration ${COLUMN_MIGRATION[missing] ?? ''} in Supabase to save this`.trim())
+        }
+        const retry = await supabase
+          .from('profiles')
+          .update(body)
+          .eq('id', user.id)
+          .select()
+          .single()
+        data = retry.data
+        error = retry.error
+      }
+
       if (error) throw error
       setProfile(data as Profile)
       return data as Profile
@@ -192,6 +242,9 @@ export function useAuth() {
 
   const weeklyGoal = profile?.weekly_goal ?? DEFAULT_WEEKLY_GOAL
   const dailyStepGoal = profile?.daily_step_goal ?? DEFAULT_DAILY_STEP_GOAL
+  const distanceUnit: DistanceUnit = profile?.distance_unit ?? DEFAULT_DISTANCE_UNIT
+  const weightUnit: WeightUnit = profile?.weight_unit ?? DEFAULT_WEIGHT_UNIT
+  const weekStart: WeekStart = profile?.week_start ?? DEFAULT_WEEK_START
   const isAdmin = user?.email === 'rkharmthant@gmail.com'
 
   return {
@@ -201,6 +254,9 @@ export function useAuth() {
     displayName,
     weeklyGoal,
     dailyStepGoal,
+    distanceUnit,
+    weightUnit,
+    weekStart,
     isAdmin,
     loading,
     authError,
