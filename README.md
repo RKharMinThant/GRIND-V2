@@ -315,6 +315,7 @@ types, each toggled per user in **Settings → Notifications**:
 
 | Type | When it fires (user's local time) | Needs Fitbit |
 |---|---|---|
+| `workout_done` | A Fitbit session of 15+ minutes syncs · any time from 06:00 · **event-driven, not scheduled** | yes |
 | `fitbit_expired` | Connection dropped · 08:00–21:00, at most every 3 days | connection status only |
 | `streak_risk` | Live streak of 2+ days with nothing logged today · 18:00–21:00 | no |
 | `inactivity` | 3+ days since the last session · 09:00–11:00, at most every 3 days | no |
@@ -365,6 +366,50 @@ Before sending, the dispatcher inserts into `notification_sends`, whose primary 
 is a no-op instead of a second buzz. If nothing was delivered the row is released so a
 later run can retry.
 
+
+### Post-workout notifications (webhook)
+
+`workout_done` does not go through the hourly scheduler. Google Health pushes to
+`health-webhook` as soon as exercise data lands, so the notification tracks when you
+actually trained rather than a clock. The remaining delay is the watch→phone→Google
+sync, which is outside our control — opening the Fitbit app forces it.
+
+The webhook says only *which user* and *which interval* changed, so:
+
+- `health_connections.health_user_id` maps Google's `healthUserId` back to an account.
+  It comes from `users.getIdentity`, captured at connect time and backfilled by
+  `health-data` for older connections.
+- `notification_sends.ref` holds the exercise data point id, so two sessions in one
+  day give two notifications while a Google retry gives none.
+- The payload signature is verified against Google's Tink keyset
+  (`_shared/googleSignature.ts`). The endpoint must be public, so the shared secret
+  alone only proves the caller saw the secret — the signature proves it was Google.
+
+Tapping the notification opens `/app?workout=<id>`, which pre-fills the log sheet with
+that workout attached.
+
+**Registering it** (the function must be deployed first — Google verifies the URL during
+registration by calling it twice):
+
+```bash
+npm run health:secrets        # HEALTH_WEBHOOK_SECRET must be in Supabase
+npm run health:deploy         # includes health-webhook (--no-verify-jwt)
+npm run health:webhook        # create or update the subscriber
+npm run health:webhook -- --list
+```
+
+Set `GOOGLE_PROJECT_NUMBER` in `.env.local` first. Registration needs an access token
+with `cloud-platform` scope and `health.subscribers.create` on the project; the script
+falls back to `gcloud auth print-access-token`.
+
+**Note on publishing status.** All `googlehealth.*` scopes are restricted. While the
+OAuth consent screen is in *Testing*, Google expires refresh tokens after 7 days and the
+whole integration — webhook included — dies weekly. Switching the app to *In production*
+stops that; it does **not** require completing verification, which would mean an annual
+third-party security assessment. Unverified production apps are capped at 100 users and
+show a click-through warning on the consent screen, both fine for an invite-only app.
+Existing tokens keep their 7-day clock, so reconnect Fitbit once after publishing.
+
 ### Troubleshooting
 
 - **Nothing arrives** — tap **Send a test** in Settings. That isolates delivery from the
@@ -375,6 +420,9 @@ later run can retry.
   Enable it again; the old row is pruned on its next failed send.
 - **Workflow is green but nothing sends** — the response prints `{users, evaluated, sent}`.
   `evaluated: 0` means no rule's hour window was open, which is normal for most runs.
+- **No workout notification** — check `health_user_id` is set on your `health_connections`
+  row (open the app once to trigger the backfill), that `npm run health:webhook -- --list`
+  shows the subscriber, and that the session was 15+ minutes.
 
 ---
 
@@ -395,7 +443,7 @@ src/
   types/database.ts
 supabase/migrations/
 supabase/functions/    # Edge Functions: health-*, push-* (+ _shared)
-scripts/               # push-secrets.mjs (Edge Function secrets)
+scripts/               # push-secrets.mjs, register-health-webhook.mjs
 docs/superpowers/      # Design specs and implementation plans
 .github/workflows/     # supabase-keepalive, push-notifications
 vercel.json            # SPA rewrites

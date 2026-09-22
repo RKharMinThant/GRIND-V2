@@ -2,6 +2,7 @@
 // Exchanges the code, stores tokens, and sends the user back to the app.
 import { adminClient } from '../_shared/clients.ts'
 import { exchangeCode, HEALTH_SCOPES } from '../_shared/google.ts'
+import { getHealthUserId } from '../_shared/googleApi.ts'
 
 const STATE_TTL_MS = 10 * 60 * 1000
 
@@ -40,6 +41,10 @@ Deno.serve(async (req) => {
     const refreshToken = tokens.refresh_token ?? existing?.refresh_token
     if (!refreshToken) return back('error')
 
+    // Webhooks identify the user only by healthUserId, so capture it now.
+    // A failure here must not fail the connection — health-data backfills it later.
+    const healthUserId = await getHealthUserId(tokens.access_token).catch(() => null)
+
     const { error } = await db.from('health_connections').upsert({
       user_id: row.user_id,
       refresh_token: refreshToken,
@@ -47,6 +52,7 @@ Deno.serve(async (req) => {
       access_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
       scopes: tokens.scope ? tokens.scope.split(' ') : HEALTH_SCOPES,
       status: 'connected',
+      ...(healthUserId ? { health_user_id: healthUserId } : {}),
     })
     if (error) return back('error')
     return back('connected')

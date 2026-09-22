@@ -91,9 +91,21 @@ export default function App() {
   const [adminPanelOpen, setAdminPanelOpen] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [settingsFrom, setSettingsFrom] = useState<Tab>('home')
+  /** Workout id from a notification deep link, held until health data arrives */
+  const [pendingWorkoutId, setPendingWorkoutId] = useState<string | null>(null)
 
   const showToast = useCallback((msg: string, variant: 'ok' | 'error' = 'ok') => {
     setToast({ msg, variant })
+  }, [])
+
+  // Opened from a workout notification (/app?workout=<id>)
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    const id = url.searchParams.get('workout')
+    if (!id) return
+    setPendingWorkoutId(id)
+    url.searchParams.delete('workout')
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
   }, [])
 
   // Opened from a notification that wants Settings (/app?settings=1)
@@ -166,12 +178,22 @@ export default function App() {
     }
   }
 
-  function openFromWorkout(workout: HealthWorkout) {
+  const openFromWorkout = useCallback((workout: HealthWorkout) => {
     setEditing(null)
     setFormDate(undefined)
     setAttachWorkout(workout)
     setFormOpen(true)
-  }
+  }, [])
+
+  // A workout notification arrives before the Fitbit data is loaded, so hold the id
+  // from the deep link and open the log sheet once that workout actually shows up.
+  useEffect(() => {
+    if (!pendingWorkoutId) return
+    const match = health.workouts.find((w) => w.id === pendingWorkoutId)
+    if (!match) return
+    setPendingWorkoutId(null)
+    openFromWorkout(match)
+  }, [pendingWorkoutId, health.workouts, openFromWorkout])
 
   function openEdit(log: Log) {
     setDetailId(null)

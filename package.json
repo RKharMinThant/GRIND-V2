@@ -1,7 +1,7 @@
 {
   "name": "grind-habit-tracker",
   "private": true,
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "GRIND — training journal + marketing site (Supabase + React)",
   "type": "module",
   "scripts": {
@@ -10,8 +10,9 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "health:deploy": "npx supabase functions deploy health-oauth-start && npx supabase functions deploy health-oauth-callback --no-verify-jwt && npx supabase functions deploy health-data && npx supabase functions deploy health-body && npx supabase functions deploy health-disconnect",
+    "health:deploy": "npx supabase functions deploy health-oauth-start && npx supabase functions deploy health-oauth-callback --no-verify-jwt && npx supabase functions deploy health-data && npx supabase functions deploy health-body && npx supabase functions deploy health-disconnect && npx supabase functions deploy health-webhook --no-verify-jwt",
     "health:secrets": "node scripts/push-secrets.mjs",
+    "health:webhook": "node scripts/register-health-webhook.mjs",
     "push:deploy": "npx supabase functions deploy push-subscribe && npx supabase functions deploy push-unsubscribe && npx supabase functions deploy push-test && npx supabase functions deploy push-dispatch --no-verify-jwt"
   },
   "dependencies": {

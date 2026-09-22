@@ -15,6 +15,8 @@ const KEYS = [
   'VAPID_PRIVATE_KEY',
   'VAPID_SUBJECT',
   'PUSH_CRON_SECRET',
+  // Google Health webhooks
+  'HEALTH_WEBHOOK_SECRET',
 ]
 const PLACEHOLDERS = ['your-client-id.apps.googleusercontent.com', 'your-client-secret']
 

@@ -5,6 +5,7 @@
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { json } from './cors.ts'
 import { ExpiredGrantError, refreshAccessToken } from './google.ts'
+import { getHealthUserId } from './googleApi.ts'
 
 export type TokenResult =
   | { ok: true; token: string }
@@ -49,6 +50,31 @@ export async function getAccessToken(req: Request, db: SupabaseClient, userId: s
   if (result.reason === 'not_connected') return json(req, { error: 'not_connected' }, 404)
   if (result.reason === 'expired') return json(req, { error: 'expired' }, 409)
   return json(req, { error: 'token_refresh_failed', detail: result.detail }, 502)
+}
+
+/**
+ * Fills health_user_id for a connection made before webhooks existed. Cheap: one
+ * extra Google call only while the column is null, then never again.
+ */
+export async function ensureHealthUserId(
+  db: SupabaseClient,
+  userId: string,
+  accessToken: string,
+): Promise<void> {
+  const { data } = await db
+    .from('health_connections')
+    .select('health_user_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (!data || data.health_user_id) return
+  try {
+    const healthUserId = await getHealthUserId(accessToken)
+    if (healthUserId) {
+      await db.from('health_connections').update({ health_user_id: healthUserId }).eq('user_id', userId)
+    }
+  } catch (e) {
+    console.error('health_user_id backfill failed', (e as Error).message)
+  }
 }
 
 /** Force a token refresh on the next call (Google rejected the current one). */
