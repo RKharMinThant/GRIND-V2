@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy — GRIND</title>
+    <meta name="description" content="What GRIND collects, why, and how to get rid of it." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #07080a;
+        --surface: #12151b;
+        --text: #f4f5f7;
+        --muted: #9aa0ad;
+        --accent: #c8f135;
+        --border: rgba(255, 255, 255, 0.08);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 48px 16px 96px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Outfit, system-ui, -apple-system, sans-serif;
+        line-height: 1.65;
+        font-size: 16px;
+      }
+      main { max-width: 720px; margin: 0 auto; }
+      .logo {
+        font-family: 'Bebas Neue', Impact, sans-serif;
+        font-size: 1.6rem;
+        letter-spacing: 0.06em;
+        text-decoration: none;
+        color: var(--text);
+        display: inline-block;
+        margin-bottom: 32px;
+      }
+      .logo span { color: var(--accent); }
+      h1 { font-size: 2rem; line-height: 1.15; margin: 0 0 8px; letter-spacing: -0.02em; }
+      h2 { font-size: 1.15rem; margin: 40px 0 10px; letter-spacing: -0.01em; }
+      .updated { color: var(--muted); font-size: 0.85rem; margin: 0 0 32px; }
+      p, li { color: #d9dce3; }
+      ul { padding-left: 20px; }
+      li { margin-bottom: 6px; }
+      a { color: var(--accent); }
+      .callout {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin: 24px 0;
+      }
+      .callout p:last-child { margin-bottom: 0; }
+      footer { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+      footer a { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="logo" href="/">GRIND<span>.</span></a>
+
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated 22 September 2026</p>
+
+      <p>
+        GRIND is a private, invite-only training journal run by an individual, not a company. It
+        exists to show you your own training data. It is not an advertising product and there is
+        nothing to sell.
+      </p>
+
+      <div class="callout">
+        <p>
+          <strong>The short version:</strong> GRIND stores what you log and, if you connect it,
+          what your Fitbit records. That data is shown back to you and to nobody else. There are no
+          analytics, no trackers, no advertising, and your data is never sold or shared for
+          marketing.
+        </p>
+      </div>
+
+      <h2>What GRIND stores</h2>
+      <ul>
+        <li><strong>Account</strong> — your email address and a display name. Passwords are handled by Supabase Auth and are never visible to the app.</li>
+        <li><strong>Training logs</strong> — sessions you record: workout type, focus areas, duration, notes, meals, supplement amounts, dates, and any progress photos you attach.</li>
+        <li><strong>Tracked lifts</strong> — exercises, sets, reps and weights you enter.</li>
+        <li><strong>Preferences</strong> — units, week start, goals, theme, and which notifications you have switched on.</li>
+        <li><strong>Fitbit / Google Health data, only if you connect it</strong> — workouts, sleep, heart rate, heart rate variability, steps, activity and body measurements.</li>
+        <li><strong>Notification registration, only if you enable it</strong> — the push endpoint your browser issues, its encryption keys, your time zone, and your browser's user-agent string.</li>
+      </ul>
+
+      <h2>Why</h2>
+      <p>
+        Solely to operate the app for you: to display your history and progress, to send the
+        notifications you asked for, and to keep you signed in. GRIND does not profile you, does
+        not run analytics, and does not use your data to train anything.
+      </p>
+
+      <h2>Google Health / Fitbit data</h2>
+      <p>
+        Connecting Fitbit is optional and the access is read-only. GRIND requests only the scopes
+        needed for the features you see: activity and fitness, sleep, and body measurements.
+      </p>
+      <p>
+        GRIND's use and transfer of information received from Google APIs adheres to the
+        <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Google API Services User Data Policy</a>,
+        including its Limited Use requirements. That data is used only to provide the features you
+        can see in the app. It is never sold, never used for advertising, and never shared with
+        third parties except the infrastructure providers listed below.
+      </p>
+      <p>
+        Access tokens are held server-side and never sent to your browser. You can revoke access at
+        any time from GRIND's settings, or from your
+        <a href="https://myaccount.google.com/permissions" rel="noopener">Google Account permissions</a> page.
+      </p>
+
+      <h2>Where it is stored, and who else touches it</h2>
+      <p>GRIND is small and uses few services. Each one only ever sees what it needs to do its job:</p>
+      <ul>
+        <li><strong>Supabase</strong> — database, authentication and photo storage. This is where your data lives.</li>
+        <li><strong>Vercel</strong> — serves the website itself.</li>
+        <li><strong>Google</strong> — sign-in to Fitbit and the Google Health API, only if you connect it.</li>
+        <li><strong>Your browser's push service</strong> (Apple, Google or Mozilla, depending on your device) — delivers notifications if you enable them. Notification text is encrypted so the push service cannot read it.</li>
+        <li><strong>Google Fonts</strong> — serves the typefaces used by the site.</li>
+      </ul>
+      <p>Access is enforced per row in the database, so one account cannot read another's data.</p>
+
+      <h2>Notifications</h2>
+      <p>
+        Notifications are off until you switch them on, per type. Turning them off in settings, or
+        removing the app from your home screen, ends them. Their content is limited to short
+        summaries of your own activity.
+      </p>
+
+      <h2>Getting your data out, and deleting it</h2>
+      <p>
+        Settings → Data exports everything as JSON, and your sessions as CSV, at any time. To have
+        your account and all associated data deleted, email the address below and it will be
+        removed. Disconnecting Fitbit deletes the stored tokens immediately.
+      </p>
+
+      <h2>Retention</h2>
+      <p>
+        Your logs are kept until you delete them or ask for the account to be removed. Records of
+        which notifications were already sent are pruned after 60 days.
+      </p>
+
+      <h2>Children</h2>
+      <p>GRIND is not intended for anyone under 16 and accounts are issued by invitation only.</p>
+
+      <h2>Changes</h2>
+      <p>
+        If this policy changes, the date at the top changes with it. Material changes affecting how
+        your data is handled will be sent to the email on your account.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions, data requests or deletion:
+        <a href="mailto:rkharmthant@gmail.com">rkharmthant@gmail.com</a>.
+      </p>
+
+      <footer>
+        <a href="/">Back to GRIND</a> · <a href="/tncs">Terms of Service</a>
+      </footer>
+    </main>
+  </body>
+</html>
