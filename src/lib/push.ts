@@ -3,6 +3,7 @@
 // they must stay in step with supabase/functions/_shared/notifyRules.ts.
 
 export type NotificationType =
+  | 'workout_done'
   | 'fitbit_expired'
   | 'inactivity'
   | 'streak_risk'
@@ -18,6 +19,12 @@ export const NOTIFICATION_TYPES: {
   description: string
   needsFitbit: boolean
 }[] = [
+  {
+    id: 'workout_done',
+    label: 'Workout finished',
+    description: 'A summary as soon as Fitbit syncs a session, with a tap to log it',
+    needsFitbit: true,
+  },
   {
     id: 'fitbit_expired',
     label: 'Fitbit needs reconnecting',

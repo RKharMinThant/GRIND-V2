@@ -2,7 +2,7 @@
 // 404 not_connected · 409 expired · 502 google
 import { normalizeToday } from '../_shared/bodyNormalize.ts'
 import { adminClient, requireUser } from '../_shared/clients.ts'
-import { getAccessToken, invalidateAccessToken } from '../_shared/connection.ts'
+import { ensureHealthUserId, getAccessToken, invalidateAccessToken } from '../_shared/connection.ts'
 import { json, preflight } from '../_shared/cors.ts'
 import { dailyRollUpRange, dailyStepsRollUp, FILTERS, GoogleApiError, listAll } from '../_shared/googleApi.ts'
 import { buildRecovery, normalizeExercise, normalizeStepsRollup } from '../_shared/normalize.ts'
@@ -33,6 +33,9 @@ Deno.serve(async (req) => {
   const db = adminClient()
   const accessToken = await getAccessToken(req, db, user.id)
   if (accessToken instanceof Response) return accessToken
+
+  // Backfills health_user_id once, so webhooks can map back to this account
+  await ensureHealthUserId(db, user.id, accessToken)
 
   const recoveryFrom = addDaysIso(to, -7)
   try {

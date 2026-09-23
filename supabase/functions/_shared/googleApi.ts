@@ -3,7 +3,8 @@
 
 import type { GDataPoint, GRollupPoint } from './normalize.ts'
 
-const BASE = 'https://health.googleapis.com/v4/users/me/dataTypes'
+const USER_BASE = 'https://health.googleapis.com/v4/users/me'
+const BASE = `${USER_BASE}/dataTypes`
 const MAX_ROLLUP_DAYS = 90
 
 export class GoogleApiError extends Error {
@@ -62,6 +63,17 @@ async function call(accessToken: string, url: string, init?: RequestInit, dataTy
   const text = await res.text()
   if (!res.ok) throw new GoogleApiError(res.status, googleMessage(text), dataType)
   return text ? JSON.parse(text) : {}
+}
+
+/**
+ * The caller's Google Health identity. Webhooks arrive with only a healthUserId,
+ * so this is the sole bridge back to a GRIND account. It never changes, so it is
+ * fetched once at connect time and cached on the row.
+ */
+export async function getHealthUserId(accessToken: string): Promise<string | null> {
+  const data = await call(accessToken, `${USER_BASE}/identity`, undefined, 'identity')
+  const id = (data as { healthUserId?: string }).healthUserId
+  return typeof id === 'string' && id ? id : null
 }
 
 export async function listAll(
