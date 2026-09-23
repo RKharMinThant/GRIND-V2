@@ -12,6 +12,7 @@ import { LogDetail } from './components/LogDetail'
 import { LogFormSheet } from './components/LogFormSheet'
 import { LogsList } from './components/LogsList'
 import { ProgressView } from './components/ProgressView'
+import { RestDaySheet } from './components/RestDaySheet'
 import { SettingsView } from './components/SettingsView'
 import { Shell, type Tab } from './components/Shell'
 import { Toast } from './components/Toast'
@@ -23,6 +24,7 @@ import { useLogs } from './hooks/useLogs'
 import { useTheme } from './hooks/useTheme'
 import { useTrackedLifts } from './hooks/useTrackedLifts'
 import { toLocalDateString } from './lib/dates'
+import { restDeepLinkDate } from './lib/push'
 import { isRestLog, REST_WORKOUT, type Log, type LogInsert, type TrackedLift } from './types/database'
 
 type LiftSheetState =
@@ -93,6 +95,9 @@ export default function App() {
   const [settingsFrom, setSettingsFrom] = useState<Tab>('home')
   /** Workout id from a notification deep link, held until health data arrives */
   const [pendingWorkoutId, setPendingWorkoutId] = useState<string | null>(null)
+  /** Day to log from a "Rest day?" notification (/app?rest=YYYY-MM-DD) */
+  const [restDate, setRestDate] = useState<string | null>(null)
+  const [restOpen, setRestOpen] = useState(false)
 
   const showToast = useCallback((msg: string, variant: 'ok' | 'error' = 'ok') => {
     setToast({ msg, variant })
@@ -106,6 +111,19 @@ export default function App() {
     setPendingWorkoutId(id)
     url.searchParams.delete('workout')
     window.history.replaceState(null, '', url.pathname + url.search + url.hash)
+  }, [])
+
+  // Opened from a "Rest day?" notification (/app?rest=YYYY-MM-DD). The date comes from
+  // the link, not the clock: the notification lands near midnight.
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (!url.searchParams.has('rest')) return
+    const date = restDeepLinkDate(url.searchParams.get('rest'), toLocalDateString())
+    url.searchParams.delete('rest')
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
+    if (!date) return
+    setRestDate(date)
+    setRestOpen(true)
   }, [])
 
   // Opened from a notification that wants Settings (/app?settings=1)
@@ -351,6 +369,15 @@ export default function App() {
       </Shell>
 
       {/* Root-level sheets — same layer as Log, above dock / page transforms */}
+      <RestDaySheet
+        open={restOpen}
+        date={restDate}
+        displayName={displayName}
+        ready={!logsLoading}
+        onConfirm={logRestDay}
+        onClose={() => setRestOpen(false)}
+      />
+
       <CalendarSheet
         open={calendarOpen}
         logs={logs}

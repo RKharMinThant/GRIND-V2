@@ -7342,3 +7342,18 @@ img {
     transition: none;
   }
 }
+
+/* ── Rest-day confirm (from the "Rest day?" notification) ──────────────────── */
+.sheet--rest {
+  max-width: 440px;
+}
+
+.rest-day-copy {
+  margin: 0 0 8px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.rest-day-copy strong {
+  color: var(--text);
+}

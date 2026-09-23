@@ -15,13 +15,22 @@ import { localParts } from '../_shared/localTime.ts'
 import {
   dueTypes,
   evaluate,
+  isRestWorkout,
   needsHealthData,
   type HealthSnapshot,
   type NotificationPrefs,
   type NotificationType,
 } from '../_shared/notifyRules.ts'
-import { normalizeStepsRollup, restingHeartRateByDate, sleepMinutesByNight } from '../_shared/normalize.ts'
+import {
+  normalizeExercise,
+  normalizeStepsRollup,
+  restingHeartRateByDate,
+  sleepMinutesByNight,
+} from '../_shared/normalize.ts'
+import { firstName } from '../_shared/personal.ts'
 import { allSubscriptions, deliver, type SubscriptionRow } from '../_shared/subscriptions.ts'
+import type { HealthWorkout } from '../_shared/types.ts'
+import { MIN_WORKOUT_MINUTES } from '../_shared/workoutNotification.ts'
 
 /** Users processed at once. Keeps slow Google reads from serialising the whole run. */
 const CONCURRENCY = 4
@@ -44,20 +53,21 @@ function unauthorized(): Response {
 /** Everything the rules need that doesn't cost a Google call, for every user at once. */
 async function loadContext(db: Db, userIds: string[], since: string) {
   const [profiles, sends, connections, logs] = await Promise.all([
-    db.from('profiles').select('id, notification_prefs, daily_step_goal').in('id', userIds),
+    db.from('profiles').select('id, notification_prefs, daily_step_goal, display_name').in('id', userIds),
     db.from('notification_sends').select('user_id, type, local_day').in('user_id', userIds).gte('local_day', since),
     db.from('health_connections').select('user_id, status').in('user_id', userIds),
     // Deliberately unbounded: "days since your last session" must not read as
     // "you have never logged anything" for someone who has simply been away a while.
     // One short column per log row, only for users with a subscription.
-    db.from('logs').select('user_id, log_date').in('user_id', userIds),
+    db.from('logs').select('user_id, log_date, workout').in('user_id', userIds),
   ])
 
-  const prefsBy = new Map<string, { prefs: NotificationPrefs; stepGoal: number }>()
+  const prefsBy = new Map<string, { prefs: NotificationPrefs; stepGoal: number; name: string | null }>()
   for (const p of profiles.data ?? []) {
     prefsBy.set(p.id, {
       prefs: (p.notification_prefs ?? {}) as NotificationPrefs,
       stepGoal: p.daily_step_goal ?? DEFAULT_STEP_GOAL,
+      name: firstName(p.display_name),
     })
   }
 
@@ -74,13 +84,21 @@ async function loadContext(db: Db, userIds: string[], since: string) {
   for (const c of connections.data ?? []) statusBy.set(c.user_id, c.status)
 
   const logsBy = new Map<string, string[]>()
+  // A logged rest day keeps a streak alive but is not training, so the rest-day
+  // rule needs the two apart
+  const trainingBy = new Map<string, string[]>()
   for (const l of logs.data ?? []) {
     const list = logsBy.get(l.user_id) ?? []
     list.push(l.log_date)
     logsBy.set(l.user_id, list)
+    if (!isRestWorkout(l.workout)) {
+      const training = trainingBy.get(l.user_id) ?? []
+      training.push(l.log_date)
+      trainingBy.set(l.user_id, training)
+    }
   }
 
-  return { prefsBy, sentBy, statusBy, logsBy }
+  return { prefsBy, sentBy, statusBy, logsBy, trainingBy }
 }
 
 /** The Fitbit reads a due rule needs — and nothing more. */
@@ -88,8 +106,10 @@ async function loadHealth(
   db: Db,
   userId: string,
   localDay: string,
+  timeZone: string,
   due: NotificationType[],
   stepGoal: number,
+  wantExercise: boolean,
 ): Promise<HealthSnapshot | null> {
   const token = await resolveAccessToken(db, userId)
   if (!token.ok) return null
@@ -99,13 +119,28 @@ async function loadHealth(
   const from = addDays(localDay, -30)
 
   try {
-    const [steps, sleep, rhr] = await Promise.all([
+    const [steps, sleep, rhr, exercise] = await Promise.all([
       wantSteps ? dailyStepsRollUp(token.token, localDay, localDay) : Promise.resolve([]),
       wantRecovery ? listAll(token.token, 'sleep', FILTERS.sleep(from)) : Promise.resolve([]),
       wantRecovery
         ? listAll(token.token, 'daily-resting-heart-rate', FILTERS.dailyRestingHeartRate(from))
         : Promise.resolve([]),
+      // Today and the three days before it, plus a day's margin because the filter is on
+      // civil start time and a late session can finish after midnight
+      wantExercise ? listAll(token.token, 'exercise', FILTERS.exercise(addDays(localDay, -4))) : Promise.resolve([]),
     ])
+
+    const exerciseDates = wantExercise
+      ? [
+          ...new Set(
+            exercise
+              .map(normalizeExercise)
+              .filter((w): w is HealthWorkout => w !== null && w.durationMin >= MIN_WORKOUT_MINUTES)
+              // The day it finished, on the user's own clock
+              .map((w) => localParts(new Date(w.end), timeZone).day),
+          ),
+        ]
+      : null
 
     const stepsToday = wantSteps
       ? (normalizeStepsRollup(steps).find((d) => d.date === localDay)?.steps ?? null)
@@ -131,6 +166,7 @@ async function loadHealth(
       bestSleepMinutes,
       restingHeartRate,
       restingHeartRateBaseline,
+      exerciseDates,
     }
   } catch (e) {
     console.error('push-dispatch health read failed', userId, (e as Error).message)
@@ -160,7 +196,7 @@ Deno.serve(async (req) => {
   const userIds = [...byUser.keys()]
   // Bounds the send ledger only; cooldowns never look back further than a week
   const since = addDays(now.toISOString().slice(0, 10), -60)
-  const { prefsBy, sentBy, statusBy, logsBy } = await loadContext(db, userIds, since)
+  const { prefsBy, sentBy, statusBy, logsBy, trainingBy } = await loadContext(db, userIds, since)
 
   let evaluated = 0
   let sent = 0
@@ -178,15 +214,22 @@ Deno.serve(async (req) => {
     if (due.length === 0) return
     evaluated++
 
-    const health = needsHealthData(due)
-      ? await loadHealth(db, userId, day, due, profile.stepGoal)
-      : null
+    // The streak warning also asks "is today a planned rest day?" when the rest-day
+    // check-in is on, and a forgotten log shouldn't make it guess wrong
+    const wantExercise =
+      due.includes('rest_day') || (due.includes('streak_risk') && profile.prefs.rest_day === true)
+    const health =
+      needsHealthData(due) || wantExercise
+        ? await loadHealth(db, userId, day, entry.timeZone, due, profile.stepGoal, wantExercise)
+        : null
 
     const notifications = evaluate({
       ...gate,
       logDates: logsBy.get(userId) ?? [],
+      trainingLogDates: trainingBy.get(userId) ?? [],
       fitbitStatus: statusBy.get(userId) ?? 'none',
       health,
+      name: profile.name,
     })
 
     for (const notification of notifications) {
