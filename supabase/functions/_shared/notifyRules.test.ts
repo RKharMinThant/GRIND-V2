@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { daysBetween, dueTypes, evaluate, needsHealthData, type RuleContext } from './notifyRules'
+import { daysBetween, dueTypes, evaluate, isRestWorkout, needsHealthData, type RuleContext } from './notifyRules'
 
 const base: RuleContext = {
   localDay: '2026-09-18',
   localHour: 19,
   prefs: {},
   logDates: [],
+  trainingLogDates: [],
   lastSent: {},
   fitbitStatus: 'connected',
   health: null,
+  name: null,
 }
 
 const ctx = (over: Partial<RuleContext>): RuleContext => ({ ...base, ...over })
@@ -54,6 +56,8 @@ describe('needsHealthData', () => {
   it('is true only for rules that read Fitbit', () => {
     expect(needsHealthData(['step_goal'])).toBe(true)
     expect(needsHealthData(['recovery_milestone'])).toBe(true)
+    // Checks Fitbit for a session today before asking "rest day?"
+    expect(needsHealthData(['rest_day'])).toBe(true)
     expect(needsHealthData(['streak_risk', 'inactivity'])).toBe(false)
     // fitbit_expired reads the connection row, not the Google API
     expect(needsHealthData(['fitbit_expired'])).toBe(false)
@@ -151,6 +155,7 @@ describe('step_goal', () => {
     bestSleepMinutes: null,
     restingHeartRate: null,
     restingHeartRateBaseline: null,
+    exerciseDates: null,
   }
 
   it('fires when the goal is close but not met', () => {
@@ -183,6 +188,7 @@ describe('recovery_milestone', () => {
     bestSleepMinutes: 470,
     restingHeartRate: 58,
     restingHeartRateBaseline: 59,
+    exerciseDates: null,
   }
 
   it('celebrates the best sleep of the month', () => {
@@ -230,6 +236,7 @@ describe('independence', () => {
           bestSleepMinutes: null,
           restingHeartRate: null,
           restingHeartRateBaseline: null,
+          exerciseDates: null,
         },
       }),
     )
@@ -240,5 +247,145 @@ describe('independence', () => {
     const out = evaluate(ctx({ prefs: { inactivity: true }, localHour: 10, logDates: [] }))
     expect(out[0].tag).toBeTruthy()
     expect(out[0].url).toMatch(/^\/app/)
+  })
+})
+
+describe('rest_day', () => {
+  // localDay is Fri 2026-09-18; the three days before it are 15, 16, 17
+  const trained = ['2026-09-15', '2026-09-16', '2026-09-17']
+  const prefs = { rest_day: true }
+  const restCtx = (over: Partial<RuleContext> = {}) =>
+    ctx({ prefs, localHour: 23, logDates: trained, trainingLogDates: trained, ...over })
+  const fitbit = (exerciseDates: string[]) => ({
+    stepsToday: null,
+    stepGoal: 10000,
+    sleepMinutes: null,
+    bestSleepMinutes: null,
+    restingHeartRate: null,
+    restingHeartRateBaseline: null,
+    exerciseDates,
+  })
+
+  it('asks after three training days with nothing today', () => {
+    const out = evaluate(restCtx())
+    expect(out.map((n) => n.type)).toEqual(['rest_day'])
+    expect(out[0].title).toBe('Rest day today?')
+    expect(out[0].body).toContain('3 sessions in a row')
+  })
+
+  it('uses the first name when there is one', () => {
+    expect(evaluate(restCtx({ name: 'Andy' }))[0].title).toBe('Andy, rest day today?')
+  })
+
+  it('mentions the streak that logging the rest keeps alive', () => {
+    const logs = ['2026-09-13', '2026-09-14', ...trained]
+    expect(evaluate(restCtx({ logDates: logs }))[0].body).toContain('5-day streak')
+  })
+
+  it('carries the date in the link, so tapping after midnight logs the right day', () => {
+    expect(evaluate(restCtx())[0].url).toBe('/app?rest=2026-09-18')
+  })
+
+  it('only fires in the 11pm hour, after the usual finish time', () => {
+    expect(evaluate(restCtx({ localHour: 22 }))).toEqual([])
+    expect(evaluate(restCtx({ localHour: 23 }))).toHaveLength(1)
+  })
+
+  it('stays quiet after only two training days', () => {
+    const two = ['2026-09-16', '2026-09-17']
+    expect(evaluate(restCtx({ logDates: two, trainingLogDates: two }))).toEqual([])
+  })
+
+  it('does not count a logged rest day as training', () => {
+    // The 16th was already a rest day, so the 18th is not the end of a 3-day block
+    expect(evaluate(restCtx({ trainingLogDates: ['2026-09-15', '2026-09-17'] }))).toEqual([])
+  })
+
+  it('stays quiet once anything is logged today', () => {
+    const logs = [...trained, '2026-09-18']
+    expect(evaluate(restCtx({ logDates: logs }))).toEqual([])
+  })
+
+  it('stays quiet when Fitbit recorded a session today — you trained after all', () => {
+    expect(evaluate(restCtx({ health: fitbit(['2026-09-18']) }))).toEqual([])
+  })
+
+  it('counts a Fitbit session as training even if you forgot to log it', () => {
+    // Only two days logged; Fitbit saw the third
+    const out = evaluate(
+      restCtx({
+        logDates: ['2026-09-15', '2026-09-16'],
+        trainingLogDates: ['2026-09-15', '2026-09-16'],
+        health: fitbit(['2026-09-17']),
+      }),
+    )
+    expect(out.map((n) => n.type)).toEqual(['rest_day'])
+  })
+
+  it('still works from logs alone when Fitbit is not connected', () => {
+    expect(evaluate(restCtx({ health: null, fitbitStatus: 'none' }))).toHaveLength(1)
+  })
+})
+
+describe('streak_risk on a predicted rest day', () => {
+  const trained = ['2026-09-15', '2026-09-16', '2026-09-17']
+
+  it('is replaced by the rest-day check-in while that is switched on', () => {
+    const out = evaluate(
+      ctx({
+        prefs: { streak_risk: true, rest_day: true },
+        localHour: 19,
+        logDates: trained,
+        trainingLogDates: trained,
+      }),
+    )
+    expect(out).toEqual([])
+  })
+
+  it('still warns when the rest-day check-in is off, so nothing goes quiet by surprise', () => {
+    const out = evaluate(
+      ctx({ prefs: { streak_risk: true }, localHour: 19, logDates: trained, trainingLogDates: trained }),
+    )
+    expect(out.map((n) => n.type)).toEqual(['streak_risk'])
+  })
+
+  it('still warns on an ordinary training day', () => {
+    const two = ['2026-09-16', '2026-09-17']
+    const out = evaluate(
+      ctx({ prefs: { streak_risk: true, rest_day: true }, localHour: 19, logDates: two, trainingLogDates: two }),
+    )
+    expect(out.map((n) => n.type)).toEqual(['streak_risk'])
+  })
+})
+
+describe('personal touch', () => {
+  it('names the user in every title when a name is known', () => {
+    const named = evaluate(ctx({ name: 'Andy', prefs: { inactivity: true }, localHour: 10, logDates: ['2026-09-10'] }))
+    expect(named[0].title).toBe('Back to it, Andy')
+  })
+
+  it('reads naturally without a name', () => {
+    const plain = evaluate(ctx({ prefs: { inactivity: true }, localHour: 10, logDates: ['2026-09-10'] }))
+    expect(plain[0].title).toBe('Back to it')
+  })
+
+  it('never leaves a dangling comma or placeholder', () => {
+    const out = evaluate(
+      ctx({ prefs: { fitbit_expired: true, streak_risk: true }, localHour: 19, fitbitStatus: 'expired', logDates: ['2026-09-16', '2026-09-17'], trainingLogDates: ['2026-09-16', '2026-09-17'] }),
+    )
+    for (const n of out) {
+      expect(n.title).not.toMatch(/^,|, $|null|undefined/)
+    }
+  })
+})
+
+describe('isRestWorkout', () => {
+  it('matches how the app records a rest day', () => {
+    // Mirrors isRestLog in src/types/database.ts
+    expect(isRestWorkout('Rest')).toBe(true)
+    expect(isRestWorkout(' rest day ')).toBe(true)
+    expect(isRestWorkout('Push day')).toBe(false)
+    expect(isRestWorkout('Restorative yoga')).toBe(false)
+    expect(isRestWorkout(null)).toBe(false)
   })
 })

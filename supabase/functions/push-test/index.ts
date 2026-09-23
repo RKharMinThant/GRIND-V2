@@ -2,6 +2,7 @@
 // The only way to prove the whole chain works without waiting for a real trigger.
 import { adminClient, requireUser } from '../_shared/clients.ts'
 import { json, preflight } from '../_shared/cors.ts'
+import { firstName, personal } from '../_shared/personal.ts'
 import { deliver, userSubscriptions } from '../_shared/subscriptions.ts'
 
 Deno.serve(async (req) => {
@@ -18,9 +19,12 @@ Deno.serve(async (req) => {
     return json(req, { error: 'not_subscribed', detail: 'No device is registered yet' }, 404)
   }
 
+  const { data: profile } = await db.from('profiles').select('display_name').eq('id', user.id).maybeSingle()
+  const name = firstName(profile?.display_name)
+
   try {
     const delivered = await deliver(db, subs, {
-      title: 'GRIND',
+      title: personal(name, (n) => `Hi ${n}`, 'GRIND'),
       body: 'Notifications are working. This is the only test you’ll get.',
       tag: 'grind-test',
       url: '/app',

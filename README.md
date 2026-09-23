@@ -313,11 +313,14 @@ Set `VITE_HEALTH_PROVIDER=google` in `.env.local` and/or Vercel (then redeploy),
 Web Push to the installed app — no App Store, no Apple developer account. Five opt-in
 types, each toggled per user in **Settings → Notifications**:
 
+Every title uses the first word of the display name when there is one ("Andy, rest day today?").
+
 | Type | When it fires (user's local time) | Needs Fitbit |
 |---|---|---|
 | `workout_done` | A Fitbit session of 15+ minutes syncs · any time from 06:00 · **event-driven, not scheduled** | yes |
 | `fitbit_expired` | Connection dropped · 08:00–21:00, at most every 3 days | connection status only |
-| `streak_risk` | Live streak of 2+ days with nothing logged today · 18:00–21:00 | no |
+| `rest_day` | Three training days in a row (logged, or a 15+ min Fitbit session), nothing logged today and no Fitbit session today · 23:00 · tap opens a one-tap confirm for that date | optional — falls back to logs |
+| `streak_risk` | Live streak of 2+ days with nothing logged today · 18:00–21:00 · skipped on a predicted rest day while `rest_day` is on | no |
 | `inactivity` | 3+ days since the last session · 09:00–11:00, at most every 3 days | no |
 | `step_goal` | Between 60% and 99% of the daily step goal · 18:00–20:00 | yes |
 | `recovery_milestone` | Best sleep in 30 days, or resting HR 2+ bpm below its 30-day average · 08:00–10:00, at most weekly | yes |

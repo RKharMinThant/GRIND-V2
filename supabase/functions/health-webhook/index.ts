@@ -16,6 +16,7 @@ import { FILTERS, listAll } from '../_shared/googleApi.ts'
 import { verifyWebhookSignature, webhookPublicKeys } from '../_shared/googleSignature.ts'
 import { localParts } from '../_shared/localTime.ts'
 import { normalizeExercise } from '../_shared/normalize.ts'
+import { firstName } from '../_shared/personal.ts'
 import { deliver, userSubscriptions } from '../_shared/subscriptions.ts'
 import type { HealthWorkout } from '../_shared/types.ts'
 import { workoutNotification } from '../_shared/workoutNotification.ts'
@@ -74,10 +75,11 @@ async function handleNotification(notification: Notification): Promise<void> {
 
   const { data: profile } = await db
     .from('profiles')
-    .select('notification_prefs')
+    .select('notification_prefs, display_name')
     .eq('id', userId)
     .maybeSingle()
   if ((profile?.notification_prefs ?? {})[NOTIFICATION_TYPE] !== true) return
+  const name = firstName(profile?.display_name)
 
   const subscriptions = await userSubscriptions(db, userId)
   if (subscriptions.length === 0) return
@@ -98,7 +100,7 @@ async function handleNotification(notification: Notification): Promise<void> {
   const timeZone = subscriptions[0].time_zone
   for (const workout of workouts) {
     const end = localParts(new Date(workout.end), timeZone)
-    const payload = workoutNotification(workout, end.hour)
+    const payload = workoutNotification(workout, end.hour, { name })
     if (!payload) continue
 
     // Claim before sending: Google retries, and a retry must not buzz twice.

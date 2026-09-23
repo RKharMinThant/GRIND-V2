@@ -19,7 +19,8 @@ describe('workoutNotification', () => {
   it('summarises a finished session', () => {
     const n = workoutNotification(workout(), 21)
     expect(n).not.toBeNull()
-    expect(n!.title).toBe('Strength training')
+    expect(n!.title).toBe('Nice work')
+    expect(n!.body).toMatch(/^Strength training · /)
     expect(n!.body).toContain('48 min')
     expect(n!.body).toContain('312 cal')
     expect(n!.body).toContain('128 bpm')
@@ -67,6 +68,10 @@ describe('workoutNotification', () => {
 
   it('handles a session with no recognised activity name', () => {
     const n = workoutNotification(workout({ activity: '' }), 21)
-    expect(n!.title).toBe('Workout logged')
+    expect(n!.body).toMatch(/^Workout · 48 min/)
+  })
+
+  it('puts your name in the title', () => {
+    expect(workoutNotification(workout(), 21, { name: 'Andy' })!.title).toBe('Nice work, Andy')
   })
 })

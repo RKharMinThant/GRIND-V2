@@ -4,6 +4,7 @@ import {
   anyNotificationOn,
   isNotificationOn,
   pushSupport,
+  restDeepLinkDate,
   urlBase64ToUint8Array,
   withNotificationPref,
 } from './push'
@@ -80,5 +81,33 @@ describe('pushSupport', () => {
 
   it('is unsupported without a service worker', () => {
     expect(pushSupport({ ...full, serviceWorker: false })).toBe('unsupported')
+  })
+})
+
+describe('restDeepLinkDate', () => {
+  const today = '2026-09-23'
+
+  it('accepts the day the notification was about', () => {
+    expect(restDeepLinkDate('2026-09-23', today)).toBe('2026-09-23')
+  })
+
+  it('accepts yesterday, for a tap after midnight', () => {
+    expect(restDeepLinkDate('2026-09-22', today)).toBe('2026-09-22')
+  })
+
+  it('rejects a future date', () => {
+    expect(restDeepLinkDate('2026-09-24', today)).toBeNull()
+  })
+
+  it('rejects anything older than a week — a stale notification, not a quick log', () => {
+    expect(restDeepLinkDate('2026-09-10', today)).toBeNull()
+  })
+
+  it('rejects malformed input', () => {
+    expect(restDeepLinkDate(null, today)).toBeNull()
+    expect(restDeepLinkDate('', today)).toBeNull()
+    expect(restDeepLinkDate('1', today)).toBeNull()
+    expect(restDeepLinkDate('2026-9-23', today)).toBeNull()
+    expect(restDeepLinkDate('2026-13-40', today)).toBeNull()
   })
 })

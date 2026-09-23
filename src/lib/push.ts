@@ -9,6 +9,7 @@ export type NotificationType =
   | 'streak_risk'
   | 'step_goal'
   | 'recovery_milestone'
+  | 'rest_day'
 
 export type NotificationPrefs = Partial<Record<NotificationType, boolean>>
 
@@ -35,6 +36,12 @@ export const NOTIFICATION_TYPES: {
     id: 'streak_risk',
     label: 'Streak about to break',
     description: "Evening nudge when you've trained recently but not today",
+    needsFitbit: false,
+  },
+  {
+    id: 'rest_day',
+    label: 'Rest day check-in',
+    description: 'Around 11pm after three training days, if no workout showed up',
     needsFitbit: false,
   },
   {
@@ -123,4 +130,21 @@ export function browserTimeZone(): string {
   } catch {
     return 'UTC'
   }
+}
+
+/** How far back a rest-day link may reach: a late tap, not an old notification. */
+const REST_LINK_MAX_AGE_DAYS = 7
+
+/**
+ * The date from a rest-day notification link (/app?rest=YYYY-MM-DD), if it's one we
+ * should act on. It comes from a URL, so it is validated rather than trusted.
+ */
+export function restDeepLinkDate(value: string | null, today: string): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
+  const time = Date.parse(`${value}T00:00:00Z`)
+  // Rejects impossible dates like 2026-13-40, which Date would otherwise roll over
+  if (Number.isNaN(time) || new Date(time).toISOString().slice(0, 10) !== value) return null
+  const age = (Date.parse(`${today}T00:00:00Z`) - time) / 86_400_000
+  if (age < 0 || age > REST_LINK_MAX_AGE_DAYS) return null
+  return value
 }
