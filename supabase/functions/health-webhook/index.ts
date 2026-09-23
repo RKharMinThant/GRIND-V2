@@ -2,7 +2,8 @@
 //
 // Two jobs:
 //   1. The registration handshake. Google POSTs {"type":"verification"} twice — once with
-//      the Authorization secret (must answer 2xx) and once without (must answer 401/403).
+//      the Authorization secret (must answer 200 or 201; 204 fails) and once without
+//      (must answer 401/403).
 //   2. Notifications. Google says "healthUserId X changed exercise data in interval Y";
 //      we fetch that workout and push it to the user's phone.
 //
@@ -137,8 +138,10 @@ Deno.serve(async (req) => {
     return noContent()
   }
 
-  // Registration probe: authorized, so a 2xx is the expected answer
-  if (body?.type === 'verification' || !body?.data) return noContent()
+  // Registration probe. Google requires exactly 200 or 201 here — a 204, which is right
+  // for notifications, fails verification with FAILED_PRECONDITION.
+  if (body?.type === 'verification') return new Response(null, { status: 201 })
+  if (!body?.data) return noContent()
 
   const signature = req.headers.get('GOOGLE-HEALTH-API-SIGNATURE') ?? ''
   const valid = await verifyWebhookSignature(raw, signature, await webhookPublicKeys())

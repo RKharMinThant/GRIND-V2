@@ -69,7 +69,14 @@ const base = `${API}/projects/${projectNumber}/subscribers`
 async function call(url, init = {}) {
   const res = await fetch(url, {
     ...init,
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      // gcloud user tokens are attributed to gcloud's own project unless told otherwise,
+      // and the Health API refuses calls without a quota project. Bill it to ours.
+      'x-goog-user-project': projectNumber,
+      ...(init.headers ?? {}),
+    },
   })
   const text = await res.text()
   let body
@@ -129,7 +136,13 @@ if (!result.ok) {
     )
   }
   if (result.status === 403) {
-    console.error('\nThe token lacks health.subscribers.create on this project, or the project number is wrong.')
+    const reason = result.body?.error?.details?.find((d) => d.reason)?.reason
+    console.error(
+      reason === 'SERVICE_DISABLED'
+        ? '\nThe Health API is not enabled for the project the call was billed to — check GOOGLE_PROJECT_NUMBER.'
+        : '\nThe signed-in gcloud account lacks health.subscribers.create on this project, or the project number is wrong.\n' +
+            'Check `gcloud auth list` shows the account that owns the project.',
+    )
   }
   process.exit(1)
 }
