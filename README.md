@@ -350,9 +350,25 @@ npm run push:deploy      # push-subscribe, push-unsubscribe, push-test, push-dis
 Apply `supabase/migrations/017_push_notifications.sql`. Set `VITE_VAPID_PUBLIC_KEY` in
 Vercel too, or the UI stays hidden in production.
 
-**3. Scheduler** — add two repo secrets (Settings → Secrets and variables → Actions):
-`SUPABASE_URL` (already there for keep-alive) and `PUSH_CRON_SECRET`, matching the
-Supabase secret exactly. `.github/workflows/push-notifications.yml` then runs hourly.
+**3. Scheduler** — a Supabase Cron job (Integrations → Cron) named `push-dispatch-hourly`:
+schedule `7 * * * *`, type *Supabase Edge Function*, `POST` to `push-dispatch`, header
+`x-cron-secret` set to `PUSH_CRON_SECRET`, body `{}`.
+
+The dispatcher answers `202` straight away and finishes in the background, because Cron
+stops waiting after 5 seconds and a run that reads Fitbit can take longer. A Cron job's
+History says "Succeeded" as soon as the request is *queued*, whatever the function
+answered, so check the real response in the SQL Editor:
+
+```sql
+select status_code, left(content::text, 60) as body, timed_out, error_msg, created
+from net._http_response order by created desc limit 5;
+```
+
+GitHub's scheduler proved unusable for this: the hourly workflow ran about six times a
+day at random times, so fixed-hour rules like the 23:00 rest-day check were mostly
+missed. `.github/workflows/push-notifications.yml` is kept for manual runs; it calls
+`?wait=1` so its log shows `{users, evaluated, sent}`. It needs the repo secrets
+`SUPABASE_URL` and `PUSH_CRON_SECRET`.
 
 ### How it works
 
