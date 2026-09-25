@@ -9,6 +9,7 @@ import {
   type WeekStart,
   type WeightUnit,
 } from '../lib/units'
+import { clearHealthCache } from '../health/cache'
 import type { NotificationPrefs } from '../lib/push'
 import type { Profile } from '../types/database'
 
@@ -192,6 +193,8 @@ export function useAuth() {
       }
     }
     await supabase.auth.signOut()
+    // Saved Fitbit data belongs to the account, not the phone
+    clearHealthCache()
     setProfile(null)
   }, [])
 
