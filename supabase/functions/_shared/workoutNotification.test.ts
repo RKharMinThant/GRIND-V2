@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { workoutNotification } from './workoutNotification'
+import { isTrainingSession, workoutNotification } from './workoutNotification'
 import type { HealthWorkout } from './types'
 
 const workout = (over: Partial<HealthWorkout> = {}): HealthWorkout => ({
@@ -12,6 +12,7 @@ const workout = (over: Partial<HealthWorkout> = {}): HealthWorkout => ({
   avgHr: 128,
   maxHr: 161,
   zoneMinutes: null,
+  exerciseType: 'STRENGTH_TRAINING',
   ...over,
 })
 
@@ -73,5 +74,33 @@ describe('workoutNotification', () => {
 
   it('puts your name in the title', () => {
     expect(workoutNotification(workout(), 21, { name: 'Andy' })!.title).toBe('Nice work, Andy')
+  })
+})
+
+describe('isTrainingSession — what counts as a workout', () => {
+  it('counts deliberate sessions', () => {
+    expect(isTrainingSession(workout({ exerciseType: 'STRENGTH_TRAINING' }))).toBe(true)
+    expect(isTrainingSession(workout({ exerciseType: 'RUNNING', durationMin: 42 }))).toBe(true)
+    // A treadmill incline walk is chosen on purpose, unlike the walk home
+    expect(isTrainingSession(workout({ exerciseType: 'INCLINE_WALK', durationMin: 37 }))).toBe(true)
+  })
+
+  it('does not count an everyday walk, however long', () => {
+    // The daily ~30-minute walks were turning rest days into "training" days
+    expect(isTrainingSession(workout({ exerciseType: 'WALKING', durationMin: 35 }))).toBe(false)
+  })
+
+  it('still ignores anything too short to be a session', () => {
+    expect(isTrainingSession(workout({ exerciseType: 'STRENGTH_TRAINING', durationMin: 9 }))).toBe(false)
+  })
+
+  it('treats an unknown type as training rather than silently dropping it', () => {
+    expect(isTrainingSession(workout({ exerciseType: null }))).toBe(true)
+  })
+})
+
+describe('workoutNotification skips walks', () => {
+  it('sends nothing for the walk home', () => {
+    expect(workoutNotification(workout({ exerciseType: 'WALKING', activity: 'Walk', durationMin: 35 }), 18)).toBeNull()
   })
 })

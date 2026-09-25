@@ -14,6 +14,7 @@ import { adminClient } from '../_shared/clients.ts'
 import { resolveAccessToken } from '../_shared/connection.ts'
 import { FILTERS, listAll } from '../_shared/googleApi.ts'
 import { verifyWebhookSignature, webhookPublicKeys } from '../_shared/googleSignature.ts'
+import { parseWebhookBody, type WebhookNotification } from '../_shared/webhookBody.ts'
 import { localParts } from '../_shared/localTime.ts'
 import { normalizeExercise } from '../_shared/normalize.ts'
 import { firstName } from '../_shared/personal.ts'
@@ -38,15 +39,8 @@ function authorized(req: Request): boolean {
   return header === expected || header === `Bearer ${expected}`
 }
 
-type Notification = {
-  healthUserId?: string
-  dataType?: string
-  operation?: string
-  intervals?: { physicalTimeInterval?: { startTime?: string; endTime?: string } }[]
-}
-
 /** Earliest civil date the changed intervals touch, as the exercise filter wants. */
-function filterFrom(notification: Notification): string {
+function filterFrom(notification: WebhookNotification): string {
   const starts = (notification.intervals ?? [])
     .map((i) => i.physicalTimeInterval?.startTime)
     .filter((s): s is string => Boolean(s))
@@ -56,7 +50,7 @@ function filterFrom(notification: Notification): string {
   return new Date(earliest - 86_400_000).toISOString().slice(0, 10)
 }
 
-async function handleNotification(notification: Notification): Promise<void> {
+async function handleNotification(notification: WebhookNotification): Promise<void> {
   const healthUserId = notification.healthUserId
   if (!healthUserId || notification.dataType !== 'exercise') return
   if (notification.operation && notification.operation !== 'UPSERT') return
@@ -132,18 +126,15 @@ Deno.serve(async (req) => {
   if (!authorized(req)) return unauthorized()
 
   const raw = await req.text()
-
-  let body: { data?: Notification; type?: string }
-  try {
-    body = JSON.parse(raw)
-  } catch {
-    return noContent()
-  }
+  const body = parseWebhookBody(raw)
 
   // Registration probe. Google requires exactly 200 or 201 here — a 204, which is right
   // for notifications, fails verification with FAILED_PRECONDITION.
-  if (body?.type === 'verification') return new Response(null, { status: 201 })
-  if (!body?.data) return noContent()
+  if (body.kind === 'verification') return new Response(null, { status: 201 })
+  if (body.kind === 'invalid') {
+    console.error('webhook body not understood', raw.slice(0, 200))
+    return noContent()
+  }
 
   const signature = req.headers.get('GOOGLE-HEALTH-API-SIGNATURE') ?? ''
   const valid = await verifyWebhookSignature(raw, signature, await webhookPublicKeys())
@@ -153,8 +144,12 @@ Deno.serve(async (req) => {
     return noContent()
   }
 
-  const work = handleNotification(body.data).catch((e) =>
-    console.error('webhook processing failed', (e as Error).message),
+  // A batch can carry several users and data types; handle each one on its own so a
+  // failure in one can't swallow the rest
+  const work = Promise.all(
+    body.items.map((item) =>
+      handleNotification(item).catch((e) => console.error('webhook processing failed', (e as Error).message)),
+    ),
   )
   if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(work)
   else await work

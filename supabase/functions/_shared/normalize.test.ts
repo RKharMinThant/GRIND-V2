@@ -69,6 +69,8 @@ describe('normalizeExercise', () => {
       avgHr: 128,
       maxHr: null,
       zoneMinutes: { fatBurn: 25, cardio: 11, peak: 2 },
+      // Kept so a walk can be told apart from training
+      exerciseType: 'WEIGHTLIFTING',
     })
   })
 
