@@ -40,7 +40,7 @@ jobs:
           fi
           body=$(mktemp)
           status=$(curl -s -o "$body" -w '%{http_code}' -m 120 -X POST \
-            "$SUPABASE_URL/functions/v1/push-dispatch" \
+            "$SUPABASE_URL/functions/v1/push-dispatch?wait=1" \
             -H "x-cron-secret: $PUSH_CRON_SECRET" \
             -H "Content-Type: application/json" \
             -d '{}')

@@ -1,6 +1,7 @@
-// POST with header `x-cron-secret` → { users, evaluated, sent }
+// POST with header `x-cron-secret` → 202 { accepted } (work continues in the background)
+// POST ?wait=1                     → 200 { users, evaluated, sent } once the run finishes
 //
-// Runs hourly from .github/workflows/push-notifications.yml. Deployed with
+// Runs hourly from Supabase Cron (job push-dispatch-hourly). Deployed with
 // --no-verify-jwt (the scheduler has no user login), so PUSH_CRON_SECRET is the gate.
 //
 // Cost shape: four small queries cover everyone, then a Fitbit read happens only for
@@ -174,16 +175,14 @@ async function loadHealth(
   }
 }
 
-Deno.serve(async (req) => {
-  const secret = Deno.env.get('PUSH_CRON_SECRET')
-  if (!secret || req.headers.get('x-cron-secret') !== secret) return unauthorized()
-  if (req.method !== 'POST') return json(req, { error: 'method_not_allowed' }, 405)
+type RunSummary = { users: number; evaluated: number; sent: number }
 
+async function dispatch(): Promise<RunSummary> {
   const db = adminClient()
   const now = new Date()
 
   const subscriptions = await allSubscriptions(db)
-  if (subscriptions.length === 0) return json(req, { users: 0, evaluated: 0, sent: 0 })
+  if (subscriptions.length === 0) return { users: 0, evaluated: 0, sent: 0 }
 
   // Group by user. Rows come newest-first, so the first zone we see is the freshest.
   const byUser = new Map<string, { timeZone: string; subs: SubscriptionRow[] }>()
@@ -271,5 +270,24 @@ Deno.serve(async (req) => {
     .lt('local_day', addDays(now.toISOString().slice(0, 10), -LEDGER_RETENTION_DAYS))
 
   console.log(`push-dispatch users=${userIds.length} evaluated=${evaluated} sent=${sent}`)
-  return json(req, { users: userIds.length, evaluated, sent })
+  return { users: userIds.length, evaluated, sent }
+}
+
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined
+
+Deno.serve(async (req) => {
+  const secret = Deno.env.get('PUSH_CRON_SECRET')
+  if (!secret || req.headers.get('x-cron-secret') !== secret) return unauthorized()
+  if (req.method !== 'POST') return json(req, { error: 'method_not_allowed' }, 405)
+
+  // Supabase Cron stops waiting after 5 seconds at most, and a run that reads Fitbit can
+  // take longer. So by default: acknowledge now, finish in the background. Manual and
+  // GitHub runs pass ?wait=1 to get the counts back for their logs.
+  const wait = new URL(req.url).searchParams.get('wait') === '1'
+  if (wait || typeof EdgeRuntime === 'undefined') return json(req, await dispatch())
+
+  EdgeRuntime.waitUntil(
+    dispatch().catch((e) => console.error('push-dispatch failed', (e as Error).message)),
+  )
+  return json(req, { accepted: true }, 202)
 })
