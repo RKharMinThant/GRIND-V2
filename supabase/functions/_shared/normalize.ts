@@ -80,6 +80,7 @@ export function normalizeExercise(dp: GDataPoint): HealthWorkout | null {
     // Not in metricsSummary
     maxHr: null,
     zoneMinutes,
+    exerciseType: typeof ex.exerciseType === 'string' ? ex.exerciseType : null,
   }
 }
 

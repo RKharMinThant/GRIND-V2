@@ -13,6 +13,8 @@ export type HealthWorkout = {
   avgHr: number | null
   maxHr: number | null
   zoneMinutes: ZoneMinutes | null
+  /** Google's exercise type (e.g. WALKING, STRENGTH_TRAINING). Server-side only. */
+  exerciseType?: string | null
 }
 
 export type SleepStages = { deep: number; light: number; rem: number; awake: number }

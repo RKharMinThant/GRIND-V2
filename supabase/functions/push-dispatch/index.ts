@@ -30,7 +30,7 @@ import {
 import { firstName } from '../_shared/personal.ts'
 import { allSubscriptions, deliver, type SubscriptionRow } from '../_shared/subscriptions.ts'
 import type { HealthWorkout } from '../_shared/types.ts'
-import { MIN_WORKOUT_MINUTES } from '../_shared/workoutNotification.ts'
+import { isTrainingSession } from '../_shared/workoutNotification.ts'
 
 /** Users processed at once. Keeps slow Google reads from serialising the whole run. */
 const CONCURRENCY = 4
@@ -135,7 +135,7 @@ async function loadHealth(
           ...new Set(
             exercise
               .map(normalizeExercise)
-              .filter((w): w is HealthWorkout => w !== null && w.durationMin >= MIN_WORKOUT_MINUTES)
+              .filter((w): w is HealthWorkout => w !== null && isTrainingSession(w))
               // The day it finished, on the user's own clock
               .map((w) => localParts(new Date(w.end), timeZone).day),
           ),
