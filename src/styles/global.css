@@ -7357,3 +7357,149 @@ img {
 .rest-day-copy strong {
   color: var(--text);
 }
+
+/* ── GRIND Age ─────────────────────────────────────────────────────────────── */
+.grind-age-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.grind-age-skeleton span {
+  display: block;
+  width: 55%;
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: body-shimmer 1.4s linear infinite;
+}
+
+.grind-age-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.grind-age-num {
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.grind-age-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.grind-age-pace,
+.grind-age-note {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.grind-age-note {
+  margin-top: 8px;
+}
+
+.sheet--grind-age {
+  max-width: 480px;
+}
+
+.grind-age-factors {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+}
+
+.grind-age-factor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.grind-age-factor-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.grind-age-factor-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.grind-age-factor-value,
+.grind-age-factor-target {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.grind-age-tag {
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.grind-age-years {
+  flex-shrink: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.grind-age-years[data-tone='young'] {
+  color: var(--accent-ink, var(--accent));
+}
+
+.grind-age-years[data-tone='old'] {
+  color: var(--danger);
+}
+
+.grind-age-form {
+  margin-top: 20px;
+}
+
+.grind-age-form-title {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.grind-age-form .field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.grind-age-form .settings-note,
+.grind-age-form .auth-error {
+  margin-bottom: 12px;
+}
+
+.grind-age-disclaimer {
+  margin-top: 16px;
+}

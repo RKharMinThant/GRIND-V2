@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toLocalDateString } from '../lib/dates'
 import { relativeSync } from '../health/logic'
 import type { PushState } from '../hooks/usePush'
 import type { HealthState } from '../health/useHealth'
@@ -18,6 +19,8 @@ export type ProfilePatch = {
   weight_unit?: WeightUnit
   week_start?: WeekStart
   notification_prefs?: NotificationPrefs
+  birth_date?: string | null
+  sex?: 'male' | 'female'
 }
 
 type Props = {
@@ -29,6 +32,8 @@ type Props = {
   weightUnit: WeightUnit
   weekStart: WeekStart
   notificationPrefs: NotificationPrefs
+  birthDate: string | null
+  sex: 'male' | 'female' | null
   push: PushState
   themePreference: ThemePreference
   onThemeChange: (pref: ThemePreference) => void
@@ -85,6 +90,8 @@ export function SettingsView({
   weightUnit,
   weekStart,
   notificationPrefs,
+  birthDate,
+  sex,
   push,
   themePreference,
   onThemeChange,
@@ -100,6 +107,7 @@ export function SettingsView({
   const [name, setName] = useState(displayName)
   const [goal, setGoal] = useState(String(weeklyGoal))
   const [stepGoal, setStepGoal] = useState(String(dailyStepGoal))
+  const [birth, setBirth] = useState(birthDate ?? '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -108,7 +116,8 @@ export function SettingsView({
     setName(displayName)
     setGoal(String(weeklyGoal))
     setStepGoal(String(dailyStepGoal))
-  }, [displayName, weeklyGoal, dailyStepGoal])
+    setBirth(birthDate ?? '')
+  }, [displayName, weeklyGoal, dailyStepGoal, birthDate])
 
   async function save(patch: ProfilePatch, quiet = false) {
     setSaving(true)
@@ -173,16 +182,39 @@ export function SettingsView({
             />
           </div>
         </div>
+        <div className="field">
+          <label htmlFor="setBirth">Birth date</label>
+          <input
+            id="setBirth"
+            type="date"
+            min="1900-01-01"
+            max={toLocalDateString()}
+            value={birth}
+            onChange={(e) => setBirth(e.target.value)}
+          />
+        </div>
+        <Segment
+          label="Sex"
+          value={sex ?? ('' as 'male' | 'female' | '')}
+          options={[
+            { value: 'male' as const, label: 'Male' },
+            { value: 'female' as const, label: 'Female' },
+          ]}
+          onChange={(v) => v && void save({ sex: v }, true)}
+        />
+        <p className="settings-note">Used only to work out your GRIND Age.</p>
         {error && <div className="auth-error">{error}</div>}
         <button
           type="button"
           className="btn btn-primary btn-full"
+
           disabled={saving}
           onClick={() =>
             void save({
               display_name: name.trim() || displayName,
               weekly_goal: Math.min(14, Math.max(1, Number(goal) || 4)),
               daily_step_goal: Math.min(100000, Math.max(1000, Math.round((Number(stepGoal) || 10000) / 500) * 500)),
+              ...(birth && birth !== (birthDate ?? '') ? { birth_date: birth } : {}),
             })
           }
         >

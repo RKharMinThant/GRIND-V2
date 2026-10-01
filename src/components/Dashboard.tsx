@@ -6,7 +6,9 @@ import { DEFAULT_DISTANCE_UNIT, DEFAULT_WEEK_START, type DistanceUnit, type Week
 import { greetingForHour, toLocalDateString, todayHeading, weekSessionCount } from '../lib/dates'
 import type { StreakStats } from '../lib/streaks'
 import { isRestLog, type Log } from '../types/database'
+import type { GrindAgeState } from '../hooks/useGrindAge'
 import { GoalRing } from './GoalRing'
+import { GrindAgeCard } from './GrindAgeCard'
 import { Heatmap } from './Heatmap'
 import { LogCard } from './LogCard'
 import { RecoveryCard } from './RecoveryCard'
@@ -32,6 +34,9 @@ type Props = {
   onLogWorkout: (workout: HealthWorkout) => void
   stepGoal: number
   onOpenBody: () => void
+  grindAge: GrindAgeState
+  onOpenGrindAge: () => void
+  onOpenSettings: () => void
   weekStart?: WeekStart
   distanceUnit?: DistanceUnit
 }
@@ -52,6 +57,9 @@ export function Dashboard({
   onLogWorkout,
   stepGoal,
   onOpenBody,
+  grindAge,
+  onOpenGrindAge,
+  onOpenSettings,
   weekStart = DEFAULT_WEEK_START,
   distanceUnit = DEFAULT_DISTANCE_UNIT,
 }: Props) {
@@ -123,6 +131,10 @@ export function Dashboard({
           distanceUnit={distanceUnit}
           onOpen={onOpenBody}
         />
+      )}
+
+      {health.isConnected && (
+        <GrindAgeCard grindAge={grindAge} onOpen={onOpenGrindAge} onOpenSettings={onOpenSettings} />
       )}
 
       {detected[0] && (
