@@ -12,12 +12,14 @@ import { LogDetail } from './components/LogDetail'
 import { LogFormSheet } from './components/LogFormSheet'
 import { LogsList } from './components/LogsList'
 import { ProgressView } from './components/ProgressView'
+import { GrindAgeSheet } from './components/GrindAgeSheet'
 import { RestDaySheet } from './components/RestDaySheet'
 import { SettingsView } from './components/SettingsView'
 import { Shell, type Tab } from './components/Shell'
 import { Toast } from './components/Toast'
 import type { HealthWorkout } from './health/types'
 import { useHealth } from './health/useHealth'
+import { useGrindAge } from './hooks/useGrindAge'
 import { usePush } from './hooks/usePush'
 import { useAuth } from './hooks/useAuth'
 import { useLogs } from './hooks/useLogs'
@@ -44,6 +46,8 @@ export default function App() {
     weightUnit,
     weekStart,
     notificationPrefs,
+    birthDate,
+    sex,
     isAdmin,
     loading: authLoading,
     authError,
@@ -77,6 +81,9 @@ export default function App() {
 
   // Fitbit (Phase 1: mock data, admin only)
   const health = useHealth(isAdmin, logs, logsLoading, user?.id)
+
+  const grindAge = useGrindAge(user?.id, health.isConnected)
+  const [grindAgeOpen, setGrindAgeOpen] = useState(false)
 
   // Web Push registration for this device (no-op until the user enables it)
   const push = usePush(Boolean(user))
@@ -308,6 +315,12 @@ export default function App() {
                 distanceUnit={distanceUnit}
                 stepGoal={dailyStepGoal}
                 onOpenBody={() => setTab('body')}
+                grindAge={grindAge}
+                onOpenGrindAge={() => setGrindAgeOpen(true)}
+                onOpenSettings={() => {
+                  setSettingsFrom('home')
+                  setTab('settings')
+                }}
               />
             )}
             {tab === 'history' && (
@@ -342,11 +355,15 @@ export default function App() {
                 weightUnit={weightUnit}
                 weekStart={weekStart}
                 notificationPrefs={notificationPrefs}
+                birthDate={birthDate}
+                sex={sex}
                 push={push}
                 themePreference={preference}
                 onThemeChange={setPreference}
                 onUpdateProfile={async (patch) => {
                   await updateProfile(patch)
+                  // Age depends on both, so recompute rather than wait for next week
+                  if (patch.birth_date !== undefined || patch.sex !== undefined) void grindAge.refresh()
                 }}
                 health={health}
                 logs={logs}
@@ -376,6 +393,13 @@ export default function App() {
         ready={!logsLoading}
         onConfirm={logRestDay}
         onClose={() => setRestOpen(false)}
+      />
+
+      <GrindAgeSheet
+        open={grindAgeOpen}
+        data={grindAge.data?.status === 'ok' ? grindAge.data : null}
+        onRefresh={grindAge.refresh}
+        onClose={() => setGrindAgeOpen(false)}
       />
 
       <CalendarSheet

@@ -14,6 +14,9 @@ export type Profile = {
   distance_unit?: DistanceUnit | null
   weight_unit?: WeightUnit | null
   week_start?: WeekStart | null
+  /** Used for GRIND Age (migration 019) */
+  birth_date?: string | null
+  sex?: 'male' | 'female' | null
   created_at: string
 }
 

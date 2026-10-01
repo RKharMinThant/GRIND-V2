@@ -28,6 +28,7 @@ export const FILTERS = {
   dailyRespiratoryRate: (from: string) => `daily_respiratory_rate.date >= "${from}"`,
   dailySleepTemperature: (from: string) => `daily_sleep_temperature_derivations.date >= "${from}"`,
   weight: (from: string) => `weight.sample_time.civil_time >= "${from}"`,
+  height: (from: string) => `height.sample_time.civil_time >= "${from}"`,
 }
 
 /** Roll-up range limits: these types allow 14 days per request, others 90. */

@@ -23,6 +23,8 @@ const OPTIONAL_PROFILE_COLUMNS = [
   'weight_unit',
   'week_start',
   'notification_prefs',
+  'birth_date',
+  'sex',
 ] as const
 
 /** Which migration adds each optional column, so the UI can say what to run. */
@@ -32,6 +34,8 @@ const COLUMN_MIGRATION: Record<string, string> = {
   weight_unit: '016_preferences.sql',
   week_start: '016_preferences.sql',
   notification_prefs: '017_push_notifications.sql',
+  birth_date: '019_grind_age.sql',
+  sex: '019_grind_age.sql',
 }
 
 /**
@@ -207,6 +211,8 @@ export function useAuth() {
       weight_unit?: WeightUnit
       week_start?: WeekStart
       notification_prefs?: NotificationPrefs
+      birth_date?: string | null
+      sex?: 'male' | 'female'
     }) => {
       if (!user) throw new Error('Not signed in')
 
@@ -258,6 +264,8 @@ export function useAuth() {
   const weightUnit: WeightUnit = profile?.weight_unit ?? DEFAULT_WEIGHT_UNIT
   const weekStart: WeekStart = profile?.week_start ?? DEFAULT_WEEK_START
   const notificationPrefs: NotificationPrefs = profile?.notification_prefs ?? {}
+  const birthDate = profile?.birth_date ?? null
+  const sex = profile?.sex ?? null
   const isAdmin = user?.email === 'rkharmthant@gmail.com'
 
   return {
@@ -271,6 +279,8 @@ export function useAuth() {
     weightUnit,
     weekStart,
     notificationPrefs,
+    birthDate,
+    sex,
     isAdmin,
     loading,
     authError,
