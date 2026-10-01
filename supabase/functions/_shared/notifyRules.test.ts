@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { WeeklySummary } from './weeklyReport'
 import { daysBetween, dueTypes, evaluate, isRestWorkout, needsHealthData, type RuleContext } from './notifyRules'
 
 const base: RuleContext = {
@@ -10,6 +11,7 @@ const base: RuleContext = {
   lastSent: {},
   fitbitStatus: 'connected',
   health: null,
+  weekly: null,
   name: null,
 }
 
@@ -324,6 +326,69 @@ describe('rest_day', () => {
 
   it('still works from logs alone when Fitbit is not connected', () => {
     expect(evaluate(restCtx({ health: null, fitbitStatus: 'none' }))).toHaveLength(1)
+  })
+})
+
+describe('weekly_report', () => {
+  // 2026-09-20 is a Sunday
+  const prefs = { weekly_report: true }
+  const weekly: WeeklySummary = {
+    sessions: 4,
+    goal: 4,
+    volumeKg: 5400,
+    lastVolumeKg: 5000,
+    prs: 2,
+    zoneMinutes: 410,
+    grindAgeChange: -0.2,
+  }
+  const sunday = (over: Partial<RuleContext> = {}) =>
+    ctx({ prefs, localDay: '2026-09-20', localHour: 20, weekly, ...over })
+
+  it('fires Sunday at 8pm with a summary', () => {
+    const out = evaluate(sunday())
+    expect(out.map((n) => n.type)).toEqual(['weekly_report'])
+    expect(out[0].body).toBe('4/4 sessions · volume +8% · 2 PRs · 410 zone min · GRIND Age −0.2')
+  })
+
+  it('stays quiet on other days', () => {
+    expect(evaluate(sunday({ localDay: '2026-09-19' }))).toEqual([])
+    expect(evaluate(sunday({ localDay: '2026-09-21' }))).toEqual([])
+  })
+
+  it('stays quiet at other hours', () => {
+    expect(evaluate(sunday({ localHour: 19 }))).toEqual([])
+    expect(evaluate(sunday({ localHour: 22 }))).toEqual([])
+  })
+
+  it('also fires at 9pm, as a second chance if the 8pm run failed', () => {
+    expect(evaluate(sunday({ localHour: 21 })).map((n) => n.type)).toEqual(['weekly_report'])
+  })
+
+  it('is not due again the same Sunday once sent', () => {
+    expect(dueTypes(sunday({ localHour: 21, lastSent: { weekly_report: '2026-09-20' } }))).not.toContain('weekly_report')
+  })
+
+  it('stays quiet without a summary', () => {
+    expect(evaluate(sunday({ weekly: null }))).toEqual([])
+  })
+
+  it('is on a six-day cooldown', () => {
+    expect(dueTypes(sunday({ lastSent: { weekly_report: '2026-09-14' } }))).toContain('weekly_report')
+    expect(dueTypes(sunday({ lastSent: { weekly_report: '2026-09-19' } }))).not.toContain('weekly_report')
+  })
+
+  it('uses the first name when there is one', () => {
+    expect(evaluate(sunday({ name: 'Andy' }))[0].title).toBe("Andy's week in review")
+    expect(evaluate(sunday())[0].title).toBe('Your week in review')
+  })
+
+  it('links to the progress tab', () => {
+    expect(evaluate(sunday())[0].url).toBe('/app?tab=progress')
+  })
+
+  it('does not ask for the live Fitbit read (zone minutes load separately) and sends without one', () => {
+    expect(needsHealthData(['weekly_report'])).toBe(false)
+    expect(evaluate(sunday({ health: null, fitbitStatus: 'none' }))).toHaveLength(1)
   })
 })
 

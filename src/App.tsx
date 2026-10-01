@@ -145,6 +145,15 @@ export default function App() {
     window.history.replaceState(null, '', url.pathname + url.search + url.hash)
   }, [])
 
+  // Opened from the weekly report notification (/app?tab=progress)
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('tab') !== 'progress') return
+    setTab('progress')
+    url.searchParams.delete('tab')
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
+  }, [])
+
   // Returning from Google's consent screen (/app?health=connected|error)
   useEffect(() => {
     const url = new URL(window.location.href)
@@ -343,6 +352,8 @@ export default function App() {
                 onOpenAdd={(group) => setLiftSheet({ mode: 'add', group })}
                 fetchAllHistory={fetchAllHistory}
                 onOpenLift={(lift) => setProgressLift(lift)}
+                health={health}
+                weightUnit={weightUnit}
               />
             )}
             {tab === 'body' && (
