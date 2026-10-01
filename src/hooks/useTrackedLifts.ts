@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createId } from '../lib/id'
 import { volumeOf, type LiftHistoryPoint } from '../lib/overload'
+import { newPrKinds, type PrKind } from '../lib/strength'
 import { supabase } from '../lib/supabase'
 import {
   MUSCLE_GROUPS,
@@ -28,6 +29,19 @@ function resolveInputSets(input: TrackedLiftInput): LiftSet[] {
 function setsEqual(a: LiftSet[], b: LiftSet[]): boolean {
   if (a.length !== b.length) return false
   return a.every((s, i) => s.reps === b[i].reps && s.weight === b[i].weight)
+}
+
+const HISTORY_COLUMNS = 'id, lift_id, sets_detail, unit, volume, recorded_at'
+
+function mapHistoryRow(row: Record<string, unknown>): LiftHistoryPoint {
+  return {
+    id: String(row.id),
+    lift_id: String(row.lift_id),
+    sets_detail: parseSetsDetail(row.sets_detail),
+    unit: row.unit === 'lb' ? 'lb' : 'kg',
+    volume: Number(row.volume) || 0,
+    recorded_at: String(row.recorded_at),
+  }
 }
 
 function normalize(row: TrackedLift): TrackedLift {
@@ -147,21 +161,32 @@ export function useTrackedLifts(userId: string | undefined) {
       if (!userId) return []
       const { data, error: err } = await supabase
         .from('lift_history')
-        .select('*')
+        .select(HISTORY_COLUMNS)
         .eq('user_id', userId)
         .eq('lift_id', liftId)
-        .order('recorded_at', { ascending: true })
+        .order('recorded_at', { ascending: false })
         .limit(limit)
 
       if (err || !data) return []
-      return (data as Record<string, unknown>[]).map((row) => ({
-        id: String(row.id),
-        lift_id: String(row.lift_id),
-        sets_detail: parseSetsDetail(row.sets_detail),
-        unit: row.unit === 'lb' ? 'lb' : 'kg',
-        volume: Number(row.volume) || 0,
-        recorded_at: String(row.recorded_at),
-      }))
+      // Newest rows were fetched so the limit never drops recent history; flip back to oldest first
+      return (data as Record<string, unknown>[]).map(mapHistoryRow).reverse()
+    },
+    [userId],
+  )
+
+  /** The user's most recent history across all lifts, returned oldest first. */
+  const fetchAllHistory = useCallback(
+    async (limit = 1000): Promise<LiftHistoryPoint[]> => {
+      if (!userId) return []
+      const { data, error: err } = await supabase
+        .from('lift_history')
+        .select(HISTORY_COLUMNS)
+        .eq('user_id', userId)
+        .order('recorded_at', { ascending: false })
+        .limit(limit)
+
+      if (err || !data) return []
+      return (data as Record<string, unknown>[]).map(mapHistoryRow).reverse()
     },
     [userId],
   )
@@ -224,7 +249,7 @@ export function useTrackedLifts(userId: string | undefined) {
   )
 
   const updateLift = useCallback(
-    async (id: string, input: TrackedLiftInput) => {
+    async (id: string, input: TrackedLiftInput): Promise<PrKind[]> => {
       if (!userId) throw new Error('Not signed in')
       const existing = lifts.find((l) => l.id === id)
       if (!existing) throw new Error('Lift not found')
@@ -294,13 +319,17 @@ export function useTrackedLifts(userId: string | undefined) {
 
       if (err) throw err
       const updated = normalize(data as TrackedLift)
+      let prKinds: PrKind[] = []
       if (metricsChanged) {
+        // Read history before the new snapshot lands so the update is compared to what came before
+        const previousHistory = await fetchHistory(id, 1000)
+        prKinds = newPrKinds(previousHistory, sets_detail, nextUnit)
         await recordHistory(id, sets_detail, nextUnit, String(patch.updated_at))
       }
       setLifts((prev) => prev.map((l) => (l.id === id ? updated : l)))
-      return updated
+      return prKinds
     },
-    [userId, lifts, recordHistory],
+    [userId, lifts, recordHistory, fetchHistory],
   )
 
   const removeLift = useCallback(
@@ -326,6 +355,7 @@ export function useTrackedLifts(userId: string | undefined) {
     updateLift,
     removeLift,
     fetchHistory,
+    fetchAllHistory,
     refresh,
   }
 }

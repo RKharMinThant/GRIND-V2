@@ -27,6 +27,7 @@ import { useTheme } from './hooks/useTheme'
 import { useTrackedLifts } from './hooks/useTrackedLifts'
 import { toLocalDateString } from './lib/dates'
 import { restDeepLinkDate } from './lib/push'
+import { formatPrToast } from './lib/strength'
 import { isRestLog, REST_WORKOUT, type Log, type LogInsert, type TrackedLift } from './types/database'
 
 type LiftSheetState =
@@ -77,6 +78,7 @@ export default function App() {
     updateLift,
     removeLift,
     fetchHistory,
+    fetchAllHistory,
   } = useTrackedLifts(user?.id)
 
   // Fitbit (Phase 1: mock data, admin only)
@@ -339,6 +341,7 @@ export default function App() {
                 byMuscle={byMuscle}
                 liftsLoading={liftsLoading}
                 onOpenAdd={(group) => setLiftSheet({ mode: 'add', group })}
+                fetchAllHistory={fetchAllHistory}
                 onOpenLift={(lift) => setProgressLift(lift)}
               />
             )}
@@ -452,12 +455,17 @@ export default function App() {
         onClose={() => setLiftSheet(null)}
         onSave={async (input) => {
           if (liftSheet?.mode === 'edit') {
-            const updated = await updateLift(liftSheet.lift.id, input)
-            showToast('Lift updated')
+            const prKinds = await updateLift(liftSheet.lift.id, input)
+            const prToast = formatPrToast(
+              input.exercise_name.trim(),
+              prKinds,
+              input.sets_detail ?? [],
+              input.unit === 'lb' ? 'lb' : 'kg',
+            )
+            showToast(prToast ?? 'Lift updated')
             setLiftSheet(null)
             // Keep progress sheet in sync if reopened
             setProgressLift(null)
-            void updated
           } else {
             await addLift(input)
             showToast('Lift added')

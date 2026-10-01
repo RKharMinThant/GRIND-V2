@@ -10,11 +10,13 @@ import {
   volumeOf,
   type LiftHistoryPoint,
 } from '../lib/overload'
+import { bestOneRepMax, convertSets, personalBests } from '../lib/strength'
 import type { TrackedLift } from '../types/database'
+import { Sparkline } from './charts/Sparkline'
 
 type Props = {
   lift: TrackedLift | null
-  fetchHistory: (liftId: string) => Promise<LiftHistoryPoint[]>
+  fetchHistory: (liftId: string, limit?: number) => Promise<LiftHistoryPoint[]>
   onClose: () => void
   onEdit: (lift: TrackedLift) => void
   onDelete: (lift: TrackedLift) => Promise<void>
@@ -48,7 +50,7 @@ export function LiftProgressSheet({
     setError(null)
     let cancelled = false
     setLoading(true)
-    void fetchHistory(lift.id).then((rows) => {
+    void fetchHistory(lift.id, 500).then((rows) => {
       if (!cancelled) {
         setHistory(rows)
         setLoading(false)
@@ -68,7 +70,7 @@ export function LiftProgressSheet({
     }
   }, [open])
 
-  const current = lift ? getLiftSets(lift) : []
+  const current = useMemo(() => (lift ? getLiftSets(lift) : []), [lift])
   const previous = lift ? getPrevLiftSets(lift) : null
   const status = lift ? compareTrackedLift(lift) : null
   const unit = lift?.unit || 'kg'
@@ -96,6 +98,30 @@ export function LiftProgressSheet({
       ...p,
       pct: Math.max(6, Math.round((p.volume / maxVol) * 100)),
     }))
+  }, [history, lift, current, unit, curVol])
+
+  const strength = useMemo(() => {
+    const u: 'kg' | 'lb' = unit === 'lb' ? 'lb' : 'kg'
+    // No history rows yet: fall back to the lift's current sets, like the volume chart
+    const source: LiftHistoryPoint[] =
+      history.length > 0
+        ? history
+        : lift && current.length > 0
+          ? [
+              {
+                id: 'cur',
+                lift_id: lift.id,
+                sets_detail: current,
+                unit: u,
+                volume: curVol,
+                recorded_at: lift.updated_at,
+              },
+            ]
+          : []
+    const trend = history.map((p) =>
+      bestOneRepMax(convertSets(p.sets_detail, p.unit === 'lb' ? 'lb' : 'kg', u)),
+    )
+    return { u, trend, bests: personalBests(source, u) }
   }, [history, lift, current, unit, curVol])
 
   if (!mounted || !lift) return null
@@ -200,6 +226,72 @@ export function LiftProgressSheet({
             )}
           </section>
 
+          <section className="lift-chart-block">
+            <div className="lift-field-label-row">
+              <h3 className="lift-field-label" style={{ marginBottom: 0 }}>
+                Estimated 1RM
+              </h3>
+              {strength.trend.length >= 2 && (
+                <span className="strength-latest">
+                  {formatNum(strength.trend[strength.trend.length - 1])} {strength.u}
+                </span>
+              )}
+            </div>
+            {strength.trend.length < 2 ? (
+              <p className="field-hint" style={{ marginTop: 8 }}>
+                Update this lift again to see your estimated 1RM trend.
+              </p>
+            ) : (
+              <>
+                <div className="strength-trend">
+                  <Sparkline
+                    values={strength.trend.slice(-12)}
+                    height={56}
+                    ariaLabel={`Estimated one-rep max over recent updates, latest ${formatNum(
+                      strength.trend[strength.trend.length - 1],
+                    )} ${strength.u}`}
+                  />
+                </div>
+                <p className="field-hint">Estimated from your best set (Epley)</p>
+              </>
+            )}
+          </section>
+
+          <section className="lift-chart-block">
+            <h3 className="lift-field-label">Personal bests</h3>
+            <div className="strength-bests">
+              <div className="lift-compare-card">
+                <div className="lift-compare-label">Est. 1RM</div>
+                <div className="lift-compare-value">
+                  {strength.bests.oneRepMax ? `${formatNum(strength.bests.oneRepMax.value)} ${strength.u}` : '—'}
+                </div>
+                <div className="lift-compare-meta">
+                  {strength.bests.oneRepMax ? shortDate(strength.bests.oneRepMax.recorded_at) : ''}
+                </div>
+              </div>
+              <div className="lift-compare-card">
+                <div className="lift-compare-label">Heaviest</div>
+                <div className="lift-compare-value">
+                  {strength.bests.heaviest
+                    ? `${formatNum(strength.bests.heaviest.value)} × ${strength.bests.heaviest.reps}`
+                    : '—'}
+                </div>
+                <div className="lift-compare-meta">
+                  {strength.bests.heaviest ? shortDate(strength.bests.heaviest.recorded_at) : ''}
+                </div>
+              </div>
+              <div className="lift-compare-card">
+                <div className="lift-compare-label">Best volume</div>
+                <div className="lift-compare-value">
+                  {strength.bests.volume ? Math.round(strength.bests.volume.value).toLocaleString('en-US') : '—'}
+                </div>
+                <div className="lift-compare-meta">
+                  {strength.bests.volume ? shortDate(strength.bests.volume.recorded_at) : ''}
+                </div>
+              </div>
+            </div>
+          </section>
+
           <p className="muscle-lift-updated" style={{ marginTop: 4, opacity: 0.55 }}>
             Last updated: {friendlyUpdatedAt(lift.updated_at)}
           </p>
@@ -248,4 +340,8 @@ function shortDate(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function formatNum(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1)
 }
