@@ -31,6 +31,16 @@ const bundle = {
   connection,
   workouts: [],
   recovery: { date: '2026-09-25', sleepMin: 450, stages: null, restingHr: 58, restingHrAvg: 59, hrvMs: 41, hrvAvg: 40 },
+  readiness: {
+    date: '2026-09-25',
+    status: 'ok' as const,
+    score: 72,
+    zone: 'green' as const,
+    hrv: { value: 41, baseline: 40, score: 70 },
+    restingHr: { value: 58, baseline: 59, score: 75 },
+    sleep: { value: 450, baseline: 450, score: 100 },
+    baselineDays: 30,
+  },
   steps: [{ date: '2026-09-25', steps: 8120 }],
   today,
 }
@@ -46,6 +56,7 @@ describe('snapshot', () => {
     const snap = readSnapshot('user-a', 'google_health', '2026-09-25', storage)
     expect(snap?.savedAt).toBe(1000)
     expect(snap?.today?.steps).toBe(8120)
+    expect(snap?.readiness?.score).toBe(72)
     expect(snap?.connection.status).toBe('connected')
   })
 
@@ -55,7 +66,14 @@ describe('snapshot', () => {
     // Yesterday's steps must never be shown as today's
     expect(snap?.today).toBeNull()
     expect(snap?.recovery).toBeNull()
+    expect(snap?.readiness).toBeNull()
     expect(snap?.steps).toHaveLength(1)
+  })
+
+  it('reads a snapshot saved before readiness existed as no readiness', () => {
+    const { readiness: _omit, ...old } = bundle
+    writeSnapshot('user-a', 'google_health', '2026-09-25', old as unknown as typeof bundle, 1000, storage)
+    expect(readSnapshot('user-a', 'google_health', '2026-09-25', storage)?.readiness).toBeNull()
   })
 
   it('never shows one account the data of another on a shared phone', () => {

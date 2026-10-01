@@ -6,6 +6,7 @@ import type {
   HealthRecovery,
   HealthSource,
   HealthWorkout,
+  ReadinessScore,
   TodaySummary,
 } from './types'
 
@@ -17,6 +18,8 @@ export interface HealthProvider {
   disconnect(): Promise<void>
   getWorkouts(fromDate: string, toDate: string): Promise<HealthWorkout[]>
   getRecovery(date: string): Promise<HealthRecovery | null>
+  /** Daily readiness (0–100) for the night ending on `date`; null when the server has none. */
+  getReadiness(date: string): Promise<ReadinessScore | null>
   getDailySteps(fromDate: string, toDate: string): Promise<DailySteps[]>
   /** Record a successful sync time. */
   markSynced(): Promise<void>

@@ -9,6 +9,7 @@ import type {
   HealthConnection,
   HealthRecovery,
   HealthWorkout,
+  ReadinessScore,
   TodaySummary,
 } from './types'
 
@@ -23,6 +24,7 @@ export class HealthExpiredError extends Error {
 type Bundle = {
   workouts: HealthWorkout[]
   recovery: HealthRecovery | null
+  readiness?: ReadinessScore | null
   steps: DailySteps[]
   today: TodaySummary | null
   lastSyncedAt: string
@@ -96,6 +98,15 @@ export function createGoogleProvider(): HealthProvider {
       }
       const from = new Date(Date.parse(`${date}T00:00:00Z`) - 7 * 86_400_000).toISOString().slice(0, 10)
       return (await bundle(from, date)).recovery
+    },
+
+    async getReadiness(date) {
+      // Same health-data bundle as recovery — no extra request
+      if (inflight && inflight.to === date && Date.now() - inflight.at < 5_000) {
+        return (await inflight.promise).readiness ?? null
+      }
+      const from = new Date(Date.parse(`${date}T00:00:00Z`) - 7 * 86_400_000).toISOString().slice(0, 10)
+      return (await bundle(from, date)).readiness ?? null
     },
 
     async markSynced() {

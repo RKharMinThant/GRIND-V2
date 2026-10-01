@@ -17,6 +17,7 @@
   --ice: #6ee7f5;
   --ice-dim: rgba(110, 231, 245, 0.12);
   --danger: #ff5c45;
+  --warn: #f5b942;
   --danger-dim: rgba(255, 92, 69, 0.12);
   --text: #f4f5f7;
   --muted: #9aa0ad;
@@ -66,6 +67,7 @@
   --ice: #0e8a9e;
   --ice-dim: rgba(14, 138, 158, 0.12);
   --danger: #e11d48;
+  --warn: #d98a0b;
   --danger-dim: rgba(225, 29, 72, 0.1);
   --text: #12160c;
   --muted: #4a5240;
@@ -6178,6 +6180,61 @@ img {
 
 .sleep-legend .rem::before {
   background: var(--accent);
+}
+
+.readiness {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.readiness-zone {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.readiness-line {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.readiness.green .chart-ring-prog,
+.readiness.green .chart-ring-prog.done {
+  stroke: var(--accent);
+}
+
+.readiness.yellow .chart-ring-prog,
+.readiness.yellow .chart-ring-prog.done {
+  stroke: var(--warn);
+}
+
+.readiness.red .chart-ring-prog,
+.readiness.red .chart-ring-prog.done {
+  stroke: var(--danger);
+}
+
+.readiness.green .readiness-zone {
+  color: var(--accent-ink, var(--accent));
+}
+
+.readiness.yellow .readiness-zone {
+  color: var(--warn);
+}
+
+.readiness.red .readiness-zone {
+  color: var(--danger);
+}
+
+.readiness--building {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.4;
 }
 
 .rec-hint {

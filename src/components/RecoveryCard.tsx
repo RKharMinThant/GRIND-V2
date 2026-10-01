@@ -1,40 +1,46 @@
 import { formatSleep, readiness } from '../health/logic'
-import type { HealthRecovery } from '../health/types'
+import { deltaVsBaseline, readinessView, ZONE_INFO } from '../health/readiness'
+import type { HealthRecovery, ReadinessScore } from '../health/types'
+import { Ring } from './charts/Ring'
 
 type Props = {
   recovery: HealthRecovery | null
-  restLoggedToday: boolean
-  restBusy: boolean
-  onRestDay: () => void
+  readiness: ReadinessScore | null
   error: string | null
   onRetry: () => void
 }
 
 function Delta({
   value,
-  avg,
+  baseline,
+  fallback,
   lowerIsBetter,
 }: {
   value: number | null
-  avg: number | null
+  /** The 30-day normal from readiness, when there is one */
+  baseline: number | null | undefined
+  /** The 7-day average, used when there is no 30-day normal */
+  fallback: number | null
   lowerIsBetter?: boolean
 }) {
-  if (value == null || avg == null) return null
-  const diff = Math.round(value - avg)
-  if (diff === 0) return <span className="rec-delta">= 7-day avg</span>
+  const has30 = baseline != null
+  const diff = deltaVsBaseline(value, has30 ? baseline : fallback)
+  if (diff == null) return null
+  const label = has30 ? '30-day normal' : '7-day'
+  if (diff === 0) return <span className="rec-delta">= {label}</span>
   const good = lowerIsBetter ? diff < 0 : diff > 0
   return (
     <span className={`rec-delta ${good ? 'good' : 'bad'}`}>
       {diff > 0 ? '↑' : '↓'}
-      {Math.abs(diff)} vs 7-day
+      {Math.abs(diff)} vs {label}
     </span>
   )
 }
 
 const STAGE_ORDER = ['deep', 'rem', 'light', 'awake'] as const
 
-/** Last night's sleep, resting HR and HRV with a simple train/rest hint. */
-export function RecoveryCard({ recovery, restLoggedToday, restBusy, onRestDay, error, onRetry }: Props) {
+/** Last night's readiness score, sleep, resting HR and HRV — informs, never prescribes. */
+export function RecoveryCard({ recovery, readiness: score, error, onRetry }: Props) {
   if (error) {
     return (
       <section className="health-card rec-card--error" aria-label="Recovery">
@@ -50,13 +56,35 @@ export function RecoveryCard({ recovery, restLoggedToday, restBusy, onRestDay, e
   }
   if (!recovery) return null
 
-  const state = readiness(recovery)
+  const view = readinessView(score)
+  // Older cached data has no readiness: keep the simple hint (text only)
+  const state = score ? 'unknown' : readiness(recovery)
   const s = recovery.stages
   const stageTotal = s ? s.deep + s.light + s.rem + s.awake : 0
 
   return (
     <section className="health-card rec-card" aria-label="Recovery">
       <div className="health-card-kicker">Recovery · last night</div>
+      {view.kind === 'building' && (
+        <p className="readiness readiness--building">
+          Building your baseline — readiness needs about a week of data ({view.days}{' '}
+          {view.days === 1 ? 'day' : 'days'} so far)
+        </p>
+      )}
+      {view.kind === 'score' && (
+        <div className={`readiness ${view.zone}`}>
+          <Ring
+            progress={view.score / 100}
+            size={88}
+            label={String(view.score)}
+            ariaLabel={`Readiness ${view.score} out of 100, ${ZONE_INFO[view.zone].word.toLowerCase()} zone`}
+          />
+          <div>
+            <div className="readiness-zone">{ZONE_INFO[view.zone].word}</div>
+            <p className="readiness-line">{ZONE_INFO[view.zone].line}</p>
+          </div>
+        </div>
+      )}
       <div className="rec-grid">
         <div className="rec-tile rec-tile--sleep">
           <div className="label">Sleep</div>
@@ -85,7 +113,12 @@ export function RecoveryCard({ recovery, restLoggedToday, restBusy, onRestDay, e
             {recovery.restingHr ?? '—'}
             {recovery.restingHr != null && <small> bpm</small>}
           </div>
-          <Delta value={recovery.restingHr} avg={recovery.restingHrAvg} lowerIsBetter />
+          <Delta
+            value={recovery.restingHr}
+            baseline={score?.restingHr.baseline}
+            fallback={recovery.restingHrAvg}
+            lowerIsBetter
+          />
         </div>
         <div className="rec-tile">
           <div className="label">HRV</div>
@@ -93,27 +126,13 @@ export function RecoveryCard({ recovery, restLoggedToday, restBusy, onRestDay, e
             {recovery.hrvMs ?? '—'}
             {recovery.hrvMs != null && <small> ms</small>}
           </div>
-          <Delta value={recovery.hrvMs} avg={recovery.hrvAvg} />
+          <Delta value={recovery.hrvMs} baseline={score?.hrv.baseline} fallback={recovery.hrvAvg} />
         </div>
       </div>
 
       {state !== 'unknown' && (
         <div className={`rec-hint ${state}`}>
-          <span>
-            {state === 'low'
-              ? 'Recovery looks low — a rest day might pay off.'
-              : 'Recovered — good day to train.'}
-          </span>
-          {state === 'low' && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm btn-rest"
-              onClick={onRestDay}
-              disabled={restBusy || restLoggedToday}
-            >
-              {restLoggedToday ? 'Rest logged' : restBusy ? 'Logging…' : 'Rest day'}
-            </button>
-          )}
+          {state === 'low' ? 'Recovery looks low — take it easy today.' : 'Recovered — good day to train.'}
         </div>
       )}
       <p className="rec-foot">Estimates from your tracker, not medical advice.</p>

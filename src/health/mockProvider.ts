@@ -2,6 +2,7 @@ import { addDays, toLocalDateString } from '../lib/dates'
 import { isRestLog } from '../types/database'
 import type { HealthProvider } from './provider'
 import { mockBodySection, mockToday } from './mockBody'
+import { mockReadiness } from './mockReadiness'
 import { datesInRange, nightFor, stepsFor, workoutFor } from './mockSeed'
 import { readJson, safeLocalStorage, writeJson } from './storage'
 import type { DailySteps, HealthConnection, HealthRecovery } from './types'
@@ -79,6 +80,10 @@ export function createMockProvider(deps: MockProviderDeps): HealthProvider {
         restingHrAvg: avg(prev.map((p) => p.restingHr)),
         hrvAvg: avg(prev.map((p) => p.hrvMs)),
       } satisfies HealthRecovery
+    },
+
+    async getReadiness(date) {
+      return mockReadiness(date)
     },
 
     async getDailySteps(from, to) {

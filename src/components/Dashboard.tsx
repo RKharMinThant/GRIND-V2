@@ -5,7 +5,7 @@ import type { HealthState } from '../health/useHealth'
 import { DEFAULT_DISTANCE_UNIT, DEFAULT_WEEK_START, type DistanceUnit, type WeekStart } from '../lib/units'
 import { greetingForHour, toLocalDateString, todayHeading, weekSessionCount } from '../lib/dates'
 import type { StreakStats } from '../lib/streaks'
-import { isRestLog, type Log } from '../types/database'
+import type { Log } from '../types/database'
 import type { GrindAgeState } from '../hooks/useGrindAge'
 import { GoalRing } from './GoalRing'
 import { GrindAgeCard } from './GrindAgeCard'
@@ -72,7 +72,6 @@ export function Dashboard({
   const detected = health.isConnected
     ? unlinkedWorkouts(health.workouts, logs, health.dismissedIds, today)
     : []
-  const restLoggedToday = logs.some((l) => l.log_date === today && isRestLog(l.workout))
 
   async function handleRest(date?: string) {
     if (restBusy) return
@@ -149,9 +148,7 @@ export function Dashboard({
       {health.isConnected && (
         <RecoveryCard
           recovery={health.recovery}
-          restLoggedToday={restLoggedToday}
-          restBusy={restBusy}
-          onRestDay={() => void handleRest()}
+          readiness={health.readiness}
           error={health.error}
           onRetry={() => void health.sync()}
         />

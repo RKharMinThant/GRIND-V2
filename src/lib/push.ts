@@ -3,6 +3,7 @@
 // they must stay in step with supabase/functions/_shared/notifyRules.ts.
 
 export type NotificationType =
+  | 'readiness'
   | 'workout_done'
   | 'fitbit_expired'
   | 'inactivity'
@@ -21,6 +22,12 @@ export const NOTIFICATION_TYPES: {
   description: string
   needsFitbit: boolean
 }[] = [
+  {
+    id: 'readiness',
+    label: 'Morning readiness',
+    description: "Your 0–100 readiness as soon as last night's sleep syncs",
+    needsFitbit: true,
+  },
   {
     id: 'workout_done',
     label: 'Workout finished',

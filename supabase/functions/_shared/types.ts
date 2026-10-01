@@ -89,3 +89,32 @@ export type BodySectionData = {
   sleep: SleepSection
   vitals: VitalsSection
 }
+
+// ── Daily readiness (0–100) — computed on the server, shown on Home and in the
+// morning notification. Mirrored between supabase/functions/_shared/types.ts and
+// src/health/types.ts.
+export type ReadinessZone = 'green' | 'yellow' | 'red'
+
+export type ReadinessComponent = {
+  /** Last night's value (HRV ms, resting HR bpm, minutes asleep) */
+  value: number | null
+  /** 30-day personal mean for HRV / resting HR; the 450-min need for sleep */
+  baseline: number | null
+  /** 0–100 */
+  score: number | null
+}
+
+export type ReadinessScore = {
+  /** Local date the night ended (YYYY-MM-DD) */
+  date: string
+  /** 'building' until there are ≥7 days of HRV or resting-HR history */
+  status: 'ok' | 'building'
+  /** 0–100, null when building or when last night has no HRV and no resting HR */
+  score: number | null
+  zone: ReadinessZone | null
+  hrv: ReadinessComponent
+  restingHr: ReadinessComponent
+  sleep: ReadinessComponent
+  /** Days of history behind the baselines (max 30) */
+  baselineDays: number
+}
