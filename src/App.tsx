@@ -76,7 +76,7 @@ export default function App() {
   } = useTrackedLifts(user?.id)
 
   // Fitbit (Phase 1: mock data, admin only)
-  const health = useHealth(isAdmin, logs, logsLoading)
+  const health = useHealth(isAdmin, logs, logsLoading, user?.id)
 
   // Web Push registration for this device (no-op until the user enables it)
   const push = usePush(Boolean(user))

@@ -22,8 +22,10 @@ export function BodyView({ health, stepGoal, distanceUnit = DEFAULT_DISTANCE_UNI
         <div>
           <div className="page-title">Body</div>
           {status === 'connected' && (
-            <div className="body-synced">
-              {health.source === 'demo' ? 'Demo data · ' : ''}Synced {relativeSync(health.connection?.lastSyncedAt ?? null)}
+            <div className="body-synced" aria-live="polite">
+              {health.source === 'demo' ? 'Demo data · ' : ''}
+              {/* The cards keep showing the last data while it refreshes, so say so here */}
+              {health.loading ? 'Updating…' : `Synced ${relativeSync(health.connection?.lastSyncedAt ?? null)}`}
             </div>
           )}
         </div>

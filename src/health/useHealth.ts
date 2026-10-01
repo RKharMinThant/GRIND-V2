@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { addDays, toLocalDateString } from '../lib/dates'
 import type { Log } from '../types/database'
+import { clearHealthCache, isFresh, readSnapshot, writeSnapshot } from './cache'
 import { createGoogleProvider } from './googleProvider'
 import type { HealthProvider } from './provider'
 import { createMockProvider } from './mockProvider'
@@ -32,6 +33,10 @@ export type HealthState = {
   today: TodaySummary | null
   /** Increments on every sync so Body sections refetch */
   syncVersion: number
+  /** Account the cached data belongs to */
+  userId: string | undefined
+  /** When the data on screen was fetched (ms); 0 until the first sync or cached copy */
+  lastSyncAt: number
   provider: HealthProvider
   loading: boolean
   connecting: boolean
@@ -43,7 +48,12 @@ export type HealthState = {
   dismiss(workoutId: string): void
 }
 
-export function useHealth(enabled: boolean, logs: Log[], logsLoading: boolean): HealthState {
+export function useHealth(
+  enabled: boolean,
+  logs: Log[],
+  logsLoading: boolean,
+  userId?: string,
+): HealthState {
   const logsRef = useRef(logs)
   useEffect(() => {
     logsRef.current = logs
@@ -70,43 +80,80 @@ export function useHealth(enabled: boolean, logs: Log[], logsLoading: boolean): 
   const [dismissedIds, setDismissedIds] = useState<string[]>(() =>
     readJson<string[]>(DISMISSED_KEY, []),
   )
+  const [lastSyncAt, setLastSyncAt] = useState(0)
+  const lastSyncRef = useRef(0)
+  /** The sync in flight, so a foreground refresh can't start a second one */
+  const inFlight = useRef<Promise<void> | null>(null)
 
-  const sync = useCallback(async () => {
-    const today = toLocalDateString()
-    const from = addDays(today, -RANGE_DAYS)
-    setLoading(true)
-    setError(null)
-    try {
-      const [w, r, s, t] = await Promise.all([
-        provider.getWorkouts(from, today),
-        provider.getRecovery(today),
-        provider.getDailySteps(from, today),
-        provider.getToday(today),
-      ])
-      await provider.markSynced()
-      setWorkouts(w)
-      setRecovery(r)
-      setSteps(s)
-      setToday(t)
-      setSyncVersion((v) => v + 1)
-      setConnection(await provider.getConnection())
-    } catch (e) {
-      // Expired or disconnected elsewhere: show Reconnect instead of an error card
-      const latest = await provider.getConnection().catch(() => null)
-      if (latest && latest.status !== 'connected') {
+  // Draw the last known data straight away. iOS unloads home-screen apps in the
+  // background, so without this every open started blank and waited for Google.
+  const hydratedFor = useRef<string | null>(null)
+  useEffect(() => {
+    if (!enabled || !userId || hydratedFor.current === userId) return
+    hydratedFor.current = userId
+    const snap = readSnapshot(userId, provider.source, toLocalDateString())
+    if (!snap) return
+    setConnection(snap.connection)
+    setWorkouts(snap.workouts)
+    setRecovery(snap.recovery)
+    setSteps(snap.steps)
+    setToday(snap.today)
+    lastSyncRef.current = snap.savedAt
+    setLastSyncAt(snap.savedAt)
+  }, [enabled, userId, provider])
+
+  const sync = useCallback((): Promise<void> => {
+    if (inFlight.current) return inFlight.current
+    const run = (async () => {
+      const today = toLocalDateString()
+      const from = addDays(today, -RANGE_DAYS)
+      setLoading(true)
+      setError(null)
+      try {
+        const [w, r, s, t] = await Promise.all([
+          provider.getWorkouts(from, today),
+          provider.getRecovery(today),
+          provider.getDailySteps(from, today),
+          provider.getToday(today),
+        ])
+        await provider.markSynced()
+        const latest = await provider.getConnection()
+        const savedAt = Date.now()
+        setWorkouts(w)
+        setRecovery(r)
+        setSteps(s)
+        setToday(t)
         setConnection(latest)
-        setError(null)
-      } else {
-        setError(e instanceof Error ? e.message : "Couldn't reach Fitbit")
+        writeSnapshot(userId, provider.source, today, { connection: latest, workouts: w, recovery: r, steps: s, today: t }, savedAt)
+        lastSyncRef.current = savedAt
+        setLastSyncAt(savedAt)
+        setSyncVersion((v) => v + 1)
+      } catch (e) {
+        // Expired or disconnected elsewhere: show Reconnect instead of an error card
+        const latest = await provider.getConnection().catch(() => null)
+        if (latest && latest.status !== 'connected') {
+          // Don't let a saved "connected" copy hide the Reconnect prompt on the next open
+          clearHealthCache(userId)
+          setConnection(latest)
+          setError(null)
+        } else {
+          setError(e instanceof Error ? e.message : "Couldn't reach Fitbit")
+        }
+      } finally {
+        setLoading(false)
+        inFlight.current = null
       }
-    } finally {
-      setLoading(false)
-    }
-  }, [provider])
+    })()
+    inFlight.current = run
+    return run
+  }, [provider, userId])
 
   // First check once logs are ready (mock workouts are derived from log dates).
   useEffect(() => {
     if (!enabled || logsLoading) return
+    // Synced within the last 10 minutes: what's on screen is current, so don't call Google
+    const snap = readSnapshot(userId, provider.source, toLocalDateString())
+    if (snap?.connection.status === 'connected' && isFresh(snap.savedAt)) return
     let cancelled = false
     provider
       .getConnection()
@@ -122,13 +169,15 @@ export function useHealth(enabled: boolean, logs: Log[], logsLoading: boolean): 
     return () => {
       cancelled = true
     }
-  }, [enabled, logsLoading, provider, sync])
+  }, [enabled, logsLoading, provider, sync, userId])
 
-  // Phones suspend the app: when it returns (or the network does), retry a failed sync
+  // Phones suspend the app: when it returns (or the network does), refresh if the data
+  // is more than 10 minutes old, or retry a sync that failed
   useEffect(() => {
-    if (!enabled || !error || connection?.status !== 'connected') return
+    if (!enabled || connection?.status !== 'connected') return
     const retry = () => {
-      if (document.visibilityState === 'visible') void sync()
+      if (document.visibilityState !== 'visible') return
+      if (error || !isFresh(lastSyncRef.current)) void sync()
     }
     document.addEventListener('visibilitychange', retry)
     window.addEventListener('online', retry)
@@ -154,13 +203,16 @@ export function useHealth(enabled: boolean, logs: Log[], logsLoading: boolean): 
 
   const disconnect = useCallback(async () => {
     await provider.disconnect()
+    clearHealthCache(userId)
+    lastSyncRef.current = 0
+    setLastSyncAt(0)
     setConnection(await provider.getConnection())
     setWorkouts([])
     setRecovery(null)
     setSteps([])
     setToday(null)
     setError(null)
-  }, [provider])
+  }, [provider, userId])
 
   const dismiss = useCallback((id: string) => {
     setDismissedIds((prev) => {
@@ -180,6 +232,8 @@ export function useHealth(enabled: boolean, logs: Log[], logsLoading: boolean): 
     steps,
     today,
     syncVersion,
+    userId,
+    lastSyncAt,
     provider,
     loading,
     connecting,
