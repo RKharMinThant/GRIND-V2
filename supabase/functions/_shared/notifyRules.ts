@@ -5,6 +5,8 @@
 // waiting until 7pm. Type ids are the contract with src/lib/push.ts.
 
 import { personal } from './personal.ts'
+export { isRestWorkout } from './restDay.ts'
+import { weeklyReportBody, type WeeklySummary } from './weeklyReport.ts'
 
 export type NotificationType =
   | 'fitbit_expired'
@@ -13,6 +15,7 @@ export type NotificationType =
   | 'step_goal'
   | 'recovery_milestone'
   | 'rest_day'
+  | 'weekly_report'
 
 export type NotificationPrefs = Partial<Record<NotificationType, boolean>>
 
@@ -45,6 +48,8 @@ export type RuleContext = {
   fitbitStatus: 'connected' | 'expired' | 'none'
   /** Only loaded when a Fitbit rule is actually due; null otherwise. */
   health: HealthSnapshot | null
+  /** Only loaded when the weekly report is due; null otherwise. */
+  weekly: WeeklySummary | null
   /** First name for the personal touch, or null to leave it out. */
   name: string | null
 }
@@ -57,11 +62,6 @@ export type Notification = {
   url: string
 }
 
-/** A logged rest day, as the app writes it (mirrors isRestLog in src/types/database.ts). */
-export function isRestWorkout(workout: string | null | undefined): boolean {
-  const w = workout?.trim().toLowerCase()
-  return w === 'rest' || w === 'rest day'
-}
 
 export function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000)
@@ -255,6 +255,24 @@ export const RULES: Rule[] = [
       }
     },
   },
+  {
+    type: 'weekly_report',
+    // Sunday evening, once the week's last session has had time to sync
+    // 21:xx is a second chance if the 20:xx run fails; the send ledger and the cooldown
+    // still make it one report
+    hours: [20, 21],
+    cooldownDays: 6,
+    // Zone minutes are read separately by the dispatcher, so no live health snapshot
+    needsHealth: false,
+    build: (ctx) => {
+      if (!ctx.weekly) return null
+      if (new Date(`${ctx.localDay}T00:00:00Z`).getUTCDay() !== 0) return null
+      return {
+        title: personal(ctx.name, (n) => `${n}'s week in review`, 'Your week in review'),
+        body: weeklyReportBody(ctx.weekly),
+      }
+    },
+  },
 ]
 
 const RULE_BY_TYPE = new Map(RULES.map((r) => [r.type, r]))
@@ -282,6 +300,7 @@ function urlFor(type: NotificationType, localDay: string): string {
   if (type === 'fitbit_expired') return '/app?settings=1'
   // The date rides along: this lands near midnight, and "today" moves if tapped late
   if (type === 'rest_day') return `/app?rest=${localDay}`
+  if (type === 'weekly_report') return '/app?tab=progress'
   return '/app'
 }
 

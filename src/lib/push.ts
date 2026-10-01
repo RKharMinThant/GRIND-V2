@@ -10,6 +10,7 @@ export type NotificationType =
   | 'step_goal'
   | 'recovery_milestone'
   | 'rest_day'
+  | 'weekly_report'
 
 export type NotificationPrefs = Partial<Record<NotificationType, boolean>>
 
@@ -42,6 +43,12 @@ export const NOTIFICATION_TYPES: {
     id: 'rest_day',
     label: 'Rest day check-in',
     description: 'Around 11pm after three training days, if no workout showed up',
+    needsFitbit: false,
+  },
+  {
+    id: 'weekly_report',
+    label: 'Week in review',
+    description: 'Sunday 8 PM: sessions, volume, PRs, zone minutes and GRIND Age change',
     needsFitbit: false,
   },
   {

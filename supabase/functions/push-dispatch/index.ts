@@ -11,7 +11,8 @@
 import { adminClient } from '../_shared/clients.ts'
 import { resolveAccessToken } from '../_shared/connection.ts'
 import { json } from '../_shared/cors.ts'
-import { FILTERS, dailyStepsRollUp, listAll } from '../_shared/googleApi.ts'
+import { normalizeActivity } from '../_shared/bodyNormalize.ts'
+import { FILTERS, dailyRollUpRange, dailyStepsRollUp, listAll } from '../_shared/googleApi.ts'
 import { localParts } from '../_shared/localTime.ts'
 import {
   dueTypes,
@@ -32,12 +33,15 @@ import { firstName } from '../_shared/personal.ts'
 import { allSubscriptions, deliver, type SubscriptionRow } from '../_shared/subscriptions.ts'
 import type { HealthWorkout } from '../_shared/types.ts'
 import { isTrainingSession } from '../_shared/workoutNotification.ts'
+import { summarizeWeek, type WeeklySummary } from '../_shared/weeklyReport.ts'
 
 /** Users processed at once. Keeps slow Google reads from serialising the whole run. */
 const CONCURRENCY = 4
 /** Ledger rows older than this are pruned; the longest cooldown is a week. */
 const LEDGER_RETENTION_DAYS = 60
 const DEFAULT_STEP_GOAL = 10000
+const DEFAULT_WEEKLY_GOAL = 4
+const LIFT_PAGE = 1000
 
 type Db = ReturnType<typeof adminClient>
 
@@ -54,7 +58,7 @@ function unauthorized(): Response {
 /** Everything the rules need that doesn't cost a Google call, for every user at once. */
 async function loadContext(db: Db, userIds: string[], since: string) {
   const [profiles, sends, connections, logs] = await Promise.all([
-    db.from('profiles').select('id, notification_prefs, daily_step_goal, display_name').in('id', userIds),
+    db.from('profiles').select('id, notification_prefs, daily_step_goal, weekly_goal, display_name').in('id', userIds),
     db.from('notification_sends').select('user_id, type, local_day').in('user_id', userIds).gte('local_day', since),
     db.from('health_connections').select('user_id, status').in('user_id', userIds),
     // Deliberately unbounded: "days since your last session" must not read as
@@ -63,11 +67,15 @@ async function loadContext(db: Db, userIds: string[], since: string) {
     db.from('logs').select('user_id, log_date, workout').in('user_id', userIds),
   ])
 
-  const prefsBy = new Map<string, { prefs: NotificationPrefs; stepGoal: number; name: string | null }>()
+  const prefsBy = new Map<
+    string,
+    { prefs: NotificationPrefs; stepGoal: number; weeklyGoal: number; name: string | null }
+  >()
   for (const p of profiles.data ?? []) {
     prefsBy.set(p.id, {
       prefs: (p.notification_prefs ?? {}) as NotificationPrefs,
       stepGoal: p.daily_step_goal ?? DEFAULT_STEP_GOAL,
+      weeklyGoal: p.weekly_goal ?? DEFAULT_WEEKLY_GOAL,
       name: firstName(p.display_name),
     })
   }
@@ -175,6 +183,74 @@ async function loadHealth(
   }
 }
 
+/** Daily Fitbit zone minutes for the week ending `localDay`; null when Fitbit can't be read. */
+async function loadWeekZoneMinutes(db: Db, userId: string, localDay: string) {
+  const token = await resolveAccessToken(db, userId)
+  if (!token.ok) return null
+  try {
+    const azm = await dailyRollUpRange(token.token, 'active-zone-minutes', addDays(localDay, -6), localDay)
+    return normalizeActivity({ azm }).flatMap((d) =>
+      d.azm ? [{ date: d.date, fatBurn: d.azm.fatBurn, cardio: d.azm.cardio, peak: d.azm.peak }] : [],
+    )
+  } catch (e) {
+    console.error('push-dispatch zone minutes read failed', userId, (e as Error).message)
+    return null
+  }
+}
+
+/** Everything the week-in-review needs for one user. Fitbit trouble only drops zone minutes. */
+async function loadWeekly(
+  db: Db,
+  userId: string,
+  localDay: string,
+  timeZone: string,
+  goal: number,
+  trainingDates: string[],
+  wantZones: boolean,
+): Promise<WeeklySummary> {
+  // Personal-best detection needs every earlier row of a lift, not just recent ones.
+  // Paged because a single request is capped; select only what the maths uses.
+  const lifts: { liftId: string; recordedAt: string; date: string; sets: { reps: number; weight: number }[]; unit: string }[] = []
+  for (let from = 0; ; from += LIFT_PAGE) {
+    const { data, error } = await db
+      .from('lift_history')
+      .select('lift_id, sets_detail, unit, recorded_at')
+      .eq('user_id', userId)
+      .order('recorded_at', { ascending: true })
+      // Tie-breaker, so rows sharing a timestamp never shift between pages
+      .order('id', { ascending: true })
+      .range(from, from + LIFT_PAGE - 1)
+    if (error) throw error
+    for (const r of data ?? []) {
+      lifts.push({
+        liftId: r.lift_id,
+        recordedAt: r.recorded_at,
+        date: localParts(new Date(r.recorded_at), timeZone).day,
+        sets: Array.isArray(r.sets_detail) ? r.sets_detail : [],
+        unit: r.unit,
+      })
+    }
+    if ((data?.length ?? 0) < LIFT_PAGE) break
+  }
+
+  const [ages, azm] = await Promise.all([
+    db.from('grind_age_weekly').select('grind_age, week_start').eq('user_id', userId).order('week_start', { ascending: false }).limit(2),
+    wantZones ? loadWeekZoneMinutes(db, userId, localDay) : Promise.resolve(null),
+  ])
+
+  return summarizeWeek({
+    localDay,
+    goal,
+    // Rest days are already filtered out of these, so the workout name no longer matters
+    logs: trainingDates.map((date) => ({ date, workout: null })),
+    lifts,
+    azm,
+    grindAges: (ages.data ?? [])
+      .map((a) => ({ weekStart: String(a.week_start), grindAge: Number(a.grind_age) }))
+      .filter((a) => Number.isFinite(a.grindAge)),
+  })
+}
+
 type RunSummary = { users: number; evaluated: number; sent: number }
 
 async function dispatch(): Promise<RunSummary> {
@@ -209,7 +285,9 @@ async function dispatch(): Promise<RunSummary> {
     const lastSent = sentBy.get(userId) ?? {}
     const gate = { prefs: profile.prefs, localDay: day, localHour: hour, lastSent }
 
-    const due = dueTypes(gate)
+    // The weekly report is Sunday-only; skip it (and its Fitbit read) on other days
+    const isSunday = new Date(`${day}T00:00:00Z`).getUTCDay() === 0
+    const due = dueTypes(gate).filter((t) => t !== 'weekly_report' || isSunday)
     if (due.length === 0) return
     evaluated++
 
@@ -222,12 +300,26 @@ async function dispatch(): Promise<RunSummary> {
         ? await loadHealth(db, userId, day, entry.timeZone, due, profile.stepGoal, wantExercise)
         : null
 
+    // Zone minutes come from the same Fitbit connection; the report sends without them
+    let weekly: WeeklySummary | null = null
+    if (due.includes('weekly_report')) {
+      try {
+        weekly = await loadWeekly(
+          db, userId, day, entry.timeZone, profile.weeklyGoal,
+          trainingBy.get(userId) ?? [], (statusBy.get(userId) ?? 'none') === 'connected',
+        )
+      } catch (e) {
+        console.error('push-dispatch weekly summary failed', userId, (e as Error).message)
+      }
+    }
+
     const notifications = evaluate({
       ...gate,
       logDates: logsBy.get(userId) ?? [],
       trainingLogDates: trainingBy.get(userId) ?? [],
       fitbitStatus: statusBy.get(userId) ?? 'none',
       health,
+      weekly,
       name: profile.name,
     })
 

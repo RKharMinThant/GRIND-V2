@@ -7,7 +7,19 @@ import {
   formatSetsDetail,
   type LiftHistoryPoint,
 } from '../lib/overload'
-import { prEvents, recentPrs, type PrKind } from '../lib/strength'
+import { prEvents, recentPrs, type PrKind, type WeightUnit } from '../lib/strength'
+import {
+  LOAD_STATUS_CHIP,
+  LOAD_STATUS_TEXT,
+  formatVsAverage,
+  liftingVolumeByDay,
+  loadSummary,
+  zoneMinutesByDay,
+  type LoadSummary,
+} from '../lib/trainingLoad'
+import { toLocalDateString } from '../lib/dates'
+import { useBodySection } from '../health/useBodySection'
+import type { HealthState } from '../health/useHealth'
 import { DEFAULT_WEEK_START, type WeekStart } from '../lib/units'
 import { buildProgressInsights } from '../lib/progress'
 import type { Log, TrackedLift } from '../types/database'
@@ -22,6 +34,8 @@ type Props = {
   fetchAllHistory: () => Promise<LiftHistoryPoint[]>
   /** Open progress detail (not editor) */
   onOpenLift: (lift: TrackedLift) => void
+  health: HealthState
+  weightUnit: WeightUnit
 }
 
 export function ProgressView({
@@ -33,6 +47,8 @@ export function ProgressView({
   fetchAllHistory,
   onOpenLift,
   weekStart = DEFAULT_WEEK_START,
+  health,
+  weightUnit,
 }: Props) {
   const insights = buildProgressInsights(logs, weeklyGoal, weekStart)
   const maxWeek = Math.max(1, ...insights.last4Weeks.map((w) => w.count), weeklyGoal)
@@ -75,6 +91,18 @@ export function ProgressView({
     }))
   }, [allHistory, byMuscle])
 
+  const today = toLocalDateString()
+  const lifting = useMemo(
+    () => loadSummary(liftingVolumeByDay(allHistory, weightUnit), today),
+    [allHistory, weightUnit, today],
+  )
+  const activity = useBodySection(health, 'activity').data
+  // The activity section covers 30 days, so the cardio baseline is days 7–29 back
+  const cardio = useMemo(
+    () => (health.isConnected && activity ? loadSummary(zoneMinutesByDay(activity), today, 23) : null),
+    [health.isConnected, activity, today],
+  )
+
   return (
     <div className="page progress-page">
       <div className="page-header page-header--row">
@@ -105,6 +133,17 @@ export function ProgressView({
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="progress-block">
+        <div className="section-title-row">
+          <h2 className="section-heading">Training load</h2>
+        </div>
+        <div className="load-rows">
+          <LoadRow label="Lifting volume" summary={lifting} unit={weightUnit} />
+          {cardio && <LoadRow label="Cardio (zone minutes)" summary={cardio} unit="min" />}
+        </div>
+        <p className="field-hint load-note">Last 7 days vs your 4-week average.</p>
       </section>
 
       <section className="progress-block">
@@ -217,6 +256,30 @@ export function ProgressView({
           </div>
         )}
       </section>
+    </div>
+  )
+}
+
+function LoadRow({ label, summary, unit }: { label: string; summary: LoadSummary; unit: string }) {
+  const vs = formatVsAverage(summary.ratio)
+  return (
+    <div className="load-row">
+      <div className="load-main">
+        <span className="load-label">{label}</span>
+        <span className="load-value">
+          {Math.round(summary.thisWeek).toLocaleString('en-US')} {unit}
+        </span>
+        <span className="load-vs">{vs ? `vs 4-wk avg ${vs}` : 'No 4-wk average yet'}</span>
+      </div>
+      <span
+        className={`load-chip load-chip--${summary.status}`}
+        title={LOAD_STATUS_TEXT[summary.status]}
+      >
+        {LOAD_STATUS_CHIP[summary.status]}
+      </span>
+      {(summary.status === 'ramping' || summary.status === 'lighter') && (
+        <span className="load-status-text">{LOAD_STATUS_TEXT[summary.status]}</span>
+      )}
     </div>
   )
 }
