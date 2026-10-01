@@ -1,10 +1,13 @@
+import { useEffect, useMemo, useState } from 'react'
 import { friendlyUpdatedAt } from '../lib/dates'
 import {
   compareTrackedLift,
   formatLiftLine,
   getLiftSets,
   formatSetsDetail,
+  type LiftHistoryPoint,
 } from '../lib/overload'
+import { prEvents, recentPrs, type PrKind } from '../lib/strength'
 import { DEFAULT_WEEK_START, type WeekStart } from '../lib/units'
 import { buildProgressInsights } from '../lib/progress'
 import type { Log, TrackedLift } from '../types/database'
@@ -16,6 +19,7 @@ type Props = {
   byMuscle: { group: string; lifts: TrackedLift[] }[]
   liftsLoading?: boolean
   onOpenAdd: (group?: string) => void
+  fetchAllHistory: () => Promise<LiftHistoryPoint[]>
   /** Open progress detail (not editor) */
   onOpenLift: (lift: TrackedLift) => void
 }
@@ -26,12 +30,50 @@ export function ProgressView({
   byMuscle,
   liftsLoading,
   onOpenAdd,
+  fetchAllHistory,
   onOpenLift,
   weekStart = DEFAULT_WEEK_START,
 }: Props) {
   const insights = buildProgressInsights(logs, weeklyGoal, weekStart)
   const maxWeek = Math.max(1, ...insights.last4Weeks.map((w) => w.count), weeklyGoal)
   const totalLifts = byMuscle.reduce((n, g) => n + g.lifts.length, 0)
+
+  const [allHistory, setAllHistory] = useState<LiftHistoryPoint[]>([])
+  // Refetch only when a lift is added, removed or saved, not on every list identity change
+  const historyKey = useMemo(
+    () =>
+      byMuscle
+        .flatMap(({ lifts }) => lifts.map((l) => `${l.id}:${l.updated_at}`))
+        .join('|'),
+    [byMuscle],
+  )
+  useEffect(() => {
+    if (!historyKey && liftsLoading) return
+    let cancelled = false
+    void fetchAllHistory().then((rows) => {
+      if (!cancelled) setAllHistory(rows)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [fetchAllHistory, historyKey, liftsLoading])
+
+  const prs = useMemo(() => {
+    const events = byMuscle.flatMap(({ lifts }) =>
+      lifts.flatMap((lift) =>
+        prEvents(
+          lift.exercise_name,
+          allHistory.filter((p) => p.lift_id === lift.id),
+          lift.unit,
+        ).map((event) => ({ event, lift })),
+      ),
+    )
+    const byEvent = new Map(events.map((e) => [e.event, e.lift]))
+    return recentPrs(events.map((e) => e.event)).map((event) => ({
+      event,
+      lift: byEvent.get(event)!,
+    }))
+  }, [allHistory, byMuscle])
 
   return (
     <div className="page progress-page">
@@ -63,6 +105,32 @@ export function ProgressView({
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="progress-block">
+        <div className="section-title-row">
+          <h2 className="section-heading">Recent PRs</h2>
+        </div>
+        {prs.length === 0 ? (
+          <p className="field-hint">PRs show up here when you beat a previous best.</p>
+        ) : (
+          <ul className="strength-pr-list">
+            {prs.map(({ event, lift }) => (
+              <li key={`${lift.id}-${event.kind}-${event.recorded_at}`}>
+                <button type="button" className="strength-pr-row" onClick={() => onOpenLift(lift)}>
+                  <span className={`strength-pr-kind strength-pr-kind--${event.kind}`}>
+                    {PR_LABELS[event.kind]}
+                  </span>
+                  <span className="strength-pr-name">{event.liftName}</span>
+                  <span className="strength-pr-value">
+                    {formatValue(event.value)} {event.unit}
+                  </span>
+                  <span className="strength-pr-date">{shortDate(event.recorded_at)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="progress-block">
@@ -151,4 +219,20 @@ export function ProgressView({
       </section>
     </div>
   )
+}
+
+const PR_LABELS: Record<PrKind, string> = {
+  oneRepMax: '1RM est.',
+  heaviest: 'Heaviest',
+  volume: 'Volume',
+}
+
+function formatValue(n: number): string {
+  return Number.isInteger(n) ? n.toLocaleString('en-US') : n.toFixed(1)
+}
+
+function shortDate(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
