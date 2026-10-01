@@ -16,6 +16,7 @@ import type {
   HealthRecovery,
   HealthSource,
   HealthWorkout,
+  ReadinessScore,
   TodaySummary,
 } from './types'
 
@@ -28,6 +29,7 @@ export type HealthBundle = {
   connection: HealthConnection
   workouts: HealthWorkout[]
   recovery: HealthRecovery | null
+  readiness: ReadinessScore | null
   steps: DailySteps[]
   today: TodaySummary | null
 }
@@ -70,7 +72,7 @@ export function writeSnapshot(
 
 /**
  * The last sync, or null. History (workouts, step counts) is always reusable; today's
- * summary and last night's recovery only on the same day — yesterday's steps must never
+ * summary and last night's recovery and readiness only on the same day — yesterday's steps must never
  * appear as today's.
  */
 export function readSnapshot(
@@ -88,6 +90,8 @@ export function readSnapshot(
     workouts: stored.workouts,
     steps: stored.steps,
     recovery: sameDay ? stored.recovery : null,
+    // Snapshots saved before readiness existed have no field
+    readiness: sameDay ? (stored.readiness ?? null) : null,
     today: sameDay ? stored.today : null,
     savedAt: stored.savedAt,
   }

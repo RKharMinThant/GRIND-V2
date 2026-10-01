@@ -1,4 +1,5 @@
-// Registers (or re-registers) the Google Health webhook subscriber for `exercise`.
+// Registers (or re-registers) the Google Health webhook subscriber for `exercise` (workout
+// notifications) and sleep / HRV / resting heart rate (the morning readiness notification).
 //
 //   npm run health:webhook              # create or update
 //   npm run health:webhook -- --list    # show what is registered
@@ -102,12 +103,12 @@ if (mode === 'delete') {
   process.exit(status < 300 ? 0 : 1)
 }
 
-console.log(`Registering ${endpointUri} for the "exercise" data type…`)
+console.log(`Registering ${endpointUri} for exercise, sleep, HRV and resting heart rate…`)
 console.log('(Google will call that URL twice now to verify it — it must already be deployed.)')
 
 const payload = {
   endpointUri,
-  subscriberConfigs: [{ dataTypes: ['exercise'], subscriptionCreatePolicy: 'AUTOMATIC' }],
+  subscriberConfigs: [{ dataTypes: ['exercise', 'sleep', 'daily-heart-rate-variability', 'daily-resting-heart-rate'], subscriptionCreatePolicy: 'AUTOMATIC' }],
   // Sent verbatim as the Authorization header on every notification
   endpointAuthorization: { secret: `Bearer ${secret}` },
 }

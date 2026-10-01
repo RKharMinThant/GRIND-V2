@@ -139,6 +139,18 @@ function averageBefore(map: Map<string, number>, date: string): number | null {
   return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
 }
 
+/** HRV (RMSSD, ms) keyed by date. */
+export function hrvByDate(points: GDataPoint[]): Map<string, number> {
+  return dailyValues(points, 'dailyHeartRateVariability', (o) => {
+    // Fitbit's HRV is RMSSD during deep sleep; fall back to whole-night figures
+    const v =
+      o.deepSleepRootMeanSquareOfSuccessiveDifferencesMilliseconds ??
+      o.rootMeanSquareOfSuccessiveDifferencesMilliseconds ??
+      o.averageHeartRateVariabilityMilliseconds
+    return v == null ? null : Math.round(Number(v))
+  })
+}
+
 export function buildRecovery(
   date: string,
   sleep: GDataPoint[],
@@ -156,18 +168,11 @@ export function buildRecovery(
     )[0]
 
   const rhrByDate = dailyValues(rhr, 'dailyRestingHeartRate', (o) => toInt(o.beatsPerMinute))
-  const hrvByDate = dailyValues(hrv, 'dailyHeartRateVariability', (o) => {
-    // Fitbit's HRV is RMSSD during deep sleep; fall back to whole-night figures
-    const v =
-      o.deepSleepRootMeanSquareOfSuccessiveDifferencesMilliseconds ??
-      o.rootMeanSquareOfSuccessiveDifferencesMilliseconds ??
-      o.averageHeartRateVariabilityMilliseconds
-    return v == null ? null : Math.round(Number(v))
-  })
+  const hrvMap = hrvByDate(hrv)
 
   const sleepMin = main ? toInt(main.summary?.minutesAsleep) : null
   const restingHr = rhrByDate.get(date) ?? null
-  const hrvMs = hrvByDate.get(date) ?? null
+  const hrvMs = hrvMap.get(date) ?? null
   if (sleepMin == null && restingHr == null && hrvMs == null) return null
 
   return {
@@ -177,7 +182,7 @@ export function buildRecovery(
     restingHr,
     restingHrAvg: averageBefore(rhrByDate, date),
     hrvMs,
-    hrvAvg: averageBefore(hrvByDate, date),
+    hrvAvg: averageBefore(hrvMap, date),
   }
 }
 

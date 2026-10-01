@@ -1,11 +1,19 @@
-// POST { from, to } (user JWT) → { workouts, recovery, steps, today, lastSyncedAt }
+// POST { from, to } (user JWT) → { workouts, recovery, readiness, steps, today, lastSyncedAt }
 // 404 not_connected · 409 expired · 502 google
 import { normalizeToday } from '../_shared/bodyNormalize.ts'
 import { adminClient, requireUser } from '../_shared/clients.ts'
 import { ensureHealthUserId, getAccessToken, invalidateAccessToken } from '../_shared/connection.ts'
 import { json, preflight } from '../_shared/cors.ts'
 import { dailyRollUpRange, dailyStepsRollUp, FILTERS, GoogleApiError, listAll } from '../_shared/googleApi.ts'
-import { buildRecovery, normalizeExercise, normalizeStepsRollup } from '../_shared/normalize.ts'
+import {
+  buildRecovery,
+  hrvByDate,
+  normalizeExercise,
+  normalizeStepsRollup,
+  restingHeartRateByDate,
+  sleepMinutesByNight,
+} from '../_shared/normalize.ts'
+import { computeReadiness } from '../_shared/readiness.ts'
 import type { HealthWorkout } from '../_shared/types.ts'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -37,13 +45,16 @@ Deno.serve(async (req) => {
   // Backfills health_user_id once, so webhooks can map back to this account
   await ensureHealthUserId(db, user.id, accessToken)
 
-  const recoveryFrom = addDaysIso(to, -7)
+  // HRV / resting HR: 31 days, the readiness baseline is the 30 days before `to`.
+  // Sleep: buildRecovery and readiness only use the night ending on `to`, so 7 days is plenty.
+  const baselineFrom = addDaysIso(to, -31)
+  const sleepFrom = addDaysIso(to, -7)
   try {
     const [exercise, sleep, rhr, hrv, stepsRollup, todayDistance, todayAzm, todayCalories] = await Promise.all([
       listAll(accessToken, 'exercise', FILTERS.exercise(from)),
-      listAll(accessToken, 'sleep', FILTERS.sleep(recoveryFrom)),
-      listAll(accessToken, 'daily-resting-heart-rate', FILTERS.dailyRestingHeartRate(recoveryFrom)),
-      listAll(accessToken, 'daily-heart-rate-variability', FILTERS.dailyHeartRateVariability(recoveryFrom)),
+      listAll(accessToken, 'sleep', FILTERS.sleep(sleepFrom)),
+      listAll(accessToken, 'daily-resting-heart-rate', FILTERS.dailyRestingHeartRate(baselineFrom)),
+      listAll(accessToken, 'daily-heart-rate-variability', FILTERS.dailyHeartRateVariability(baselineFrom)),
       dailyStepsRollUp(accessToken, from, to),
       dailyRollUpRange(accessToken, 'distance', to, to),
       dailyRollUpRange(accessToken, 'active-zone-minutes', to, to),
@@ -60,6 +71,12 @@ Deno.serve(async (req) => {
     return json(req, {
       workouts,
       recovery: buildRecovery(to, sleep, rhr, hrv),
+      readiness: computeReadiness({
+        date: to,
+        hrvByDate: hrvByDate(hrv),
+        rhrByDate: restingHeartRateByDate(rhr),
+        sleepMinutesLastNight: sleepMinutesByNight(sleep).get(to) ?? null,
+      }),
       steps: normalizeStepsRollup(stepsRollup),
       today: normalizeToday(to, {
         steps: stepsRollup,

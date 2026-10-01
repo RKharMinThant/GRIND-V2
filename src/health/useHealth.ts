@@ -12,6 +12,7 @@ import type {
   HealthRecovery,
   HealthSource,
   HealthWorkout,
+  ReadinessScore,
   TodaySummary,
 } from './types'
 
@@ -29,6 +30,7 @@ export type HealthState = {
   isConnected: boolean
   workouts: HealthWorkout[]
   recovery: HealthRecovery | null
+  readiness: ReadinessScore | null
   steps: DailySteps[]
   today: TodaySummary | null
   /** Increments on every sync so Body sections refetch */
@@ -71,6 +73,7 @@ export function useHealth(
   const [connection, setConnection] = useState<HealthConnection | null>(null)
   const [workouts, setWorkouts] = useState<HealthWorkout[]>([])
   const [recovery, setRecovery] = useState<HealthRecovery | null>(null)
+  const [readiness, setReadiness] = useState<ReadinessScore | null>(null)
   const [steps, setSteps] = useState<DailySteps[]>([])
   const [today, setToday] = useState<TodaySummary | null>(null)
   const [syncVersion, setSyncVersion] = useState(0)
@@ -96,6 +99,7 @@ export function useHealth(
     setConnection(snap.connection)
     setWorkouts(snap.workouts)
     setRecovery(snap.recovery)
+    setReadiness(snap.readiness)
     setSteps(snap.steps)
     setToday(snap.today)
     lastSyncRef.current = snap.savedAt
@@ -110,9 +114,10 @@ export function useHealth(
       setLoading(true)
       setError(null)
       try {
-        const [w, r, s, t] = await Promise.all([
+        const [w, r, rd, s, t] = await Promise.all([
           provider.getWorkouts(from, today),
           provider.getRecovery(today),
+          provider.getReadiness(today),
           provider.getDailySteps(from, today),
           provider.getToday(today),
         ])
@@ -121,10 +126,11 @@ export function useHealth(
         const savedAt = Date.now()
         setWorkouts(w)
         setRecovery(r)
+        setReadiness(rd)
         setSteps(s)
         setToday(t)
         setConnection(latest)
-        writeSnapshot(userId, provider.source, today, { connection: latest, workouts: w, recovery: r, steps: s, today: t }, savedAt)
+        writeSnapshot(userId, provider.source, today, { connection: latest, workouts: w, recovery: r, readiness: rd, steps: s, today: t }, savedAt)
         lastSyncRef.current = savedAt
         setLastSyncAt(savedAt)
         setSyncVersion((v) => v + 1)
@@ -209,6 +215,7 @@ export function useHealth(
     setConnection(await provider.getConnection())
     setWorkouts([])
     setRecovery(null)
+    setReadiness(null)
     setSteps([])
     setToday(null)
     setError(null)
@@ -229,6 +236,7 @@ export function useHealth(
     isConnected: enabled && connection?.status === 'connected',
     workouts,
     recovery,
+    readiness,
     steps,
     today,
     syncVersion,
