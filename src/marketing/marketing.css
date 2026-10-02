@@ -1,3 +1,122 @@
+/* ── FROZEN tokens ────────────────────────────────────────────────────────────
+   The marketing site keeps its original look (Outfit, citrus light theme, ambient
+   dark). The app moved to the Apple Fitness token set in styles/tokens.css, so the
+   old values are pinned here, scoped to .marketing. Do not "modernise" these. */
+.marketing {
+  --bg: #07080a;
+  --bg-elevated: #0d0f13;
+  --surface: #12151b;
+  --surface-2: #1a1e27;
+  --surface-3: #232833;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --highlight: rgba(255, 255, 255, 0.08);
+  --accent: #c8f135;
+  --accent-soft: #a8d12a;
+  --accent-dim: rgba(200, 241, 53, 0.1);
+  --accent-glow: rgba(200, 241, 53, 0.22);
+  --accent-text: #0a0c08;
+  --ice: #6ee7f5;
+  --ice-dim: rgba(110, 231, 245, 0.12);
+  --danger: #ff5c45;
+  --warn: #f5b942;
+  --danger-dim: rgba(255, 92, 69, 0.12);
+  --text: #f4f5f7;
+  --muted: #9aa0ad;
+  --muted-2: #5e6574;
+  --warm: #c4b8a5;
+  --topbar-bg: rgba(7, 8, 10, 0.72);
+  --dock-bg: rgba(18, 21, 27, 0.9);
+  --overlay-bg: rgba(0, 0, 0, 0.7);
+  --hero-mid: #151a22;
+  --scrim-from: rgba(7, 8, 10, 0.88);
+  --media-title: #ffffff;
+  --media-date: rgba(255, 255, 255, 0.75);
+  --grid-line: rgba(255, 255, 255, 0.07);
+  --grid-opacity: 0.035;
+  --ambient-1: rgba(200, 241, 53, 0.07);
+  --ambient-2: rgba(110, 231, 245, 0.04);
+  --ambient-3: rgba(200, 241, 53, 0.03);
+  --auth-brand-bg: linear-gradient(160deg, #0c1018 0%, #07080a 50%, #0a1208 100%);
+  --ghost-hover-bg: rgba(255, 255, 255, 0.03);
+  --photo-remove-bg: rgba(0, 0, 0, 0.75);
+  --sheet-shadow: 0 -12px 48px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.35);
+  --shadow-dock: 0 12px 40px rgba(0, 0, 0, 0.5);
+  --shadow-log: 0 8px 24px rgba(0, 0, 0, 0.2);
+  --shadow-log-hover: 0 14px 36px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+  --accent-ink: #c8f135;
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --font-num: 'Bebas Neue', system-ui, sans-serif;
+  --font: 'Outfit', system-ui, sans-serif;
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+[data-theme='light'] .marketing {
+  --bg: #f3f5ec;
+  --bg-elevated: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #eef2e3;
+  --surface-3: #e2e8d4;
+  --border: rgba(28, 36, 12, 0.1);
+  --border-strong: rgba(28, 36, 12, 0.16);
+  --highlight: #ffffff;
+  --accent: #c8f135;
+  --accent-soft: #d8ff52;
+  --accent-dim: rgba(200, 241, 53, 0.28);
+  --accent-glow: rgba(180, 220, 30, 0.4);
+  --accent-text: #1a2600;
+  --accent-ink: #3a5800;
+  --ice: #0e8a9e;
+  --ice-dim: rgba(14, 138, 158, 0.12);
+  --danger: #e11d48;
+  --warn: #d98a0b;
+  --danger-dim: rgba(225, 29, 72, 0.1);
+  --text: #12160c;
+  --muted: #4a5240;
+  --muted-2: #6b7460;
+  --warm: #8a7a55;
+  --topbar-bg: rgba(243, 245, 236, 0.9);
+  --dock-bg: rgba(255, 255, 255, 0.95);
+  --overlay-bg: rgba(18, 22, 10, 0.4);
+  --hero-mid: #f7f9f0;
+  --scrim-from: rgba(18, 22, 10, 0.78);
+  --media-title: #ffffff;
+  --media-date: rgba(255, 255, 255, 0.85);
+  --grid-line: rgba(58, 88, 0, 0.06);
+  --grid-opacity: 0.45;
+  --ambient-1: rgba(200, 241, 53, 0.18);
+  --ambient-2: rgba(14, 138, 158, 0.06);
+  --ambient-3: rgba(200, 241, 53, 0.08);
+  --auth-brand-bg: linear-gradient(160deg, #e8f5a8 0%, #f3f5ec 48%, #d4f0f4 100%);
+  --ghost-hover-bg: rgba(28, 36, 12, 0.05);
+  --photo-remove-bg: rgba(0, 0, 0, 0.7);
+  --sheet-shadow: 0 -12px 40px rgba(18, 22, 10, 0.1);
+  --shadow-card: 0 12px 32px rgba(58, 88, 0, 0.07);
+  --shadow-dock: 0 12px 36px rgba(18, 22, 10, 0.1);
+  --shadow-log: 0 8px 22px rgba(18, 22, 10, 0.06);
+  --shadow-log-hover: 0 14px 32px rgba(58, 88, 0, 0.1);
+  color-scheme: light;
+}
+
+/* Canvas behind the page (overscroll) keeps the old flat colour too */
+body:has(.marketing) {
+  background: #07080a;
+}
+
+[data-theme='light'] body:has(.marketing) {
+  background: #f3f5ec;
+}
+
 /* ── Marketing site (Phase 1 shell + hero) ─────────────────────────────────── */
 /* Scoped under .marketing — does not fight app chrome */
 

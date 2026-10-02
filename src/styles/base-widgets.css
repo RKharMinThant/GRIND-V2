@@ -1,32 +1,38 @@
-/* ── Theme switcher ────────────────────────────────────────────────────────── */
+/* ── Theme switcher (Settings → Appearance) — iOS segmented look ───────────── */
 .theme-seg {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  padding: 4px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  gap: 0;
+  padding: 2px;
+  background: var(--fill);
+  border-radius: 9px;
   margin-bottom: 12px;
 }
 
 .theme-seg button {
-  padding: 8px 6px;
+  min-height: 28px;
+  padding: 4px 6px;
   border-radius: 7px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: var(--muted);
-  transition: background 140ms ease, color 140ms ease;
-}
-
-.theme-seg button:hover {
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  font-weight: 600;
+  letter-spacing: var(--ls-subhead);
   color: var(--text);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
 .theme-seg button.active {
-  background: var(--accent);
-  color: var(--accent-text);
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+[data-theme='light'] .theme-seg button.active {
+  background: #ffffff;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.12),
+    0 3px 1px rgba(0, 0, 0, 0.04);
 }
 
 .theme-icon-btn {
@@ -64,108 +70,97 @@
   margin-bottom: 12px;
 }
 
-/* ── Filters ───────────────────────────────────────────────────────────────── */
+/* ── Filters (chips) ───────────────────────────────────────────────────────── */
 .filter-row {
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
   overflow-x: auto;
   padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.filter-row::-webkit-scrollbar {
+  display: none;
 }
 
 .filter-chip {
   flex-shrink: 0;
-  padding: 7px 12px;
+  min-height: 32px;
+  padding: 4px 14px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  transition:
-    border-color 140ms var(--ease-out),
-    color 140ms var(--ease-out),
-    background 140ms var(--ease-out),
-    box-shadow 140ms var(--ease-out);
+  border: none;
+  background: var(--fill);
+  color: var(--text);
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  font-weight: 600;
+  letter-spacing: var(--ls-footnote);
+  text-transform: none;
 }
 
-/* Dark: lime label on soft fill is readable */
 .filter-chip.active {
-  border-color: rgba(200, 241, 53, 0.45);
-  color: var(--accent);
-  background: var(--accent-dim);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
-/* Light: solid citrus + ink text (lime-on-lime outline was illegible) */
-[data-theme='light'] .filter-chip {
-  background: #fff;
-  border-color: rgba(28, 36, 12, 0.12);
-  color: var(--muted);
-}
-
-[data-theme='light'] .filter-chip.active {
   background: var(--accent);
   color: var(--accent-text);
-  border-color: transparent;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.45) inset,
-    0 2px 10px var(--accent-glow);
-}
-
-[data-theme='light'] .filter-chip:not(.active):hover {
-  color: var(--text);
-  border-color: rgba(28, 36, 12, 0.2);
 }
 
 .search-input {
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
+  min-height: 44px;
+  background: var(--fill);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
   margin-bottom: 12px;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
   outline: none;
-  transition: border-color 150ms ease;
+}
+
+.search-input::placeholder {
+  color: var(--muted);
 }
 
 .search-input:focus {
-  border-color: rgba(200, 241, 53, 0.45);
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 0;
 }
 
-/* ── Toast ─────────────────────────────────────────────────────────────────── */
+/* ── Toast — floating capsule, drops in from the top ───────────────────────── */
 .toast {
   position: fixed;
-  bottom: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px) + 24px);
+  top: calc(var(--safe-top) + 8px);
   left: 50%;
-  transform: translateX(-50%) translateY(12px);
   z-index: 200;
-  background: var(--accent);
-  color: var(--accent-text);
-  font-weight: 700;
-  font-size: 0.86rem;
-  padding: 12px 20px;
+  max-width: min(90vw, 360px);
+  padding: 10px 18px;
   border-radius: 999px;
+  background: var(--material-bar);
+  -webkit-backdrop-filter: var(--material-filter);
+  backdrop-filter: var(--material-filter);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  color: var(--text);
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  font-weight: 600;
+  letter-spacing: var(--ls-subhead);
+  text-align: center;
   opacity: 0;
+  transform: translate(-50%, -16px);
   pointer-events: none;
   transition:
-    opacity var(--dur-ui) var(--ease-out),
-    transform var(--dur-ui) var(--ease-spring);
-  max-width: min(90vw, 360px);
-  text-align: center;
-  box-shadow: 0 8px 28px var(--accent-glow);
+    opacity 200ms var(--ease-out),
+    transform 250ms var(--ease-out);
 }
 
 .toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translate(-50%, 0);
 }
 
 .toast.error {
-  background: var(--danger);
-  color: #fff;
-  box-shadow: 0 8px 24px rgba(255, 92, 69, 0.3);
+  color: var(--danger);
 }
 
 /* ── Spinner / boot ────────────────────────────────────────────────────────── */
@@ -180,8 +175,8 @@
 .spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid var(--border-strong);
-  border-top-color: var(--accent);
+  border: 3px solid var(--fill);
+  border-top-color: var(--accent-ink);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -193,6 +188,15 @@
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
@@ -289,13 +293,180 @@
 }
 
 .boot-screen .logo {
-  animation: fade-up var(--dur-page) var(--ease-out) both;
+  animation: fade-up var(--dur-ui) var(--ease-out) both;
 }
 
 .boot-screen .spinner {
   animation: spin 0.7s linear infinite, fade-in 300ms var(--ease-out) both;
 }
 
+/* ── Rings (Apple Activity style) ──────────────────────────────────────────────
+   <Ring> draws a conic-gradient arc through a donut mask: darker at 12 o'clock,
+   full colour at the head, round caps (two dots), track = the ring colour at low
+   opacity. Progress past 100% keeps the full ring and lets the head cap overlap
+   the tail with a faint shadow, as Apple does. */
+@property --ring-p {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --ring-end {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.ring {
+  --ring-color: var(--ring-accent);
+  --ring-start: color-mix(in srgb, var(--ring-color) 68%, #000);
+  --ring-track-alpha: 18%;
+  --ring-size: 96px;
+  --ring-w: 12px;
+  position: relative;
+  flex: none;
+  animation: ring-sweep 700ms var(--ease-out) both;
+}
+
+[data-theme='light'] .ring {
+  --ring-track-alpha: 14%;
+}
+
+.ring[data-tone='accent'] {
+  --ring-color: var(--ring-accent);
+}
+.ring[data-tone='heart'] {
+  --ring-color: var(--c-heart);
+}
+.ring[data-tone='sleep'] {
+  --ring-color: var(--c-sleep);
+}
+.ring[data-tone='strength'] {
+  --ring-color: var(--c-strength);
+}
+.ring[data-tone='activity'] {
+  --ring-color: var(--c-activity);
+}
+.ring[data-tone='warn'] {
+  --ring-color: var(--warn);
+}
+.ring[data-tone='danger'] {
+  --ring-color: var(--danger);
+}
+
+/* Readiness card colours its ring by zone (until it passes a tone itself) */
+.readiness.green .ring:not([data-tone]) {
+  --ring-color: var(--accent-ink);
+}
+.readiness.yellow .ring:not([data-tone]) {
+  --ring-color: var(--warn);
+}
+.readiness.red .ring:not([data-tone]) {
+  --ring-color: var(--danger);
+}
+
+.ring-track,
+.ring-arc {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--ring-w) - 0.5px),
+    #000 calc(100% - var(--ring-w) + 0.5px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--ring-w) - 0.5px),
+    #000 calc(100% - var(--ring-w) + 0.5px)
+  );
+}
+
+.ring-track {
+  background: color-mix(in srgb, var(--ring-color) var(--ring-track-alpha), transparent);
+}
+
+.ring-arc {
+  background: conic-gradient(
+    from 0deg,
+    var(--ring-start) 0deg,
+    var(--ring-color) calc(var(--ring-p) * 360deg),
+    transparent calc(var(--ring-p) * 360deg)
+  );
+}
+
+/* Round caps: a dot at 12 o'clock (tail) and one at the head */
+.ring-dot {
+  position: absolute;
+  top: 0;
+  left: calc(50% - var(--ring-w) / 2);
+  width: var(--ring-w);
+  height: var(--ring-w);
+  border-radius: 50%;
+  transform-origin: 50% calc(var(--ring-size) / 2);
+}
+
+.ring-dot--start {
+  background: var(--ring-start);
+}
+
+.ring-dot--end {
+  background: var(--ring-color);
+  transform: rotate(calc(var(--ring-end) * 360deg));
+  box-shadow: 1.5px 0 3px rgba(0, 0, 0, 0.3);
+}
+
+.ring-center {
+  position: absolute;
+  inset: var(--ring-w);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.ring-label {
+  color: var(--text);
+  font-size: calc(var(--ring-size) * var(--ring-label-scale, 0.26));
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ring-sub {
+  margin-top: 2px;
+  font-size: max(0.625rem, calc(var(--ring-size) * 0.12));
+  line-height: 1.2;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+@keyframes ring-sweep {
+  from {
+    --ring-p: 0;
+    --ring-end: 0;
+  }
+}
+
+/* Metric tones for charts (Sparkline / StackedBar / VitalsSection use .tone-*) */
+.tone-heart {
+  --tone: var(--c-heart);
+}
+.tone-sleep {
+  --tone: var(--c-sleep);
+}
+.tone-strength {
+  --tone: var(--c-strength);
+}
+.tone-activity {
+  --tone: var(--c-activity);
+}
+.tone-warn {
+  --tone: var(--warn);
+}
+
+/* ── Reduced motion: cross-fades only ──────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -309,25 +480,18 @@
     animation: none;
   }
 
+  /* Entrance choreography: just show the content */
   .page-enter,
-  .page-layer,
-  .page-layer--enter,
-  .page-layer--exit,
   .hero-panel,
   .goal-ring-wrap,
   .home-greeting,
   .metrics,
   .log-card,
   .week-day,
-  .auth-card,
-  .menu-pop {
+  .auth-card {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
-  }
-
-  .page-layer--exit {
-    display: none !important;
   }
 
   .overlay,
@@ -341,11 +505,41 @@
     transform: none !important;
   }
 
-  .dock-log:hover,
+  /* No movement on press or reveal */
+  .btn:active,
+  .btn-icon:active,
+  .dock-slot:active,
   .dock-log:active,
-  .dock-log-plus {
-    transition: none !important;
+  .user-chip:active,
+  .filter-chip:active,
+  .segmented button:active,
+  button.card:active,
+  a.card:active,
+  button.health-card:active {
     transform: none !important;
+  }
+
+  .toast {
+    transform: translate(-50%, 0);
+  }
+
+  /* …but state changes still cross-fade */
+  .toast {
+    transition: opacity var(--dur-fast) linear !important;
+  }
+
+  .topbar::before,
+  .topbar-title {
+    transition: opacity var(--dur-fast) linear !important;
+  }
+
+  .page-layer--enter,
+  .page-layer--exit {
+    animation-duration: var(--dur-fast) !important;
+  }
+
+  .ring {
+    animation: none !important;
   }
 
   ::view-transition-old(root),
@@ -356,7 +550,7 @@
   html.theme-animating,
   html.theme-animating body,
   html.theme-animating .topbar,
-  html.theme-animating .dock,
+  html.theme-animating .dock-bar,
   html.theme-animating .card,
   html.theme-animating .hero-panel,
   html.theme-animating .log-card {
@@ -364,6 +558,7 @@
   }
 }
 
+/* ── Duration pickers (input-like tiles) ───────────────────────────────────── */
 .duration-pickers {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -375,15 +570,14 @@
   align-items: center;
   gap: 8px;
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--radius-sm);
-  padding: 4px 12px 4px 4px;
-  transition: border-color 150ms var(--ease-out);
+  padding: 2px 12px 2px 4px;
 }
 
 .duration-pick:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 0;
 }
 
 .duration-pick select {
@@ -393,7 +587,8 @@
   background: transparent;
   border: none;
   color: var(--text);
-  font-size: 1.15rem;
+  font-family: var(--font-num);
+  font-size: var(--fs-title3);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   padding: 10px 8px;
@@ -406,23 +601,25 @@
 }
 
 .duration-unit {
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted-2);
+  font-size: var(--fs-footnote);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
   flex-shrink: 0;
 }
 
-[data-theme='light'] .duration-pick {
-  background: #f7f8f6;
-  border-color: rgba(18, 22, 10, 0.12);
-}
-
-[data-theme='light'] .duration-pick:focus-within {
-  background: #fff;
-  border-color: var(--accent-ink);
-  box-shadow: 0 0 0 3px rgba(200, 241, 53, 0.35);
+/* Higher contrast: inputs get a visible edge */
+@media (prefers-contrast: more) {
+  .field input,
+  .field textarea,
+  .field select,
+  .search-input,
+  .duration-pick,
+  .filter-chip,
+  .segmented,
+  .theme-seg {
+    border: 1px solid var(--border-strong);
+  }
 }
 
 @media (min-width: 720px) {
@@ -443,4 +640,3 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
-

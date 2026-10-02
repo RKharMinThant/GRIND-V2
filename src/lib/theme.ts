@@ -42,7 +42,7 @@ function setThemeAttributes(resolved: ResolvedTheme): void {
     meta.setAttribute('name', 'theme-color')
     document.head.appendChild(meta)
   }
-  meta.setAttribute('content', resolved === 'dark' ? '#07080A' : '#F3F5EC')
+  meta.setAttribute('content', resolved === 'dark' ? '#000000' : '#F2F2F7')
 }
 
 function prefersReducedMotion(): boolean {

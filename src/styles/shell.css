@@ -1,4 +1,4 @@
-/* ── Section (tab) transitions ─────────────────────────────────────────────── */
+/* ── Section (tab) transitions — opacity + a short slide, no blur ──────────── */
 .page-stage {
   position: relative;
   width: 100%;
@@ -43,26 +43,22 @@
 @keyframes page-in-forward {
   from {
     opacity: 0;
-    transform: translate3d(18px, 0, 0);
-    filter: blur(2px);
+    transform: translate3d(12px, 0, 0);
   }
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0);
-    filter: blur(0);
   }
 }
 
 @keyframes page-in-back {
   from {
     opacity: 0;
-    transform: translate3d(-18px, 0, 0);
-    filter: blur(2px);
+    transform: translate3d(-12px, 0, 0);
   }
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0);
-    filter: blur(0);
   }
 }
 
@@ -70,12 +66,10 @@
   from {
     opacity: 1;
     transform: translate3d(0, 0, 0);
-    filter: blur(0);
   }
   to {
     opacity: 0;
-    transform: translate3d(-14px, 0, 0);
-    filter: blur(2px);
+    transform: translate3d(-10px, 0, 0);
   }
 }
 
@@ -83,56 +77,93 @@
   from {
     opacity: 1;
     transform: translate3d(0, 0, 0);
-    filter: blur(0);
   }
   to {
     opacity: 0;
-    transform: translate3d(14px, 0, 0);
-    filter: blur(2px);
+    transform: translate3d(10px, 0, 0);
+  }
+}
+
+/* Reduced motion: cross-fade only */
+@media (prefers-reduced-motion: reduce) {
+  .page-layer--enter.page-layer--forward,
+  .page-layer--enter.page-layer--back {
+    animation: fade-in var(--dur-fast) linear both;
+  }
+
+  .page-layer--exit.page-layer--forward,
+  .page-layer--exit.page-layer--back {
+    animation: fade-out var(--dur-fast) linear both;
   }
 }
 
 /* Legacy single-enter (unused by stage, kept for safety) */
 .page-enter {
-  animation: page-enter var(--dur-page) var(--ease-out) both;
+  animation: page-enter var(--dur-ui) var(--ease-out) both;
 }
 
+/* Title + actions row on a page (Large Title sits 8px under the top bar via .page) */
 .page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin: 12px 0 18px;
+  margin: 0 0 12px;
 }
 
-/* ── Top bar ───────────────────────────────────────────────────────────────── */
+/* ── Top bar ───────────────────────────────────────────────────────────────────
+   Transparent at the top of the page. Once the page scrolls past ~44px the shell
+   gets data-scrolled="true": the material fades in and the tab name appears. */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 50;
-  height: var(--header-h);
+  height: calc(var(--header-h) + var(--safe-top));
+  padding: var(--safe-top) max(var(--gutter), env(safe-area-inset-right, 0px)) 0
+    max(var(--gutter), env(safe-area-inset-left, 0px));
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 18px;
-  background: var(--topbar-bg);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  justify-content: flex-end;
+}
+
+.topbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--material-bar);
+  -webkit-backdrop-filter: var(--material-filter);
+  backdrop-filter: var(--material-filter);
   border-bottom: 1px solid var(--border);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+  pointer-events: none;
 }
 
-.logo {
-  font-family: var(--font);
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  color: var(--accent);
-  line-height: 1;
+.app-shell[data-scrolled='true'] .topbar::before {
+  opacity: 1;
 }
 
-.logo span {
-  color: var(--text);
-  font-weight: 700;
+.topbar-title {
+  position: absolute;
+  inset: var(--safe-top) 64px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-headline);
+  line-height: var(--lh-headline);
+  font-weight: var(--fw-headline);
+  letter-spacing: var(--ls-headline);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.app-shell[data-scrolled='true'] .topbar-title {
+  opacity: 1;
 }
 
 .topbar-right {
@@ -142,110 +173,74 @@
   position: relative;
 }
 
-.user-menu-wrap {
-  position: relative;
+/* Wordmark — the one place Bebas Neue lives (boot screen / auth) */
+.logo {
+  font-family: var(--font-brand);
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--accent-ink);
+  line-height: 1;
 }
 
-.user-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 12px 5px 5px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--muted);
-  max-width: 180px;
-  transition: border-color 150ms ease;
-}
-
-.user-chip:hover {
-  border-color: var(--border-strong);
+.logo span {
   color: var(--text);
 }
 
-.user-chip span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* 34px circular avatar — opens Settings */
+.user-chip {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: var(--fill);
+  color: var(--text);
+  flex: none;
+  transition-property: transform, border-color;
+  transition-duration: var(--dur-press), var(--dur-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.user-chip:active {
+  transform: scale(0.94);
 }
 
 .avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, var(--accent), #8fbb12);
-  color: var(--accent-text);
-  font-size: 0.72rem;
-  font-weight: 800;
   display: grid;
   place-items: center;
-  flex-shrink: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1;
   text-transform: uppercase;
 }
 
-.menu-pop {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 240px;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  padding: 12px;
-  box-shadow: var(--shadow-card);
-  z-index: 80;
-  transform-origin: top right;
-  animation: menu-pop var(--dur-ui) var(--ease-spring) both;
-}
-
-.menu-pop .field {
-  margin-bottom: 10px;
-}
-
-.menu-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-/* ── Bottom nav: continuous bar · Log elevated in-flow ─────────────────────── */
-.dock-wrap {
+/* ── Bottom tab bar (iOS) ──────────────────────────────────────────────────────
+   Anchored to the bottom edge, full width. 49px + safe area. Five slots; the
+   centre slot is the Log action. */
+.dock-bar {
   position: fixed;
-  bottom: 0;
   left: 0;
   right: 0;
+  bottom: 0;
   z-index: 60;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-  padding: 0 16px calc(14px + env(safe-area-inset-bottom, 0px));
-}
-
-.dock-bar {
-  pointer-events: auto;
-  width: min(100%, 420px);
+  height: calc(var(--dock-h) + var(--safe-bottom));
+  padding: 0 0 var(--safe-bottom);
   display: grid;
-  grid-template-columns: 1fr 1fr 1.15fr 1fr;
-  align-items: end;
-  gap: 2px;
-  padding: 8px 10px 10px;
-  border-radius: 28px;
-  background: var(--dock-bg);
-  backdrop-filter: blur(24px) saturate(170%);
-  -webkit-backdrop-filter: blur(24px) saturate(170%);
-  border: 1px solid var(--border-strong);
-  box-shadow: var(--shadow-dock);
-}
-
-/* 5-up: Home · History · Log · Progress · Calendar — Log dead center */
-.dock-bar--five {
-  width: min(100%, 460px);
-  grid-template-columns: 1fr 1fr 1.05fr 1fr 1fr;
-  padding: 8px 6px 10px;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: stretch;
+  background: var(--material-bar);
+  -webkit-backdrop-filter: var(--material-filter);
+  backdrop-filter: var(--material-filter);
+  border-top: 1px solid var(--border);
 }
 
 .dock-slot {
@@ -253,173 +248,84 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  min-height: 52px;
-  padding: 8px 4px;
-  border-radius: 18px;
-  color: var(--muted-2);
-  transition:
-    color 180ms var(--ease-out),
-    background 180ms var(--ease-out),
-    transform var(--dur-press) var(--ease-out);
-}
-
-.dock-slot:active {
-  transform: scale(0.96);
+  gap: 2px;
+  min-width: 0;
+  padding: 4px 2px 2px;
+  color: var(--muted);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .dock-slot-icon {
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
 }
 
 .dock-slot-icon svg {
-  width: 21px;
-  height: 21px;
+  width: 26px;
+  height: 26px;
   stroke: currentColor;
   fill: none;
-  stroke-width: 2;
+  stroke-width: 1.75;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transition: transform 220ms var(--ease-spring);
 }
 
 .dock-slot-label {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  line-height: 1;
+  font-size: var(--fs-caption2);
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .dock-slot.active {
-  color: var(--text);
-  background: var(--accent-dim);
+  color: var(--accent-ink);
 }
 
 .dock-slot.active .dock-slot-icon svg {
-  transform: scale(1.06);
-  stroke-width: 2.3;
+  stroke-width: 2.1;
 }
 
-/* Log — same row, lifted, clearly primary */
+/* Log: 46px lime circle, centred in the bar, no label */
 .dock-log-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 3px;
-  padding-bottom: 2px;
-  margin-top: -18px;
+  display: grid;
+  place-items: center;
 }
 
 .dock-log {
-  width: 54px;
-  height: 54px;
-  border-radius: 18px;
-  border: 3px solid var(--bg);
-  background: linear-gradient(165deg, #e4ff6a 0%, var(--accent) 55%, #a8d012 100%);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--accent);
   color: var(--accent-text);
   display: grid;
   place-items: center;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.45) inset,
-    0 8px 22px var(--accent-glow),
-    0 2px 8px rgba(0, 0, 0, 0.12);
-  transition:
-    transform var(--dur-fast) var(--ease-spring),
-    box-shadow var(--dur-fast) var(--ease-out);
 }
 
 .dock-log-plus {
-  font-size: 1.65rem;
-  font-weight: 500;
-  line-height: 1;
-  margin-top: -1px;
-  transition: transform 260ms var(--ease-spring);
+  display: grid;
+  place-items: center;
 }
 
-.dock-log-caption {
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted-2);
-  line-height: 1;
+.dock-log-plus svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .dock-log:hover {
-    transform: translateY(-2px) scale(1.04);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.5) inset,
-      0 12px 28px var(--accent-glow);
-  }
-
-  .dock-log:hover .dock-log-plus {
-    transform: rotate(90deg);
-  }
-
   .dock-slot:hover:not(.active) {
-    color: var(--muted);
+    color: var(--text);
   }
 }
 
-.dock-log:active {
-  transform: scale(0.95);
-}
-
-[data-theme='light'] .dock-bar {
-  background: rgba(255, 255, 255, 0.94);
-  border-color: rgba(18, 22, 10, 0.1);
-  box-shadow:
-    0 12px 40px rgba(18, 22, 10, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.85) inset;
-}
-
-[data-theme='light'] .dock-slot.active {
-  color: var(--accent-ink);
-  background: rgba(200, 241, 53, 0.32);
-}
-
-[data-theme='light'] .dock-log {
-  border-color: #f3f5ec;
-  background: linear-gradient(165deg, #e8ff7a 0%, #c8f135 52%, #b0dc20 100%);
-}
-
-[data-theme='light'] .dock-log-caption {
-  color: var(--accent-ink);
-  opacity: 0.75;
-}
-
-@media (max-width: 360px) {
-  .dock-slot-label {
-    font-size: 0.58rem;
-  }
-
-  .dock-bar {
-    padding: 6px 6px 8px;
-  }
-}
-
+/* Wide screens: keep the five slots near the middle instead of stretching */
 @media (min-width: 720px) {
   .dock-bar {
-    width: min(100%, 460px);
-    padding: 10px 12px 12px;
-  }
-
-  .dock-bar--five {
-    width: min(100%, 520px);
-  }
-
-  .dock-slot-label {
-    font-size: 0.68rem;
-  }
-
-  .dock-log {
-    width: 58px;
-    height: 58px;
+    padding-inline: calc((100% - 520px) / 2);
   }
 }
-

@@ -1,10 +1,212 @@
-/* ── Cards ─────────────────────────────────────────────────────────────────── */
-.card {
+/* ── Cards ─────────────────────────────────────────────────────────────────────
+   One surface language: --surface fill, 22px radius, 16px padding. Dark has no
+   border or shadow; light gets --shadow-card. No gradients. */
+.card,
+.health-card,
+.settings-card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-top-color: var(--highlight);
+  border: none;
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 16px;
   box-shadow: var(--shadow-card);
 }
 
+button.card,
+button.health-card,
+button.settings-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+}
+
+/* ── Section header: Title3 row above a card, optional trailing link ───────── */
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 24px 0 8px;
+  font-size: var(--fs-title3);
+  line-height: var(--lh-title3);
+  font-weight: var(--fw-title3);
+  letter-spacing: var(--ls-title3);
+}
+
+.section-header a,
+.section-header button,
+.section-header-link {
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  font-weight: 400;
+  letter-spacing: var(--ls-subhead);
+  color: var(--accent-ink);
+  text-decoration: none;
+}
+
+/* ── Inset grouped list ────────────────────────────────────────────────────── */
+.list-group {
+  background: var(--surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.list-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 11px 16px;
+  width: 100%;
+  text-align: left;
+  color: var(--text);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+  text-decoration: none;
+}
+
+/* Hairline inset 16px from the left, between rows only */
+.list-row + .list-row::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 0;
+  height: 1px;
+  background: var(--separator);
+  transform: scaleY(0.5);
+  transform-origin: top;
+  pointer-events: none;
+}
+
+.list-row-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-row-value {
+  color: var(--muted);
+  text-align: right;
+}
+
+/* Navigation row: trailing chevron */
+.list-row--nav::before {
+  content: '';
+  order: 3;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-left: 4px;
+  margin-right: 2px;
+  border-top: 2px solid var(--muted-2);
+  border-right: 2px solid var(--muted-2);
+  transform: rotate(45deg) scale(0.85);
+  box-sizing: border-box;
+}
+
+/* Pressed row: iOS highlight instead of a scale (rows span the card edge to edge) */
+button.list-row:active,
+a.list-row:active {
+  transform: none;
+  background: var(--fill);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.list-row:hover,
+  a.list-row:hover {
+    background: var(--fill);
+  }
+}
+
+/* ── Segmented control (iOS) ───────────────────────────────────────────────── */
+.segmented,
+.mode-seg {
+  display: inline-flex;
+  gap: 0;
+  padding: 2px;
+  background: var(--fill);
+  border: none;
+  border-radius: 9px;
+}
+
+.segmented--full {
+  display: flex;
+  width: 100%;
+}
+
+.segmented button,
+.mode-seg button {
+  flex: 1 1 0;
+  min-height: 28px;
+  padding: 4px 12px;
+  border-radius: 7px;
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  font-weight: 600;
+  letter-spacing: var(--ls-subhead);
+  color: var(--text);
+  background: transparent;
+  box-shadow: none;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.segmented button.active,
+.segmented button[aria-pressed='true'],
+.segmented button[aria-selected='true'],
+.mode-seg button.active {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+[data-theme='light'] .segmented button.active,
+[data-theme='light'] .segmented button[aria-pressed='true'],
+[data-theme='light'] .segmented button[aria-selected='true'],
+[data-theme='light'] .mode-seg button.active {
+  background: #ffffff;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.12),
+    0 3px 1px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Chips / badges ────────────────────────────────────────────────────────── */
+.chip,
+.badge,
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: none;
+  background: var(--fill);
+  color: var(--muted);
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  font-weight: 600;
+  letter-spacing: var(--ls-footnote);
+  text-transform: none;
+}
+
+.chip--accent,
+.badge.done {
+  background: var(--accent-dim);
+  color: var(--accent-ink);
+}
+
+.chip--button {
+  cursor: pointer;
+}
+
+/* ── Rest of the shared helper rules ───────────────────────────────────────── */
+.rec-card--error small,
+.body-section-error small {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-caption);
+  color: var(--muted-2);
+}

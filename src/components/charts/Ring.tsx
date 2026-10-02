@@ -1,33 +1,58 @@
+import type { CSSProperties } from 'react'
+import type { RingTone } from './tones'
+
 type Props = {
-  /** 0..1 */
+  /** 0..1 fills the ring; above 1 the head overlaps the tail (Apple-style), up to 2 laps */
   progress: number
   size?: number
   label: string
   sublabel?: string
   ariaLabel: string
+  /** Metric colour. Defaults to the brand accent. */
+  tone?: RingTone
+  /** Stroke width as a fraction of the diameter (Apple rings sit around 12–14%) */
+  thickness?: number
 }
 
-/** Progress ring with a centered number (steps ring on Home). */
-export function Ring({ progress, size = 96, label, sublabel, ariaLabel }: Props) {
-  const r = 42
-  const c = 2 * Math.PI * r
-  const p = Math.min(1, Math.max(0, progress))
+/** Progress ring with a centered number — styled like Apple's Activity rings. */
+export function Ring({
+  progress,
+  size = 96,
+  label,
+  sublabel,
+  ariaLabel,
+  tone,
+  thickness = 0.13,
+}: Props) {
+  const raw = Number.isFinite(progress) ? Math.min(2, Math.max(0, progress)) : 0
+  const arc = Math.min(1, raw)
+  const stroke = Math.round(size * thickness * 10) / 10
+  // Shrink the centre label as it gets longer so "12,345" still fits inside the ring
+  const labelScale = Math.min(0.32, 1.05 / Math.max(label.length, 1))
+
+  const style = {
+    width: size,
+    height: size,
+    '--ring-size': `${size}px`,
+    '--ring-w': `${stroke}px`,
+    '--ring-p': arc,
+    '--ring-end': raw,
+    '--ring-label-scale': labelScale,
+  } as CSSProperties
+
   return (
-    <div className="chart-ring" style={{ width: size, height: size }} role="img" aria-label={ariaLabel}>
-      <svg viewBox="0 0 100 100" aria-hidden>
-        <circle className="chart-ring-track" cx="50" cy="50" r={r} />
-        <circle
-          className={`chart-ring-prog${p >= 1 ? ' done' : ''}`}
-          cx="50"
-          cy="50"
-          r={r}
-          strokeDasharray={c}
-          style={{ ['--ring-offset' as string]: `${c * (1 - p)}`, ['--ring-full' as string]: `${c}` }}
-        />
-      </svg>
-      <div className="chart-ring-center">
-        <span className="chart-ring-label">{label}</span>
-        {sublabel && <span className="chart-ring-sub">{sublabel}</span>}
+    <div className="ring" data-tone={tone} style={style} role="img" aria-label={ariaLabel}>
+      <div className="ring-track" aria-hidden />
+      {raw > 0 && (
+        <>
+          <div className="ring-arc" aria-hidden />
+          <span className="ring-dot ring-dot--start" aria-hidden />
+          <span className="ring-dot ring-dot--end" aria-hidden />
+        </>
+      )}
+      <div className="ring-center">
+        <span className="ring-label num">{label}</span>
+        {sublabel && <span className="ring-sub">{sublabel}</span>}
       </div>
     </div>
   )

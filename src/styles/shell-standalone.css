@@ -1,11 +1,7 @@
 /* ── Installed to the Home Screen (standalone) ─────────────────────────────── */
+/* The top bar and tab bar already honour the safe areas (shell.css), so the
+   standalone block only handles "feels like an app" behaviour. */
 @media (display-mode: standalone) {
-  /* The status bar is translucent, so the app paints behind it */
-  .topbar {
-    height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
-    padding-top: env(safe-area-inset-top, 0px);
-  }
-
   .mkt-nav {
     padding-top: env(safe-area-inset-top, 0px);
   }
@@ -19,7 +15,9 @@
   /* Taps shouldn't feel like a web page */
   .dock-slot,
   .dock-log,
+  .user-chip,
   .btn,
+  .list-row,
   .log-card,
   .step-bar,
   .sleep-night,
@@ -31,12 +29,3 @@
     user-select: none;
   }
 }
-
-.rec-card--error small,
-.body-section-error small {
-  display: block;
-  margin-top: 2px;
-  font-size: 0.7rem;
-  color: var(--muted-2);
-}
-

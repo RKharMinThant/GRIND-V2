@@ -1,102 +1,118 @@
-/* ── Theme tokens ──────────────────────────────────────────────────────────── */
+/* ── Theme tokens — Apple Fitness look ─────────────────────────────────────────
+   Dark is the default. Light is the iOS "grouped" palette (neutral grey, no tint).
+   Brand lime is a fill / accent; use --accent-ink when lime is TEXT or an icon. */
 :root,
 [data-theme='dark'] {
-  --bg: #07080a;
-  --bg-elevated: #0d0f13;
-  --surface: #12151b;
-  --surface-2: #1a1e27;
-  --surface-3: #232833;
-  --border: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.12);
-  --highlight: rgba(255, 255, 255, 0.08);
+  /* Surfaces */
+  --bg: #000000;
+  --bg-elevated: #0b0b0c;
+  --surface: #1c1c1e; /* cards */
+  --surface-2: #2c2c2e; /* tiles / inputs inside cards */
+  --surface-3: #3a3a3c;
+  --fill: rgba(118, 118, 128, 0.24); /* segmented controls, chips */
+  /* Text */
+  --text: #ffffff;
+  --muted: rgba(235, 235, 245, 0.62);
+  --muted-2: rgba(235, 235, 245, 0.32);
+  /* Lines */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --separator: rgba(84, 84, 88, 0.6);
+  --highlight: transparent;
+  /* Brand */
   --accent: #c8f135;
   --accent-soft: #a8d12a;
-  --accent-dim: rgba(200, 241, 53, 0.1);
-  --accent-glow: rgba(200, 241, 53, 0.22);
-  --accent-text: #0a0c08;
-  --ice: #6ee7f5;
-  --ice-dim: rgba(110, 231, 245, 0.12);
-  --danger: #ff5c45;
-  --warn: #f5b942;
-  --danger-dim: rgba(255, 92, 69, 0.12);
-  --text: #f4f5f7;
-  --muted: #9aa0ad;
-  --muted-2: #5e6574;
+  --accent-text: #0a0c08; /* text ON lime */
+  --accent-ink: #c8f135; /* lime used as text / icons */
+  /* Rings stay vivid in both themes, as Apple's Activity rings do */
+  --ring-accent: #C8F135;
+  --accent-dim: rgba(200, 241, 53, 0.16);
+  --accent-glow: transparent; /* decorative glows are retired */
+  /* Metric colours */
+  --c-heart: #ff375f;
+  --c-sleep: #5e5ce6;
+  --c-strength: #ff9f0a;
+  --c-activity: #64d2ff;
+  --ice: var(--c-activity);
+  --ice-dim: color-mix(in srgb, var(--c-activity) 16%, transparent);
+  --warn: #ffd60a;
+  --warn-ink: #ffd60a; /* warn used as text */
+  --danger: #ff453a;
+  --danger-dim: color-mix(in srgb, var(--danger) 16%, transparent);
   --warm: #c4b8a5;
-  --topbar-bg: rgba(7, 8, 10, 0.72);
-  --dock-bg: rgba(18, 21, 27, 0.9);
+  /* Materials (nav bars, toasts) */
+  --material-bar: rgba(28, 28, 30, 0.72);
+  --material-filter: saturate(180%) blur(20px);
+  --topbar-bg: var(--material-bar);
+  --dock-bg: var(--material-bar);
+  /* Overlays */
   --overlay-bg: rgba(0, 0, 0, 0.7);
-  --hero-mid: #151a22;
-  --scrim-from: rgba(7, 8, 10, 0.88);
+  --scrim-from: rgba(0, 0, 0, 0.85);
   --media-title: #ffffff;
   --media-date: rgba(255, 255, 255, 0.75);
-  --grid-line: rgba(255, 255, 255, 0.07);
-  --grid-opacity: 0.035;
-  --ambient-1: rgba(200, 241, 53, 0.07);
-  --ambient-2: rgba(110, 231, 245, 0.04);
-  --ambient-3: rgba(200, 241, 53, 0.03);
-  --auth-brand-bg: linear-gradient(160deg, #0c1018 0%, #07080a 50%, #0a1208 100%);
-  --ghost-hover-bg: rgba(255, 255, 255, 0.03);
   --photo-remove-bg: rgba(0, 0, 0, 0.75);
+  --ghost-hover-bg: rgba(255, 255, 255, 0.04);
+  /* Retired decoration — names kept so older rules resolve to "nothing" */
+  --hero-mid: var(--surface);
+  --grid-line: transparent;
+  --grid-opacity: 0;
+  --ambient-1: transparent;
+  --ambient-2: transparent;
+  --ambient-3: transparent;
+  --auth-brand-bg: var(--bg-elevated);
+  /* Elevation */
+  --shadow-card: none;
+  --shadow-dock: none;
+  --shadow-log: none;
+  --shadow-log-hover: none;
   --sheet-shadow: 0 -12px 48px rgba(0, 0, 0, 0.5);
-  --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.35);
-  --shadow-dock: 0 12px 40px rgba(0, 0, 0, 0.5);
-  --shadow-log: 0 8px 24px rgba(0, 0, 0, 0.2);
-  --shadow-log-hover: 0 14px 36px rgba(0, 0, 0, 0.35);
   color-scheme: dark;
 }
 
-/* Citrus sport — vivid lime energy, ink green only for text on white */
 [data-theme='light'] {
-  --bg: #f3f5ec;
+  --bg: #f2f2f7;
   --bg-elevated: #ffffff;
   --surface: #ffffff;
-  --surface-2: #eef2e3;
-  --surface-3: #e2e8d4;
-  --border: rgba(28, 36, 12, 0.1);
-  --border-strong: rgba(28, 36, 12, 0.16);
-  --highlight: #ffffff;
-  /* Electric brand lime — buttons, dock +, fills */
+  --surface-2: #f2f2f7;
+  --surface-3: #e5e5ea;
+  --fill: rgba(120, 120, 128, 0.12);
+  --text: #000000;
+  --muted: rgba(60, 60, 67, 0.62);
+  --muted-2: rgba(60, 60, 67, 0.32);
+  --border: rgba(60, 60, 67, 0.12);
+  --border-strong: rgba(60, 60, 67, 0.2);
+  --separator: rgba(60, 60, 67, 0.18);
+  --highlight: transparent;
   --accent: #c8f135;
   --accent-soft: #d8ff52;
-  --accent-dim: rgba(200, 241, 53, 0.28);
-  --accent-glow: rgba(180, 220, 30, 0.4);
-  --accent-text: #1a2600;
-  /* Readable green for type on light surfaces */
-  --accent-ink: #3a5800;
-  --ice: #0e8a9e;
-  --ice-dim: rgba(14, 138, 158, 0.12);
-  --danger: #e11d48;
-  --warn: #d98a0b;
-  --danger-dim: rgba(225, 29, 72, 0.1);
-  --text: #12160c;
-  --muted: #4a5240;
-  --muted-2: #6b7460;
+  --accent-text: #0a0c08;
+  --accent-ink: #4a6800;
+  /* Rings stay vivid in both themes, as Apple's Activity rings do */
+  --ring-accent: #A6D608;
+  --accent-dim: rgba(200, 241, 53, 0.22);
+  --accent-glow: transparent;
+  --c-heart: #ff2d55;
+  --c-sleep: #5856d6;
+  --c-strength: #ff9500;
+  --c-activity: #32ade6;
+  --warn: #ffcc00;
+  --warn-ink: #a37a00;
+  --danger: #ff3b30;
   --warm: #8a7a55;
-  --topbar-bg: rgba(243, 245, 236, 0.9);
-  --dock-bg: rgba(255, 255, 255, 0.95);
-  --overlay-bg: rgba(18, 22, 10, 0.4);
-  --hero-mid: #f7f9f0;
-  --scrim-from: rgba(18, 22, 10, 0.78);
-  --media-title: #ffffff;
+  --material-bar: rgba(249, 249, 249, 0.8);
+  --overlay-bg: rgba(0, 0, 0, 0.4);
+  --scrim-from: rgba(0, 0, 0, 0.78);
   --media-date: rgba(255, 255, 255, 0.85);
-  --grid-line: rgba(58, 88, 0, 0.06);
-  --grid-opacity: 0.45;
-  --ambient-1: rgba(200, 241, 53, 0.18);
-  --ambient-2: rgba(14, 138, 158, 0.06);
-  --ambient-3: rgba(200, 241, 53, 0.08);
-  --auth-brand-bg: linear-gradient(160deg, #e8f5a8 0%, #f3f5ec 48%, #d4f0f4 100%);
-  --ghost-hover-bg: rgba(28, 36, 12, 0.05);
   --photo-remove-bg: rgba(0, 0, 0, 0.7);
-  --sheet-shadow: 0 -12px 40px rgba(18, 22, 10, 0.1);
-  --shadow-card: 0 12px 32px rgba(58, 88, 0, 0.07);
-  --shadow-dock: 0 12px 36px rgba(18, 22, 10, 0.1);
-  --shadow-log: 0 8px 22px rgba(18, 22, 10, 0.06);
-  --shadow-log-hover: 0 14px 32px rgba(58, 88, 0, 0.1);
+  --ghost-hover-bg: rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-log: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-log-hover: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --sheet-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12);
   color-scheme: light;
 }
 
-/* Text / icons on white → ink green (legible) */
+/* Lime as TEXT / icons on a light surface → deep lime (--accent-ink) */
 [data-theme='light'] .logo,
 [data-theme='light'] .auth-logo-mobile,
 [data-theme='light'] .auth-brand-mark,
@@ -107,7 +123,8 @@
 [data-theme='light'] .metric .num.accent,
 [data-theme='light'] .stat-card .value.accent,
 [data-theme='light'] .confirm-email,
-[data-theme='light'] .confirm-icon {
+[data-theme='light'] .confirm-icon,
+[data-theme='light'] .empty-mark {
   color: var(--accent-ink);
 }
 
@@ -117,490 +134,137 @@
   color: var(--text);
 }
 
-/* Fills stay vivid citrus */
-[data-theme='light'] .btn-primary {
-  background: var(--accent);
-  color: var(--accent-text);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.45) inset,
-    0 4px 14px var(--accent-glow);
-}
-
-[data-theme='light'] .btn-primary:hover:not(:disabled) {
-  background: var(--accent-soft);
-  filter: none;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.5) inset,
-    0 8px 22px var(--accent-glow);
-}
-
-[data-theme='light'] .toast {
-  background: var(--accent);
-  color: var(--accent-text);
-  box-shadow: 0 8px 28px var(--accent-glow);
-}
-
-[data-theme='light'] .theme-seg button.active {
-  background: var(--accent);
-  color: var(--accent-text);
-}
-
-[data-theme='light'] .avatar {
-  background: linear-gradient(145deg, #b8e02a, #8fbb12);
-  color: var(--accent-text);
-}
-
-/* Soft citrus surfaces */
-[data-theme='light'] .label {
-  color: var(--muted-2);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-
-[data-theme='light'] .badge {
-  color: var(--muted);
-  border-color: var(--border-strong);
-  background: var(--surface-2);
-}
-
-[data-theme='light'] .badge.done {
-  border-color: rgba(58, 88, 0, 0.28);
-  background: var(--accent-dim);
-}
-
-[data-theme='light'] .hero-panel {
-  border-color: var(--border);
-  background: linear-gradient(145deg, #ffffff 0%, #f7fbe8 100%);
-  box-shadow: var(--shadow-card);
-}
-
-[data-theme='light'] .hero-panel::after {
-  background: radial-gradient(circle, rgba(200, 241, 53, 0.22) 0%, transparent 65%);
-}
-
-[data-theme='light'] .goal-ring-wrap .prog {
-  stroke: var(--accent-ink);
-  filter: drop-shadow(0 0 4px rgba(200, 241, 53, 0.35));
-}
-
-[data-theme='light'] .goal-ring-wrap .track {
-  stroke: var(--surface-3);
-}
-
-[data-theme='light'] .goal-ring-center .num {
-  color: var(--text);
-}
-
-[data-theme='light'] .goal-ring-center .sub {
-  color: var(--muted-2);
-}
-
-[data-theme='light'] .tag.type {
-  border-color: rgba(58, 88, 0, 0.28);
-  background: var(--accent-dim);
-}
-
-[data-theme='light'] .week-day.logged {
-  border-color: rgba(58, 88, 0, 0.35);
-  background: var(--accent-dim);
-}
-
-[data-theme='light'] .type-btn.selected {
-  border-color: var(--accent-ink);
-  color: var(--accent-ink);
-  background: #f4fce0;
-  box-shadow: inset 0 0 0 1px rgba(58, 88, 0, 0.12);
-}
-
+/* Heatmap steps: lime fills need more weight on a light surface */
 [data-theme='light'] .heatmap-cell.l1 {
-  background: rgba(200, 241, 53, 0.35);
+  background: rgba(200, 241, 53, 0.45);
 }
 [data-theme='light'] .heatmap-cell.l2 {
-  background: rgba(180, 210, 40, 0.65);
+  background: rgba(150, 190, 20, 0.7);
 }
 [data-theme='light'] .heatmap-cell.l3 {
-  background: #9fc412;
+  background: #7ea000;
 }
 
-[data-theme='light'] .cal-cell.has-log {
-  background: var(--accent-dim);
-  border-color: rgba(58, 88, 0, 0.3);
-}
-
-[data-theme='light'] .empty-mark {
-  background: var(--accent-dim);
-  border-color: rgba(58, 88, 0, 0.25);
-  color: var(--accent-ink);
-}
-
-/* ── Light mode: log modal (flat, no nested form cards) ───────────────────── */
-[data-theme='light'] .sheet {
-  background: #ffffff;
-  border-color: rgba(18, 22, 10, 0.1);
-  box-shadow: 0 -16px 48px rgba(18, 22, 10, 0.12);
-}
-
-[data-theme='light'] .sheet-header {
-  background: #ffffff;
-  border-bottom: 1px solid rgba(18, 22, 10, 0.08);
-  padding-bottom: 14px;
-}
-
-[data-theme='light'] .sheet-title {
-  color: var(--text);
-}
-
-[data-theme='light'] .sheet--log .form-divider {
-  border-top-color: rgba(18, 22, 10, 0.08);
-  color: #6b7460;
-}
-
-[data-theme='light'] .field label {
-  color: #5c6570;
-}
-
-[data-theme='light'] .field-hint {
-  color: #8a9380;
-}
-
-[data-theme='light'] .split-chip {
-  background: #f4f5f2;
-  border-color: rgba(18, 22, 10, 0.12);
-  color: var(--text);
-}
-
-[data-theme='light'] .split-chip--you:not(.selected) {
-  background: rgba(200, 241, 53, 0.2);
-  border-color: rgba(58, 88, 0, 0.25);
-}
-
-[data-theme='light'] .split-chip.selected {
-  background: var(--accent);
-  border-color: #9fc412;
-  color: var(--accent-text);
-}
-
-[data-theme='light'] .rest-banner {
-  background: #f4f5f2;
-  border-color: rgba(18, 22, 10, 0.12);
-  color: var(--muted);
-}
-
-[data-theme='light'] .sheet .field input,
-[data-theme='light'] .sheet .field textarea {
-  background: #f7f8f6;
-  border: 1px solid rgba(18, 22, 10, 0.12);
-  color: var(--text);
-  box-shadow: none;
-}
-
-[data-theme='light'] .sheet .field input::placeholder,
-[data-theme='light'] .sheet .field textarea::placeholder {
-  color: #9aa3ad;
-}
-
-[data-theme='light'] .sheet .field input:focus,
-[data-theme='light'] .sheet .field textarea:focus {
-  background: #ffffff;
-  border-color: var(--accent-ink);
-  box-shadow: 0 0 0 3px rgba(200, 241, 53, 0.35);
-  outline: none;
-}
-
-/* Focus chips: light pills, lime when selected */
-[data-theme='light'] .focus-btn {
-  background: #f4f5f2;
-  border: 1px solid rgba(18, 22, 10, 0.12);
-  color: #3a424c;
-  box-shadow: none;
-}
-
-[data-theme='light'] .focus-btn:hover {
-  border-color: rgba(18, 22, 10, 0.28);
-  color: var(--text);
-  background: #ffffff;
-}
-
-[data-theme='light'] .focus-btn.selected {
-  background: var(--accent);
-  border-color: #9fc412;
-  color: var(--accent-text);
-  box-shadow: 0 2px 8px rgba(180, 220, 30, 0.35);
-}
-
-[data-theme='light'] .focus-summary {
-  color: var(--muted);
-}
-
-[data-theme='light'] .focus-summary strong {
-  color: var(--accent-ink);
-}
-
-/* Type grid */
-[data-theme='light'] .type-btn {
-  background: #f4f5f2;
-  border: 1px solid rgba(18, 22, 10, 0.12);
-  color: #3a424c;
-  box-shadow: none;
-}
-
-[data-theme='light'] .type-btn:hover {
-  border-color: rgba(18, 22, 10, 0.25);
-  color: var(--text);
-}
-
-[data-theme='light'] .type-btn.selected {
-  background: #f4fce0;
-  border-color: var(--accent-ink);
-  color: var(--accent-ink);
-  box-shadow: inset 0 0 0 1px rgba(58, 88, 0, 0.08);
-}
-
-/* Protein / creatine presets */
-[data-theme='light'] .preset-btn {
-  background: #f4f5f2;
-  border: 1px solid rgba(18, 22, 10, 0.12);
-  color: #4a5240;
-}
-
-[data-theme='light'] .preset-btn:hover {
-  border-color: rgba(18, 22, 10, 0.25);
-  color: var(--text);
-}
-
-[data-theme='light'] .preset-btn.selected {
-  background: var(--accent);
-  border-color: #9fc412;
-  color: var(--accent-text);
-}
-
-[data-theme='light'] .sheet .btn-icon {
-  background: #f0f2f5;
-  border-color: rgba(18, 22, 10, 0.1);
-  color: var(--muted);
-}
-
-[data-theme='light'] .sheet .btn-ghost {
-  background: #ffffff;
-  border-color: rgba(18, 22, 10, 0.14);
-  color: var(--muted);
-}
-
-[data-theme='light'] .sheet-actions {
-  border-top-color: rgba(18, 22, 10, 0.08);
-}
-
-[data-theme='light'] .photo-drop {
-  background: #ffffff;
-  border-color: rgba(18, 22, 10, 0.16);
-  color: var(--muted);
-}
-
-[data-theme='light'] .photo-drop:hover,
-[data-theme='light'] .photo-drop.drag {
-  border-color: var(--accent-ink);
-  background: #f7fbe8;
-  color: var(--text);
-}
-
-[data-theme='light'] .detail-block {
-  background: #f6f7f9;
-  border-color: rgba(18, 22, 10, 0.08);
-}
-
+/* ── Non-colour tokens ─────────────────────────────────────────────────────── */
 :root {
   --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius: 14px;
-  --radius-lg: 20px;
+  --radius-sm: 10px; /* inputs, small buttons */
+  --radius: 12px; /* buttons, grouped lists */
+  --radius-lg: 22px; /* cards */
   --radius-xl: 28px;
-  --font-num: 'Bebas Neue', system-ui, sans-serif;
-  --font: 'Outfit', system-ui, sans-serif;
-  /* Motion tokens — Emil-style: strong ease-out, press stays snappy,
-     larger state changes (tabs/theme/sheets) a touch slower & elegant */
+
+  --font:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto,
+    'Helvetica Neue', sans-serif;
+  /* Numbers: rounded + tabular. Add `font-variant-numeric: tabular-nums` wherever this is used
+     (or just use the .num class). */
+  --font-num:
+    ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
+  --font-brand: 'Bebas Neue', sans-serif; /* the GRIND wordmark ONLY */
+
+  /* Type scale (iOS text styles) */
+  --fs-large-title: 2.125rem;
+  --lh-large-title: 1.2;
+  --fw-large-title: 700;
+  --ls-large-title: -0.022em;
+  --fs-title1: 1.75rem;
+  --lh-title1: 1.21;
+  --fw-title1: 700;
+  --ls-title1: -0.02em;
+  --fs-title2: 1.375rem;
+  --lh-title2: 1.27;
+  --fw-title2: 700;
+  --ls-title2: -0.016em;
+  --fs-title3: 1.25rem;
+  --lh-title3: 1.25;
+  --fw-title3: 600;
+  --ls-title3: -0.014em;
+  --fs-headline: 1.0625rem;
+  --lh-headline: 1.29;
+  --fw-headline: 600;
+  --ls-headline: -0.01em;
+  --fs-body: 1.0625rem;
+  --lh-body: 1.29;
+  --fw-body: 400;
+  --ls-body: -0.01em;
+  --fs-callout: 1rem;
+  --lh-callout: 1.31;
+  --fw-callout: 400;
+  --ls-callout: -0.005em;
+  --fs-subhead: 0.9375rem;
+  --lh-subhead: 1.33;
+  --fw-subhead: 400;
+  --ls-subhead: 0;
+  --fs-footnote: 0.8125rem;
+  --lh-footnote: 1.38;
+  --fw-footnote: 400;
+  --ls-footnote: 0;
+  --fs-caption: 0.75rem;
+  --lh-caption: 1.33;
+  --fw-caption: 400;
+  --ls-caption: 0;
+  --fs-caption2: 0.625rem; /* tab-bar labels */
+
+  /* Motion — UI transitions stay ≤ 300ms, only transform / opacity animate */
   --ease: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1); /* animations.dev strong ease-out */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1); /* sheet / drawer */
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1); /* sheets / drawers */
   --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1); /* subtle overshoot only */
-  --dur-press: 140ms; /* button feedback stays under ~160ms */
+  --dur-press: 120ms; /* pressed feedback */
   --dur-fast: 180ms;
-  --dur-ui: 280ms;
+  --dur-ui: 250ms;
   --dur-sheet: 360ms;
   --dur-page: 420ms;
   --dur-theme: 520ms;
-  --dur-tab-in: 420ms;
-  --dur-tab-out: 360ms; /* exit slightly faster than enter */
-  --header-h: 60px;
-  --dock-h: 88px;
+  --dur-tab-in: 300ms;
+  --dur-tab-out: 220ms;
+
+  /* Layout */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --header-h: 44px; /* top bar, excluding the safe area */
+  --dock-h: 49px; /* tab bar, excluding the safe area */
+  --gutter: 16px;
   --max-w: 760px;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  color-scheme: dark;
-}
-
-html[data-theme='light'] {
-  color-scheme: light;
-}
-
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100dvh;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-  transition:
-    background-color var(--dur-theme) var(--ease-out),
-    color var(--dur-theme) var(--ease-out);
-}
-
-/* ── Theme switch transitions ──────────────────────────────────────────────── */
-/* View Transitions API (Chromium / Safari 18+) */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: var(--dur-theme);
-  animation-timing-function: var(--ease-out);
-}
-
-::view-transition-old(root) {
-  animation-name: theme-fade-out;
-}
-
-::view-transition-new(root) {
-  animation-name: theme-fade-in;
-}
-
-@keyframes theme-fade-out {
-  to {
-    opacity: 0;
+/* Solid materials when the user asks for less transparency */
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  [data-theme='dark'],
+  [data-theme='light'] {
+    --material-bar: var(--bg-elevated);
+    --material-filter: none;
   }
 }
 
-@keyframes theme-fade-in {
-  from {
-    opacity: 0;
+/* Higher contrast: opaque surfaces and visible borders */
+@media (prefers-contrast: more) {
+  :root,
+  [data-theme='dark'] {
+    --muted: rgba(235, 235, 245, 0.8);
+    --muted-2: rgba(235, 235, 245, 0.6);
+    --border: rgba(255, 255, 255, 0.4);
+    --border-strong: rgba(255, 255, 255, 0.6);
+    --separator: rgba(255, 255, 255, 0.4);
+    --material-bar: var(--bg-elevated);
+    --material-filter: none;
+  }
+  [data-theme='light'] {
+    --muted: rgba(60, 60, 67, 0.85);
+    --muted-2: rgba(60, 60, 67, 0.65);
+    --border: rgba(0, 0, 0, 0.45);
+    --border-strong: rgba(0, 0, 0, 0.65);
+    --separator: rgba(0, 0, 0, 0.4);
+    --material-bar: var(--bg-elevated);
+    --material-filter: none;
+  }
+  .card,
+  .health-card,
+  .settings-card,
+  .list-group {
+    border: 1px solid var(--border-strong);
   }
 }
-
-/* Fallback + polish: interpolate surface colors while theme-animating */
-html.theme-animating,
-html.theme-animating body,
-html.theme-animating .topbar,
-html.theme-animating .dock,
-html.theme-animating .card,
-html.theme-animating .hero-panel,
-html.theme-animating .metric,
-html.theme-animating .metrics,
-html.theme-animating .log-card,
-html.theme-animating .week-day,
-html.theme-animating .sheet,
-html.theme-animating .auth-card,
-html.theme-animating .menu-pop,
-html.theme-animating .cal-card,
-html.theme-animating .heatmap-card,
-html.theme-animating .empty,
-html.theme-animating .form-section,
-html.theme-animating .detail-block,
-html.theme-animating .field input,
-html.theme-animating .field textarea,
-html.theme-animating .search-input,
-html.theme-animating .btn-ghost,
-html.theme-animating .btn-icon,
-html.theme-animating .user-chip,
-html.theme-animating .theme-icon-btn,
-html.theme-animating .focus-btn,
-html.theme-animating .type-btn,
-html.theme-animating .preset-btn,
-html.theme-animating .filter-chip,
-html.theme-animating .tag,
-html.theme-animating .badge,
-html.theme-animating .stat-card,
-html.theme-animating .cal-cell {
-  transition:
-    background-color var(--dur-theme) var(--ease-out),
-    background var(--dur-theme) var(--ease-out),
-    color var(--dur-theme) var(--ease-out),
-    border-color var(--dur-theme) var(--ease-out),
-    box-shadow var(--dur-theme) var(--ease-out),
-    fill var(--dur-theme) var(--ease-out),
-    stroke var(--dur-theme) var(--ease-out) !important;
-}
-
-html.theme-animating body::before,
-html.theme-animating body::after {
-  transition:
-    opacity var(--dur-theme) var(--ease-out),
-    background var(--dur-theme) var(--ease-out) !important;
-}
-
-/* Theme toggle control feedback */
-.theme-icon-btn,
-.theme-seg button {
-  transition:
-    background-color 0.25s var(--ease-out),
-    color 0.25s var(--ease-out),
-    border-color 0.25s var(--ease-out),
-    transform 0.2s var(--ease-spring);
-}
-
-.theme-icon-btn:active {
-  transform: scale(0.92) rotate(-12deg);
-}
-
-/* Ambient background depth */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, var(--ambient-1), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 100% 80%, var(--ambient-2), transparent 50%),
-    radial-gradient(ellipse 50% 30% at 0% 60%, var(--ambient-3), transparent 45%),
-    var(--bg);
-  pointer-events: none;
-}
-
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  opacity: var(--grid-opacity);
-  background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 48px 48px;
-  pointer-events: none;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
-}
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
-  color: inherit;
-}
-
-button {
-  cursor: pointer;
-  border: none;
-  background: none;
-}
-
-img {
-  max-width: 100%;
-  display: block;
-}
-
