@@ -5,15 +5,17 @@ type Props = {
   goal: number
 }
 
-/** Weekly session goal on Home — an accent Activity-style ring. */
+/** Weekly session goal on Home — a glowing accent dial. */
 export function GoalRing({ current, goal }: Props) {
   const safeGoal = Math.max(1, goal)
 
   return (
     <div className="goal-ring-wrap">
       <Ring
-        size={108}
+        size={120}
         tone="accent"
+        glow
+        display
         progress={current / safeGoal}
         label={`${current}/${safeGoal}`}
         sublabel="week"

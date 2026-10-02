@@ -265,9 +265,13 @@ const factors: GrindAgeFactor[] = [
   { id: 'lean_mass', label: 'Lean mass (FFMI)', value: null, unit: 'kg/m²', target: '18–22 kg/m²', years: null },
 ]
 
+// Ten weekly readings, oldest first, drifting down with some week-to-week wobble
+const AGE_TREND = [32.4, 32.5, 32.2, 32.3, 32.0, 32.1, 31.9, 31.8, 31.9, 31.6]
+const thisWeek = currentWeekStart(toLocalDateString())
+
 export const grindAgeData: GrindAgeOk = {
   status: 'ok',
-  weekStart: currentWeekStart(toLocalDateString()),
+  weekStart: thisWeek,
   computedAt: new Date().toISOString(),
   result: {
     chronologicalAge: 30,
@@ -275,9 +279,15 @@ export const grindAgeData: GrindAgeOk = {
     factors,
     missing: ['lean_mass'],
   },
-  pace: null,
-  history: [],
+  pace: 0.8,
+  history: AGE_TREND.map((grindAge, i) => ({
+    weekStart: addDays(thisWeek, -(AGE_TREND.length - 1 - i) * 7),
+    grindAge,
+  })),
 }
+
+/** A brand-new account: no readings yet, so no pace and no trend. */
+export const grindAgeNewData: GrindAgeOk = { ...grindAgeData, pace: null, history: [] }
 
 // ── Sample day for the single-session sheet ──────────────────────────────────
 

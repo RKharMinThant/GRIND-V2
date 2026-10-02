@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { ThemePreference } from '../lib/theme'
 
-export type Tab = 'home' | 'history' | 'progress' | 'calendar' | 'body' | 'settings'
+export type Tab = 'home' | 'history' | 'progress' | 'calendar' | 'body' | 'settings' | 'grind-age'
 
 type Props = {
   tab: Tab
@@ -28,6 +28,7 @@ const TAB_TITLES: Record<Tab, string> = {
   calendar: 'Calendar',
   body: 'Body',
   settings: 'Settings',
+  'grind-age': 'GRIND Age',
 }
 
 /** Scroll distance (px) after which the top bar picks up its material */

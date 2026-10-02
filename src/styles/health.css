@@ -142,38 +142,30 @@
 .readiness {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .readiness-copy {
+  flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
+/* Zone word is the headline: colour comes from the card's data-tone */
 .readiness-zone {
-  font-size: var(--fs-title3);
-  line-height: var(--lh-title3);
-  font-weight: 700;
-  letter-spacing: var(--ls-title3);
+  color: var(--tone-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .readiness-line {
-  margin: 2px 0 0;
+  margin: 0;
   font-size: var(--fs-subhead);
   line-height: var(--lh-subhead);
   color: var(--muted);
-}
-
-.readiness.green .readiness-zone {
-  color: var(--accent-ink);
-}
-
-.readiness.yellow .readiness-zone {
-  color: var(--warn-ink);
-}
-
-.readiness.red .readiness-zone {
-  color: var(--danger);
 }
 
 .readiness--building {
@@ -202,27 +194,23 @@
   grid-column: 1 / -1;
 }
 
-.rec-num {
-  margin-top: 4px;
-  font-family: var(--font-num);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--fs-title2);
-  line-height: 1.1;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-}
-
-.rec-tile--sleep .rec-num {
+/* Tile labels take the metric colour; the numerals stay neutral (.t-display--m) */
+.rec-tile--sleep .t-eyebrow {
   color: var(--c-sleep);
 }
 
-.rec-tile--heart .rec-num {
+.rec-tile--heart .t-eyebrow {
   color: var(--c-heart);
 }
 
+.rec-num {
+  margin-top: 6px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
 .rec-num small {
-  margin-left: 3px;
+  margin-left: 4px;
   font-family: var(--font);
   font-size: var(--fs-footnote);
   font-weight: 600;

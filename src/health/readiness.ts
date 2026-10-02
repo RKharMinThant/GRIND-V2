@@ -1,10 +1,10 @@
 import type { ReadinessScore, ReadinessZone } from './types'
 
-/** What the Home card says per zone (colours live in CSS: .readiness.green / .yellow / .red). */
+/** What the Home card says per zone (colour comes from the card's data-tone; shown uppercase via CSS). */
 export const ZONE_INFO: Record<ReadinessZone, { word: string; line: string }> = {
-  green: { word: 'Green', line: 'Good day to push' },
-  yellow: { word: 'Yellow', line: 'Train as planned — listen to your body' },
-  red: { word: 'Red', line: 'Recovery is low — go easy today' },
+  green: { word: 'Primed', line: 'Good day to push' },
+  yellow: { word: 'Steady', line: 'Train as planned — listen to your body' },
+  red: { word: 'Recover', line: 'Recovery is low — go easy today' },
 }
 
 export type ReadinessView =

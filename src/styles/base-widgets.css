@@ -431,6 +431,28 @@
   white-space: nowrap;
 }
 
+/* Glow variant (<Ring glow>): a blurred copy of the arc sits behind the sharp one.
+   The wrapper carries the blur because filter runs before mask on a single element. */
+.ring--glow {
+  --ring-start: color-mix(in srgb, var(--ring-color) 70%, #000);
+}
+[data-theme='light'] .ring--glow {
+  --ring-start: color-mix(in srgb, var(--ring-color) 70%, #fff);
+}
+
+.ring-glow {
+  position: absolute;
+  inset: 0;
+  filter: blur(calc(var(--ring-w) * 1.1));
+  opacity: var(--glow-strength);
+  pointer-events: none;
+}
+
+/* Display face: Bebas sits tall and tight, so it reads lighter than the rounded face */
+.ring-label.t-display {
+  padding-top: 0.04em;
+}
+
 @keyframes ring-sweep {
   from {
     --ring-p: 0;

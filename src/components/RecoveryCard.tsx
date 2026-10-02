@@ -75,7 +75,10 @@ export function RecoveryCard({ recovery, readiness: score, error, onRetry }: Pro
         <h2>Readiness</h2>
         <span className="section-header-note">Last night</span>
       </div>
-      <div className="card rec-card">
+      <div
+        className={view.kind === 'score' ? 'card rec-card instrument' : 'card rec-card'}
+        data-tone={view.kind === 'score' ? ZONE_TONE[view.zone] : undefined}
+      >
         {view.kind === 'building' && (
           <p className="readiness readiness--building">
             Building your baseline — readiness needs about a week of data ({view.days}{' '}
@@ -86,21 +89,27 @@ export function RecoveryCard({ recovery, readiness: score, error, onRetry }: Pro
           <div className={`readiness ${view.zone}`}>
             <Ring
               progress={view.score / 100}
-              size={88}
+              size={132}
               tone={ZONE_TONE[view.zone]}
+              glow
+              display
               label={String(view.score)}
-              ariaLabel={`Readiness ${view.score} out of 100, ${ZONE_INFO[view.zone].word.toLowerCase()} zone`}
+              sublabel="/100"
+              ariaLabel={`Readiness ${view.score} out of 100, ${ZONE_INFO[view.zone].word.toLowerCase()}`}
             />
             <div className="readiness-copy">
-              <div className="readiness-zone">{ZONE_INFO[view.zone].word}</div>
+              <div className="t-eyebrow">Readiness</div>
+              <div className="readiness-zone t-display t-display--m">{ZONE_INFO[view.zone].word}</div>
               <p className="readiness-line">{ZONE_INFO[view.zone].line}</p>
             </div>
           </div>
         )}
         <div className="rec-grid">
           <div className="rec-tile rec-tile--sleep">
-            <div className="label">Sleep</div>
-            <div className="rec-num">{recovery.sleepMin != null ? formatSleep(recovery.sleepMin) : '—'}</div>
+            <div className="t-eyebrow">Sleep</div>
+            <div className="rec-num t-display t-display--m">
+              {recovery.sleepMin != null ? formatSleep(recovery.sleepMin) : '—'}
+            </div>
             {s && stageTotal > 0 && (
               <>
                 <div
@@ -120,8 +129,8 @@ export function RecoveryCard({ recovery, readiness: score, error, onRetry }: Pro
             )}
           </div>
           <div className="rec-tile rec-tile--heart">
-            <div className="label">Resting HR</div>
-            <div className="rec-num">
+            <div className="t-eyebrow">Resting HR</div>
+            <div className="rec-num t-display t-display--m">
               {recovery.restingHr ?? '—'}
               {recovery.restingHr != null && <small>bpm</small>}
             </div>
@@ -133,8 +142,8 @@ export function RecoveryCard({ recovery, readiness: score, error, onRetry }: Pro
             />
           </div>
           <div className="rec-tile rec-tile--heart">
-            <div className="label">HRV</div>
-            <div className="rec-num">
+            <div className="t-eyebrow">HRV</div>
+            <div className="rec-num t-display t-display--m">
               {recovery.hrvMs ?? '—'}
               {recovery.hrvMs != null && <small>ms</small>}
             </div>

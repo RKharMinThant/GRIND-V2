@@ -7,6 +7,7 @@ import { greetingForHour, toLocalDateString, weekSessionCount } from '../lib/dat
 import type { StreakStats } from '../lib/streaks'
 import type { Log } from '../types/database'
 import type { GrindAgeState } from '../hooks/useGrindAge'
+import { CountUp } from './CountUp'
 import { GoalRing } from './GoalRing'
 import { GrindAgeCard } from './GrindAgeCard'
 import { Heatmap } from './Heatmap'
@@ -68,6 +69,7 @@ export function Dashboard({
   const logDates = logs.map((l) => l.log_date)
   const today = toLocalDateString()
   const weekCount = weekSessionCount(logDates, today, weekStart)
+  const goalHit = weekCount >= Math.max(1, weeklyGoal)
   const firstName = displayName.split(' ')[0] || displayName
   const detected = health.isConnected
     ? unlinkedWorkouts(health.workouts, logs, health.dismissedIds, today)
@@ -92,7 +94,7 @@ export function Dashboard({
   return (
     <div className="page home-page">
       <header className="home-greeting">
-        <div className="t-subhead home-date">{dateEyebrow}</div>
+        <div className="t-eyebrow home-date">{dateEyebrow}</div>
         <h1 className="page-title">
           {greetingForHour()}, {firstName}
         </h1>
@@ -101,28 +103,33 @@ export function Dashboard({
       <div className="section-header">
         <h2>This week</h2>
       </div>
-      <section className="card home-hero" aria-label="This week">
+      <section className="card home-hero instrument" data-tone="accent" aria-label="This week">
         <div className="home-hero-top">
           <GoalRing current={weekCount} goal={weeklyGoal} />
           <div className="home-hero-stats">
+            {goalHit && <p className="t-eyebrow t-tone home-goal-hit">Goal hit</p>}
             <div className="home-stat">
-              <span className="label">Week</span>
+              <span className="t-eyebrow">Week</span>
               <span className="home-stat-value">
-                <span className="num">{weekCount}</span>
+                <span className="t-display t-display--l">{weekCount}</span>
                 <span className="home-stat-unit">of {Math.max(1, weeklyGoal)} sessions</span>
               </span>
             </div>
             <div className="home-stat">
-              <span className="label">Streak</span>
+              <span className="t-eyebrow">Streak</span>
               <span className="home-stat-value">
-                <span className="num">{stats.current}</span>
+                <CountUp className="t-display t-display--l" value={stats.current} />
                 <span className="home-stat-unit">{stats.current === 1 ? 'day' : 'days'}</span>
               </span>
             </div>
             <p className="home-hero-note t-footnote">
-              {stats.current > 0
-                ? `${stats.current} day${stats.current > 1 ? 's' : ''} locked in.`
-                : 'Log a session to light the streak.'}
+              {goalHit
+                ? stats.current > 0
+                  ? 'Week done. Keep the chain alive.'
+                  : 'Week done. Now start the chain.'
+                : stats.current > 0
+                  ? `${stats.current} day${stats.current > 1 ? 's' : ''} locked in.`
+                  : 'Log a session to light the streak.'}
             </p>
           </div>
         </div>

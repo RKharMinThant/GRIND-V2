@@ -1,0 +1,219 @@
+/* ── Instrument layer ──────────────────────────────────────────────────────────
+   WHOOP-style "performance instrument" pieces for hero moments: a tone-washed
+   card, a condensed display numeral, glowing dials. Everything here is opt-in;
+   screens that don't use these classes look exactly as before. */
+
+/* ── Tone → --tone / --tone-ink ────────────────────────────────────────────────
+   --tone fills and glows; --tone-ink is for text. Scoped to the instrument
+   classes so it can't collide with .ring[data-tone] (which sets --ring-color)
+   or the older .tone-* utility classes. Lime text uses --accent-ink: that token
+   is already lime in dark and deep lime in light. */
+.instrument,
+.glow-dial,
+.arc-gauge {
+  --tone: var(--ring-accent);
+  --tone-ink: var(--accent-ink);
+}
+
+:is(.instrument, .glow-dial, .arc-gauge, .t-tone)[data-tone='accent'] {
+  --tone: var(--ring-accent);
+  --tone-ink: var(--accent-ink);
+}
+:is(.instrument, .glow-dial, .arc-gauge, .t-tone)[data-tone='heart'] {
+  --tone: var(--c-heart);
+  --tone-ink: var(--heart-ink);
+}
+:is(.instrument, .glow-dial, .arc-gauge, .t-tone)[data-tone='sleep'] {
+  --tone: var(--c-sleep);
+  --tone-ink: var(--sleep-ink);
+}
+:is(.instrument, .glow-dial, .arc-gauge, .t-tone)[data-tone='strength'] {
+  --tone: var(--c-strength);
+  --tone-ink: var(--strength-ink);
+}
+:is(.instrument, .glow-dial, .arc-gauge, .t-tone)[data-tone='activity'] {
+  --tone: var(--c-activity);
+  --tone-ink: var(--activity-ink);
+}
+/* Yellow on white is unreadable, so warn text takes --warn-ink (deeper in light) */
+:is(.instrument, .glow-dial, .arc-gauge, .t-tone)[data-tone='warn'] {
+  --tone: var(--warn);
+  --tone-ink: var(--warn-ink);
+}
+:is(.instrument, .glow-dial, .arc-gauge, .t-tone)[data-tone='danger'] {
+  --tone: var(--danger);
+  --tone-ink: var(--danger-ink);
+}
+
+/* ── Hero card (use with .card) ────────────────────────────────────────────── */
+.instrument {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  --grain-opacity: 0.06;
+}
+
+[data-theme='light'] .instrument {
+  --grain-opacity: 0.035;
+}
+
+/* The pseudo-elements sit at z-index -1: isolation makes .instrument their stacking
+   context, so they paint above the card fill but below every child. */
+/* Tone wash from the top-left corner */
+.instrument::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 0% 0%,
+    color-mix(in srgb, var(--tone) calc(var(--wash-strength) * 100%), transparent),
+    transparent 70%
+  );
+}
+
+/* Grain keeps the gradient from banding and gives the surface some tooth */
+.instrument::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* ── Type ──────────────────────────────────────────────────────────────────── */
+/* Condensed headline numerals. Size comes from the caller or a modifier below. */
+.t-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 0.88;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.t-display--xl {
+  font-size: clamp(64px, 20vw, 96px);
+}
+.t-display--l {
+  font-size: 48px;
+}
+.t-display--m {
+  font-size: 34px;
+}
+
+.t-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.t-eyebrow.t-tone {
+  color: var(--tone-ink);
+}
+
+/* ── Arc gauge (<ArcGauge>) ────────────────────────────────────────────────── */
+.arc-gauge {
+  display: block; /* also renders as a span inside a button */
+  position: relative;
+  flex: none;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.arc-gauge__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible; /* glow bleeds past the viewBox */
+  pointer-events: none;
+}
+
+.arc-gauge__track {
+  stroke: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.arc-gauge__glow,
+.arc-gauge__knob-glow {
+  opacity: var(--glow-strength);
+}
+.arc-gauge__glow {
+  stroke: var(--tone);
+}
+.arc-gauge__knob-glow {
+  fill: var(--tone);
+}
+
+.arc-gauge__knob {
+  fill: var(--tone);
+  stroke: var(--surface);
+  stroke-width: 3px;
+}
+
+/* Gradient ends: a darker start (dark theme) or lighter start (light) into the full tone */
+.arc-gauge__stop-a {
+  stop-color: color-mix(in srgb, var(--tone) 70%, #000);
+}
+[data-theme='light'] .arc-gauge__stop-a {
+  stop-color: color-mix(in srgb, var(--tone) 70%, #fff);
+}
+.arc-gauge__stop-b {
+  stop-color: var(--tone);
+}
+
+.arc-gauge__tick {
+  stroke: var(--text);
+}
+
+.arc-gauge__marker-label,
+.arc-gauge__end-label {
+  fill: var(--muted);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.arc-gauge__center {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  pointer-events: none;
+}
+.arc-gauge__center--mid {
+  transform: translateY(-50%);
+}
+/* A semicircle's centre block must stay inside the inner chord, or its caption runs into the arc */
+.arc-gauge__center--base {
+  left: 50%;
+  width: max(0px, calc(var(--gauge-size) - 2 * var(--gauge-thickness) - 24px));
+  transform: translate(-50%, -100%);
+}
+
+.arc-gauge__label {
+  color: var(--text);
+  font-size: var(--gauge-label-size, 72px);
+  white-space: nowrap;
+}
+
+.arc-gauge__sub {
+  color: var(--muted);
+}
+
+/* ── Reduced transparency: no wash, no grain ───────────────────────────────── */
+@media (prefers-reduced-transparency: reduce) {
+  .instrument::before,
+  .instrument::after {
+    display: none;
+  }
+}
