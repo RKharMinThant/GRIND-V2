@@ -42,6 +42,10 @@ describe('deltaVsBaseline', () => {
 })
 
 describe('zones', () => {
+  it('names the zones Primed, Steady and Recover', () => {
+    expect([ZONE_INFO.green.word, ZONE_INFO.yellow.word, ZONE_INFO.red.word]).toEqual(['Primed', 'Steady', 'Recover'])
+  })
+
   it('carries the agreed advice lines', () => {
     expect(ZONE_INFO.green.line).toBe('Good day to push')
     expect(ZONE_INFO.red.line).toBe('Recovery is low — go easy today')

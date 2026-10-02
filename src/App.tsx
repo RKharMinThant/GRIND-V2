@@ -12,7 +12,7 @@ import { LogDetail } from './components/LogDetail'
 import { LogFormSheet } from './components/LogFormSheet'
 import { LogsList } from './components/LogsList'
 import { ProgressView } from './components/ProgressView'
-import { GrindAgeSheet } from './components/GrindAgeSheet'
+import { GrindAgePage } from './components/GrindAgePage'
 import { RestDaySheet } from './components/RestDaySheet'
 import { SettingsView } from './components/SettingsView'
 import { Shell, type Tab } from './components/Shell'
@@ -85,7 +85,6 @@ export default function App() {
   const health = useHealth(isAdmin, logs, logsLoading, user?.id)
 
   const grindAge = useGrindAge(user?.id, health.isConnected)
-  const [grindAgeOpen, setGrindAgeOpen] = useState(false)
 
   // Web Push registration for this device (no-op until the user enables it)
   const push = usePush(Boolean(user))
@@ -102,6 +101,8 @@ export default function App() {
   const [adminPanelOpen, setAdminPanelOpen] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [settingsFrom, setSettingsFrom] = useState<Tab>('home')
+  /** Tab the GRIND Age page was opened from. Kept apart from settingsFrom so Settings → Back lands on the page. */
+  const [grindAgeFrom, setGrindAgeFrom] = useState<Tab>('home')
   /** Workout id from a notification deep link, held until health data arrives */
   const [pendingWorkoutId, setPendingWorkoutId] = useState<string | null>(null)
   /** Day to log from a "Rest day?" notification (/app?rest=YYYY-MM-DD) */
@@ -327,7 +328,10 @@ export default function App() {
                 stepGoal={dailyStepGoal}
                 onOpenBody={() => setTab('body')}
                 grindAge={grindAge}
-                onOpenGrindAge={() => setGrindAgeOpen(true)}
+                onOpenGrindAge={() => {
+                  setGrindAgeFrom('home')
+                  setTab('grind-age')
+                }}
                 onOpenSettings={() => {
                   setSettingsFrom('home')
                   setTab('settings')
@@ -388,6 +392,17 @@ export default function App() {
                 onBack={() => setTab(settingsFrom)}
               />
             )}
+            {tab === 'grind-age' && (
+              <GrindAgePage
+                grindAge={grindAge}
+                connected={health.isConnected}
+                onBack={() => setTab(grindAgeFrom)}
+                onOpenSettings={() => {
+                  setSettingsFrom('grind-age')
+                  setTab('settings')
+                }}
+              />
+            )}
             {tab === 'calendar' && (
               <CalendarView
                 logs={logs}
@@ -407,13 +422,6 @@ export default function App() {
         ready={!logsLoading}
         onConfirm={logRestDay}
         onClose={() => setRestOpen(false)}
-      />
-
-      <GrindAgeSheet
-        open={grindAgeOpen}
-        data={grindAge.data?.status === 'ok' ? grindAge.data : null}
-        onRefresh={grindAge.refresh}
-        onClose={() => setGrindAgeOpen(false)}
       />
 
       <CalendarSheet

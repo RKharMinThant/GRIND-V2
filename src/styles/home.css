@@ -7,7 +7,7 @@
 }
 
 .home-date {
-  color: var(--muted);
+  margin-bottom: 4px;
 }
 
 .home-greeting .page-title {
@@ -52,8 +52,9 @@
 
 .home-hero-top {
   display: flex;
+  flex-wrap: wrap; /* stats drop under the dial on very narrow screens */
   align-items: center;
-  gap: 20px;
+  gap: 16px 20px;
 }
 
 .goal-ring-wrap {
@@ -63,29 +64,32 @@
 }
 
 .home-hero-stats {
-  flex: 1;
+  flex: 1 1 150px;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
+.home-goal-hit {
+  margin: 0;
+}
+
 .home-stat {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .home-stat-value {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 5px;
+  gap: 0 6px;
   min-width: 0;
 }
 
-.home-stat-value .num {
-  font-size: var(--fs-title1);
-  line-height: 1.1;
+.home-stat-value .t-display {
   color: var(--text);
 }
 

@@ -1,5 +1,6 @@
 import type { GrindAgeState } from '../hooks/useGrindAge'
-import { ageGapLabel, formatPace, type GrindAgeResult } from '../health/grindAge'
+import { ageGap, ageGapLabel, formatPace, gapTone, paceWeeksToGo, type GrindAgeResult } from '../health/grindAge'
+import { ArcGauge } from './charts/ArcGauge'
 
 type Props = {
   grindAge: GrindAgeState
@@ -74,22 +75,54 @@ export function GrindAgeCard({ grindAge, onOpen, onOpenSettings }: Props) {
 
   if (data.status !== 'ok') return null
 
+  const { result, pace, history } = data
+  const chrono = result.chronologicalAge
+  const min = chrono - 6
+  const max = chrono + 6
+  const { weeksToGo, needsReadings } = paceWeeksToGo(history, data.weekStart)
+
   return (
     <section className="grind-age" aria-label="GRIND Age">
       <h2 className="section-header">GRIND Age</h2>
       <button
         type="button"
-        className="card grind-age-card grind-age-card--button"
+        className="card instrument grind-age-card grind-age-card--button"
+        data-tone={gapTone(ageGap(result))}
         onClick={onOpen}
-        aria-label={`GRIND Age ${data.result.grindAge.toFixed(1)}. ${ageGapLabel(data.result)}. Open details`}
+        aria-label={`GRIND Age ${result.grindAge.toFixed(1)}. ${ageGapLabel(result)}. Open details`}
       >
-        <span className="num t-large-title grind-age-num">{data.result.grindAge.toFixed(1)}</span>
+        <ArcGauge
+          as="span"
+          sweep={240}
+          size={128}
+          value={result.grindAge}
+          min={min}
+          max={max}
+          fillFrom={chrono}
+          marker={{ value: chrono, label: 'Real age' }}
+          bands={[
+            { from: min, to: chrono, tone: 'accent' },
+            { from: chrono, to: max, tone: 'danger' },
+          ]}
+          tone={gapTone(ageGap(result))}
+          label={result.grindAge.toFixed(1)}
+          countUp
+          decimals={1}
+          ariaLabel={`GRIND Age ${result.grindAge.toFixed(1)}`}
+        />
         <span className="grind-age-meta">
+          <span className="t-eyebrow t-tone">GRIND AGE</span>
           <span className="t-subhead grind-age-gap">
-            <GapArrow result={data.result} />
-            <span>{ageGapLabel(data.result)}</span>
+            <GapArrow result={result} />
+            <span>{ageGapLabel(result)}</span>
           </span>
-          {data.pace != null && <span className="chip">Pace of aging {formatPace(data.pace)}</span>}
+          <span className="chip">
+            {pace != null
+              ? `Pace of ageing ${formatPace(pace)}`
+              : needsReadings
+                ? 'Pace needs more readings'
+                : `Pace unlocks in ${weeksToGo} ${weeksToGo === 1 ? 'week' : 'weeks'}`}
+          </span>
         </span>
         <span className="grind-age-chevron" aria-hidden />
         {error && (

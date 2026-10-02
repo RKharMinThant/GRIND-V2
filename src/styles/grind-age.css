@@ -1,4 +1,9 @@
-/* ── GRIND Age: Home card + sheet ──────────────────────────────────────────── */
+/* ── GRIND Age: Home teaser + full page ────────────────────────────────────────
+   The hero cards use the instrument layer (instrument.css); everything below the
+   hero is the calm grouped-list language. Page rules use the ga- prefix, chart
+   rules age-trend__. */
+
+/* ── Home teaser ───────────────────────────────────────────────────────────── */
 .grind-age-card {
   position: relative;
 }
@@ -8,6 +13,11 @@
   align-items: center;
   gap: 16px;
   text-align: left;
+}
+
+/* The dial sits left; the shared auto margin would centre it in the flex row */
+.grind-age-card .arc-gauge {
+  margin-inline: 0;
 }
 
 .grind-age-line {
@@ -45,20 +55,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .grind-age-skeleton span {
-    animation: none;
-  }
-}
-
-.grind-age-num {
-  flex: none;
-  font-size: 3rem;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  color: var(--text);
-}
-
 .grind-age-meta {
   display: flex;
   flex: 1;
@@ -68,8 +64,7 @@
   min-width: 0;
 }
 
-.grind-age-gap,
-.ga-gap {
+.grind-age-gap {
   display: flex;
   align-items: flex-start;
   gap: 6px;
@@ -113,39 +108,317 @@
   font-size: var(--fs-caption);
 }
 
-/* Sheet */
-.ga-summary {
+/* ── Page header ───────────────────────────────────────────────────────────── */
+.ga-eyebrow {
+  margin: 4px 0 2px;
+}
+
+/* A failed refresh keeps the last reading on screen; say so quietly */
+.ga-stale {
+  margin: -12px 0 12px;
+  color: var(--muted);
+}
+
+/* ── Non-ok states ─────────────────────────────────────────────────────────── */
+.ga-state {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
-  margin: 4px 4px 24px;
+  gap: 12px;
+  color: var(--muted);
 }
 
-.ga-summary .grind-age-num {
-  font-size: 3.5rem;
+.ga-state p {
+  margin: 0;
 }
 
-.ga-summary-meta {
+.ga-skel {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-block: 24px;
+}
+
+.ga-skel__dial,
+.ga-skel__line {
+  display: block;
+  background: var(--fill);
+  animation: grind-age-pulse 1.4s var(--ease-out) infinite;
+}
+
+.ga-skel__dial {
+  width: min(220px, 70%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  margin-bottom: 8px;
+}
+
+.ga-skel__line {
+  width: 60%;
+  height: 14px;
+  border-radius: 7px;
+}
+
+.ga-skel__line--short {
+  width: 40%;
+}
+
+/* ── Hero ──────────────────────────────────────────────────────────────────── */
+.ga-hero {
+  padding-bottom: 20px;
+}
+
+.ga-hero-gauge {
+  padding-top: 4px;
+}
+
+.ga-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.ga-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ga-stat + .ga-stat {
+  border-left: 1px solid var(--border);
+}
+
+.ga-stat__tone {
+  color: var(--tone-ink);
+}
+
+.ga-sentence {
+  margin: 16px 0 0;
+  color: var(--muted);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* ── Pace of ageing ────────────────────────────────────────────────────────── */
+.ga-pace {
+  margin-top: 16px;
+}
+
+.ga-pace > .t-eyebrow {
+  margin: 0 0 4px;
+}
+
+.ga-pace-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.ga-pace-title {
+  margin: 0 0 16px;
+  font-size: var(--fs-headline);
+  line-height: var(--lh-headline);
+  font-weight: 600;
+  letter-spacing: var(--ls-headline);
+}
+
+.ga-dots {
+  display: flex;
   gap: 6px;
-  margin-top: 6px;
+}
+
+.ga-dot {
+  flex: 1 1 0;
+  max-width: 20px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+/* Filled = a weekly reading banked: lime, with the same glow as the dials */
+.ga-dot[data-filled='true'] {
+  background: var(--tone);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--tone) calc(var(--glow-strength) * 100%), transparent);
+}
+
+.ga-pace-sub {
+  margin: 16px 0 0;
+  color: var(--muted);
+}
+
+/* ── Trend chart ───────────────────────────────────────────────────────────── */
+.age-trend {
+  width: 100%;
+  min-height: 176px;
+}
+
+.age-trend__svg {
+  display: block;
+  overflow: visible;
+}
+
+.age-trend__empty {
+  margin: 0;
+  padding: 24px 8px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.age-trend__ref {
+  stroke: var(--muted-2);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.age-trend__ref-label,
+.age-trend__x {
+  fill: var(--muted);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.age-trend__line {
+  stroke: var(--tone);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  animation: age-trend-draw 900ms var(--ease-out) both;
+}
+
+.age-trend__stop-a {
+  stop-color: var(--tone);
+  stop-opacity: 0.2;
+}
+
+.age-trend__stop-b {
+  stop-color: var(--tone);
+  stop-opacity: 0;
+}
+
+.age-trend__area {
+  animation: age-trend-fade 700ms var(--ease-out) 200ms both;
+}
+
+.age-trend__dot-glow {
+  fill: var(--tone);
+  opacity: var(--glow-strength);
+}
+
+.age-trend__dot {
+  fill: var(--tone);
+  stroke: var(--surface);
+  stroke-width: 2.5;
+}
+
+.age-trend__dot,
+.age-trend__dot-glow,
+.age-trend__value {
+  animation: age-trend-fade 400ms var(--ease-out) 650ms both;
+}
+
+.age-trend__value {
+  fill: var(--tone-ink);
+  font-size: 20px;
+  letter-spacing: 0.02em;
+}
+
+/* pathLength is 1, so the dash offset is a 0–1 progress */
+@keyframes age-trend-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes age-trend-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ── Drivers ───────────────────────────────────────────────────────────────── */
+.ga-group + .ga-group {
+  margin-top: 24px;
+}
+
+.ga-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px;
+  padding: 0 16px;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  letter-spacing: var(--ls-footnote);
+}
+
+.ga-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* A dot in the group colour ties the header to its bars */
+.ga-group-title::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tone);
+}
+
+.ga-group-net,
+.ga-years {
+  flex: none;
+  color: var(--muted);
+}
+
+.ga-group-net {
+  font-weight: 600;
+}
+
+.ga-years {
+  font-size: var(--fs-headline);
+}
+
+:is(.ga-group-net, .ga-years)[data-dir='young'] {
+  color: var(--accent-ink);
+}
+
+:is(.ga-group-net, .ga-years)[data-dir='old'] {
+  color: var(--danger);
 }
 
 .ga-factors {
-  margin: 0 0 24px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* Text and number on one line; the bar and tip drop under them at full width */
 .ga-factor {
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 8px;
   min-height: 56px;
 }
 
 .ga-factor-main {
   display: flex;
-  flex: 1;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 1px;
   min-width: 0;
@@ -171,22 +444,76 @@
   color: var(--muted);
 }
 
-.ga-years {
-  flex: none;
-  font-size: var(--fs-headline);
+.ga-factor-note {
+  flex: 0 0 100%;
+  margin: 0;
   color: var(--muted);
 }
 
-.ga-years[data-tone='young'] {
-  color: var(--accent-ink);
+/* Diverging bar: centre = on target, left = younger, right = older */
+.ga-bar {
+  position: relative;
+  flex: 0 0 100%;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
 }
 
-.ga-years[data-tone='old'] {
+.ga-bar::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 1px);
+  width: 2px;
+  background: var(--muted-2);
+}
+
+/* Half-width fill scaled from the centre, so growing it only animates a transform */
+.ga-bar__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background: var(--tone);
+  transform: scaleX(var(--ga-fill, 0));
+  animation: ga-bar-in 600ms var(--ease-out) both;
+}
+
+.ga-bar[data-dir='young'] .ga-bar__fill {
+  right: 50%;
+  transform-origin: right center;
+}
+
+.ga-bar[data-dir='old'] .ga-bar__fill {
+  left: 50%;
+  transform-origin: left center;
+}
+
+.ga-bar[data-dir='flat'] .ga-bar__fill {
+  display: none;
+}
+
+@keyframes ga-bar-in {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* ── Log a measurement + footer ────────────────────────────────────────────── */
+.ga-form .list-row:focus-within {
+  background: var(--fill);
+}
+
+.ga-msg {
+  margin: 12px 4px 0;
   color: var(--danger);
 }
 
-.ga-form {
-  margin-bottom: 8px;
+.ga-msg[data-ok='true'] {
+  color: var(--accent-ink);
 }
 
 .ga-save {
@@ -194,6 +521,20 @@
 }
 
 .ga-disclaimer {
-  margin: 16px 4px 0;
+  margin: 24px 4px 0;
   color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grind-age-skeleton span,
+  .ga-skel__dial,
+  .ga-skel__line,
+  .ga-bar__fill,
+  .age-trend__line,
+  .age-trend__area,
+  .age-trend__dot,
+  .age-trend__dot-glow,
+  .age-trend__value {
+    animation: none;
+  }
 }
