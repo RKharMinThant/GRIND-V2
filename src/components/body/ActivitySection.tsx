@@ -7,6 +7,7 @@ import { toLocalDateString } from '../../lib/dates'
 import { StackedBar } from '../charts/StackedBar'
 import { StepBars } from '../charts/StepBars'
 import { SectionFrame } from './SectionFrame'
+import { Value } from './Value'
 
 type Props = { health: HealthState; stepGoal: number; distanceUnit?: DistanceUnit }
 
@@ -34,7 +35,7 @@ export function ActivitySection({ health, stepGoal, distanceUnit = DEFAULT_DISTA
       empty={!data?.length}
       onRetry={retry}
       meta={
-        <div className="mode-seg" role="group" aria-label="Range">
+        <div className="segmented" role="group" aria-label="Range">
           {([7, 30] as const).map((r) => (
             <button key={r} type="button" className={range === r ? 'active' : ''} onClick={() => setRange(r)} aria-pressed={range === r}>
               {r}d
@@ -48,15 +49,15 @@ export function ActivitySection({ health, stepGoal, distanceUnit = DEFAULT_DISTA
       <div className="body-stats">
         <div>
           <span className="label">Avg steps</span>
-          <span className="body-stat-value">{avgSteps?.toLocaleString() ?? '—'}</span>
+          <span className="body-stat-value num">{avgSteps?.toLocaleString() ?? '—'}</span>
         </div>
         <div>
           <span className="label">Distance</span>
-          <span className="body-stat-value">{formatDistance(present.length ? Math.round(totalKm * 10) / 10 : null, distanceUnit)}</span>
+          <Value text={formatDistance(present.length ? Math.round(totalKm * 10) / 10 : null, distanceUnit)} />
         </div>
         <div>
           <span className="label">Zone min</span>
-          <span className="body-stat-value">{present.length ? totalAzm : '—'}</span>
+          <Value text={present.length ? `${totalAzm} min` : '—'} />
         </div>
       </div>
 
@@ -68,9 +69,9 @@ export function ActivitySection({ health, stepGoal, distanceUnit = DEFAULT_DISTA
           <StackedBar
             ariaLabel="Active minutes today by intensity"
             parts={[
-              { label: 'Light', value: latest.activeMin.light, tone: 'accent-soft' },
-              { label: 'Moderate', value: latest.activeMin.moderate, tone: 'accent' },
-              { label: 'Vigorous', value: latest.activeMin.vigorous, tone: 'danger' },
+              { label: 'Light', value: latest.activeMin.light, tone: 'activity', color: 'var(--activity-light)' },
+              { label: 'Moderate', value: latest.activeMin.moderate, tone: 'activity', color: 'var(--activity-mid)' },
+              { label: 'Vigorous', value: latest.activeMin.vigorous, tone: 'activity' },
             ]}
           />
         </div>

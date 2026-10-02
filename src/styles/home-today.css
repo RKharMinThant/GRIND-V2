@@ -1,73 +1,65 @@
-/* ── Today strip (Home) ────────────────────────────────────────────────────── */
+/* ── Today (Home): steps ring + 2×2 tiles ──────────────────────────────────── */
 .today-strip {
-  display: block;
-  width: 100%;
-  text-align: left;
   color: var(--text);
-  cursor: pointer;
-  transition: border-color 180ms var(--ease-out), transform 180ms var(--ease-out);
-}
-
-.today-strip:hover {
-  border-color: var(--border-strong);
-}
-
-.today-strip:active {
-  transform: scale(0.99);
-}
-
-.today-strip .health-card-kicker {
-  justify-content: space-between;
-}
-
-.today-strip-more {
-  letter-spacing: 0.04em;
-  text-transform: none;
-  font-weight: 600;
-  color: var(--muted-2);
 }
 
 .today-strip-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .today-strip-tiles {
   flex: 1;
   min-width: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
 .today-tile {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px 10px 9px;
+  gap: 6px;
+  padding: 12px;
   border-radius: var(--radius);
   background: var(--surface-2);
   min-width: 0;
 }
 
-.today-tile .label {
-  font-size: 0.6rem;
+.today-tile-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  color: var(--muted);
   white-space: nowrap;
+}
+
+.today-tile-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: var(--tone, var(--muted));
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .today-tile-value {
-  font-family: var(--font-num);
-  font-size: 1.35rem;
-  line-height: 1;
+  font-size: var(--fs-title3);
+  line-height: 1.1;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--text);
 }
 
-@media (max-width: 560px) {
-  .today-strip-tiles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.today-tile-value small {
+  margin-left: 2px;
+  font-family: var(--font);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--muted);
 }
-

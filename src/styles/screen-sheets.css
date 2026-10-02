@@ -1,1 +1,34 @@
 /* Redesign overrides owned by the sheets screen work. Loaded last. */
+
+/* ── Embedded calendar (CalendarSheet): flatten the page card into the sheet ── */
+.sheet .cal-card {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sheet .cal-day-panel {
+  margin: 12px 0 0;
+}
+
+.sheet .cal-day-item {
+  background: var(--surface-2);
+}
+
+/* Fitbit zone bar inside the session detail: the facts line is shown as chips above */
+.detail-fitbit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-fitbit .health-stats-facts {
+  display: none;
+}
+
+/* Spinner / toast live in base files; keep them tidy inside a sheet row */
+.sheet .spinner {
+  border-width: 2px;
+}

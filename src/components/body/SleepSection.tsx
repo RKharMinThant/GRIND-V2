@@ -7,6 +7,7 @@ import { friendlyDateShort } from '../../lib/dates'
 import { Hypnogram } from '../charts/Hypnogram'
 import { StackedBar } from '../charts/StackedBar'
 import { SectionFrame } from './SectionFrame'
+import { Value } from './Value'
 
 export function SleepSection({ health }: { health: HealthState }) {
   const { data, loading, error, retry } = useBodySection(health, 'sleep')
@@ -45,7 +46,7 @@ export function SleepSection({ health }: { health: HealthState }) {
       {night && (
         <>
           <div className="chart-readout">
-            <span className="chart-readout-value">{night.asleepMin != null ? formatSleep(night.asleepMin) : '—'}</span>
+            <span className="chart-readout-value num">{night.asleepMin != null ? formatSleep(night.asleepMin) : '—'}</span>
             <span className="chart-readout-meta">
               {friendlyDateShort(night.date)} · {formatClock(night.start)} → {formatClock(night.end)}
             </span>
@@ -53,26 +54,26 @@ export function SleepSection({ health }: { health: HealthState }) {
           <Hypnogram night={night} />
           <div className="body-stats">
             <div>
-              <span className="label">Fell asleep in</span>
-              <span className="body-stat-value">{night.toFallAsleepMin != null ? `${night.toFallAsleepMin} min` : '—'}</span>
+              <span className="label">Fall asleep</span>
+              <Value text={night.toFallAsleepMin != null ? `${night.toFallAsleepMin} min` : '—'} />
             </div>
             <div>
               <span className="label">Awake</span>
-              <span className="body-stat-value">{night.awakeMin != null ? `${night.awakeMin} min` : '—'}</span>
+              <Value text={night.awakeMin != null ? `${night.awakeMin} min` : '—'} />
             </div>
             <div>
               <span className="label">Deep + REM</span>
-              <span className="body-stat-value">{night.stages ? formatSleep(night.stages.deep + night.stages.rem) : '—'}</span>
+              <span className="body-stat-value num">{night.stages ? formatSleep(night.stages.deep + night.stages.rem) : '—'}</span>
             </div>
           </div>
           {night.stages && (
             <StackedBar
               ariaLabel="Minutes in each sleep stage"
               parts={[
-                { label: 'Deep', value: night.stages.deep, tone: 'ice' },
-                { label: 'REM', value: night.stages.rem, tone: 'rem' },
-                { label: 'Light', value: night.stages.light, tone: 'ice-soft' },
-                { label: 'Awake', value: night.stages.awake, tone: 'danger' },
+                { label: 'Deep', value: night.stages.deep, tone: 'sleep', color: 'var(--sleep-deep)' },
+                { label: 'REM', value: night.stages.rem, tone: 'sleep', color: 'var(--sleep-rem)' },
+                { label: 'Light', value: night.stages.light, tone: 'sleep', color: 'var(--sleep-light)' },
+                { label: 'Awake', value: night.stages.awake, tone: 'sleep', color: 'var(--sleep-awake)' },
               ]}
             />
           )}

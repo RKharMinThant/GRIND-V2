@@ -1,140 +1,331 @@
-/* ── Settings ──────────────────────────────────────────────────────────────── */
-.settings-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* ── Settings — iOS Settings: grouped lists on a flat background ───────────── */
+
+/* Back affordance (chevron + label) above the Large Title */
+.set-head {
+  margin-bottom: 24px;
 }
 
-.settings-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-top-color: var(--highlight);
-  border-radius: var(--radius-lg);
-  padding: 16px 18px 18px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-card);
-  animation: fade-up var(--dur-page) var(--ease-out) both;
-}
-
-.settings-title {
-  margin: 0 0 14px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-.setting-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.setting-row:last-of-type {
-  border-bottom: none;
-}
-
-.setting-row-label {
+.set-back {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.88rem;
+  gap: 4px;
+  min-height: 44px;
+  margin: -8px 0 0 -8px;
+  padding: 0 8px;
+  color: var(--accent-ink);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.set-back svg {
+  width: 11px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.set-back:active {
+  opacity: 0.4;
+}
+
+/* One group = footnote header, inset list, optional footnote */
+.set-group {
+  margin-bottom: 32px;
+}
+
+.set-group--tight {
+  margin-bottom: 16px;
+}
+
+.set-group-title {
+  margin: 0 0 8px;
+  padding: 0 16px;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  font-weight: 400;
+  letter-spacing: var(--ls-footnote);
+  color: var(--muted);
+}
+
+.set-footer {
+  margin: 8px 0 0;
+  padding: 0 16px;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  letter-spacing: var(--ls-footnote);
+  color: var(--muted);
+}
+
+.set-error {
+  margin: 8px 0 0;
+  padding: 0 16px;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  color: var(--danger);
+}
+
+/* Profile save button sits right under its group */
+.settings-page .set-save {
+  margin: 0 0 32px;
+}
+
+.settings-page .set-error {
+  margin-bottom: 16px;
+}
+
+/* ── Rows ──────────────────────────────────────────────────────────────────── */
+.settings-page .list-row[disabled],
+.settings-page .list-row:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Row holding a full-width control (appearance segmented) */
+.set-row-control {
+  padding-block: 8px;
+}
+
+/* Text-button row: left-aligned action in --accent-ink */
+.set-action {
+  justify-content: flex-start;
+  color: var(--accent-ink);
+}
+
+.set-action--danger {
+  color: var(--danger);
+}
+
+.set-action--center {
+  justify-content: center;
+}
+
+/* Right-aligned value rows */
+.set-email {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.set-row-note {
+  display: block;
+  margin: 0;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  letter-spacing: var(--ls-footnote);
+  color: var(--muted);
+}
+
+.set-row-note strong {
+  color: var(--text);
   font-weight: 600;
 }
 
-.settings-note {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--muted);
+/* Error row with Retry */
+.set-row-error {
+  color: var(--danger);
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  letter-spacing: var(--ls-footnote);
 }
 
-.settings-about {
-  margin-top: 14px;
+.set-inline-btn {
+  flex: none;
+  min-height: 44px;
+  margin: -11px -8px -11px 0;
+  padding: 0 8px;
+  color: var(--accent-ink);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
 }
 
-.settings-about a {
-  color: var(--muted);
-  text-decoration: underline;
+.set-inline-btn:active {
+  opacity: 0.4;
 }
 
-.settings-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.settings-error {
+/* Connection status */
+.set-status {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: var(--radius);
-  background: var(--danger-dim);
-  color: var(--danger);
-  font-size: 0.78rem;
 }
 
-.settings-card .field-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.set-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--muted-2);
+}
+
+.set-dot[data-status='connected'] {
+  background: var(--ring-accent);
+}
+
+.set-dot[data-status='expired'] {
+  background: var(--danger);
+}
+
+/* ── Inline fields: label left, borderless value right ─────────────────────── */
+.set-field {
+  cursor: text;
+}
+
+.set-input {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+  text-align: right;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  caret-color: var(--accent-ink);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.set-input:focus {
+  color: var(--text);
+}
+
+.set-field {
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.set-field:focus-within {
+  background: var(--fill);
+}
+
+.set-field .list-row-label {
+  flex: none;
+}
+
+.set-input.num-input {
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.set-input.num-input::-webkit-outer-spin-button,
+.set-input.num-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.set-input[type='date'] {
+  height: 22px;
+  min-width: 0;
+  text-align: right;
+}
+
+.set-input[type='date']::-webkit-datetime-edit {
+  padding: 0;
+  text-align: right;
+}
+
+.set-input[type='date']::-webkit-date-and-time-value {
+  text-align: right;
+}
+
+.set-input[type='date']::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+/* Compact segmented controls sit on the right of their row */
+.settings-page .list-row > .segmented {
+  flex: none;
+}
+
+.settings-page .list-row > .segmented--full {
+  flex: 1 1 auto;
+}
+
+/* ── Footer ────────────────────────────────────────────────────────────────── */
+.set-about {
+  margin: -16px 0 0;
+  text-align: center;
+  color: var(--muted);
+}
+
+.set-about a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Used by sheets that still carry a muted note */
+.settings-note {
+  margin: 0;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  color: var(--muted);
 }
 
 .user-chip.active {
   border-color: var(--accent);
 }
 
-@media (max-width: 520px) {
-  .settings-card .field-row {
-    grid-template-columns: 1fr;
-  }
+/* ── Notification rows + iOS switch ────────────────────────────────────────── */
+.set-switch-row {
+  gap: 16px;
+  padding-block: 10px;
 }
 
-/* ── Notification settings ─────────────────────────────────────────────────── */
-.notify-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.notify-row:last-of-type {
-  border-bottom: none;
-}
-
-.notify-text {
+.set-switch-text {
+  flex: 1;
   min-width: 0;
 }
 
-.notify-text .settings-note {
-  margin-top: 2px;
+.set-switch-label {
+  display: block;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+  color: var(--text);
 }
 
+.set-switch-desc {
+  margin: 1px 0 0;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  letter-spacing: var(--ls-footnote);
+  color: var(--muted);
+}
+
+/* 51 × 31 track, 27px knob inset 2px */
 .switch {
+  position: relative;
   flex: none;
-  width: 46px;
-  height: 28px;
+  display: block;
+  width: 51px;
+  height: 31px;
   padding: 0;
-  border: 1px solid var(--border);
+  border: none;
   border-radius: 999px;
-  background: var(--surface-2);
+  background: var(--fill);
   cursor: pointer;
-  transition:
-    background var(--dur-fast) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out);
+  transition: background-color 200ms var(--ease-out);
+}
+
+[data-theme='light'] .switch {
+  background: rgba(120, 120, 128, 0.16);
 }
 
 .switch.on {
   background: var(--accent);
-  border-color: var(--accent);
 }
 
 .switch:disabled {
@@ -143,20 +334,23 @@
 }
 
 .switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
   display: block;
-  width: 20px;
-  height: 20px;
-  margin-left: 3px;
+  width: 27px;
+  height: 27px;
   border-radius: 50%;
-  /* --muted reads against the track in both themes; the knob must never vanish */
-  background: var(--muted);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
-  transition: transform var(--dur-fast) var(--ease-out);
+  background: #ffffff;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.15),
+    0 1px 1px rgba(0, 0, 0, 0.16),
+    0 3px 1px rgba(0, 0, 0, 0.06);
+  transition: transform 200ms var(--ease-out);
 }
 
 .switch.on .switch-knob {
-  transform: translateX(18px);
-  background: var(--accent-text);
+  transform: translateX(20px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -165,4 +359,3 @@
     transition: none;
   }
 }
-

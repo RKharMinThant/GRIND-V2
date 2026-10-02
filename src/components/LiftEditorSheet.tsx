@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { DEFAULT_WEIGHT_UNIT, type WeightUnit } from '../lib/units'
-import { usePresence } from '../hooks/usePresence'
 import { formatSetsDetail, getLiftSets, getPrevLiftSets } from '../lib/overload'
 import {
   MUSCLE_GROUPS,
@@ -9,6 +7,7 @@ import {
   type TrackedLift,
   type TrackedLiftInput,
 } from '../types/database'
+import { Sheet, SheetAction, SheetCancel, SheetHeader } from './Sheet'
 
 export type LiftEditorSheetProps = {
   open: boolean
@@ -60,12 +59,6 @@ function weightFromLift(lift: TrackedLift): string {
   return formatWeightLabel(best)
 }
 
-function draftsFromLift(lift: TrackedLift): SetDraft[] {
-  const detail = getLiftSets(lift)
-  if (!detail.length) return [newSetDraft('8')]
-  return detail.map((s) => newSetDraft(String(s.reps)))
-}
-
 function draftsToSets(drafts: SetDraft[], weightStr: string): LiftSet[] {
   const weight = Math.max(0, Number(weightStr) || 0)
   return drafts
@@ -85,6 +78,31 @@ function mapLegacyMuscle(group: string): string {
   return match ?? 'Full Body'
 }
 
+/** The values the form opens with: the lift being edited, or an empty lift in the chosen group. */
+function initialFields(
+  lift: TrackedLift | null,
+  initialGroup: string | undefined,
+  defaultUnit: WeightUnit,
+) {
+  if (lift) {
+    const known = (MUSCLE_GROUPS as readonly string[]).includes(lift.muscle_group)
+    const detail = getLiftSets(lift)
+    return {
+      muscle: known ? lift.muscle_group : mapLegacyMuscle(lift.muscle_group),
+      name: lift.exercise_name,
+      weight: weightFromLift(lift),
+      reps: detail.length ? detail.map((s) => String(s.reps)) : ['8'],
+      unit: (lift.unit === 'lb' ? 'lb' : 'kg') as 'kg' | 'lb',
+    }
+  }
+  const muscle = initialGroup
+    ? (MUSCLE_GROUPS as readonly string[]).includes(initialGroup)
+      ? initialGroup
+      : mapLegacyMuscle(initialGroup)
+    : MUSCLE_GROUPS[0]
+  return { muscle, name: '', weight: '', reps: ['8', '8', '8'], unit: defaultUnit as 'kg' | 'lb' }
+}
+
 /**
  * Progressive-overload lift editor.
  * One shared weight + per-set reps (15 · 12 · 10 @ 60kg).
@@ -92,15 +110,24 @@ function mapLegacyMuscle(group: string): string {
  */
 export function LiftEditorSheet({
   open,
-  mode,
-  initialGroup,
-  lift,
+  mode: modeProp,
+  initialGroup: initialGroupProp,
+  lift: liftProp,
   onClose,
   onSave,
-  onDelete,
+  onDelete: onDeleteProp,
   defaultUnit = DEFAULT_WEIGHT_UNIT,
 }: LiftEditorSheetProps) {
-  const { mounted, visible } = usePresence(open, 380)
+  // The parent clears these as soon as it saves; keep what the sheet opened with while it slides away
+  const incoming = {
+    mode: modeProp,
+    initialGroup: initialGroupProp,
+    lift: liftProp,
+    onDelete: onDeleteProp,
+  }
+  const held = useRef(incoming)
+  if (open) held.current = incoming
+  const { mode, initialGroup, lift, onDelete } = held.current
   const bodyRef = useRef<HTMLDivElement>(null)
   const nameRef = useRef<HTMLInputElement>(null)
   const [muscle, setMuscle] = useState<string>(MUSCLE_GROUPS[0])
@@ -118,25 +145,12 @@ export function LiftEditorSheet({
 
   useEffect(() => {
     if (!open) return
-    if (lift) {
-      const known = (MUSCLE_GROUPS as readonly string[]).includes(lift.muscle_group)
-      setMuscle(known ? lift.muscle_group : mapLegacyMuscle(lift.muscle_group))
-      setName(lift.exercise_name)
-      setWeight(weightFromLift(lift))
-      setSetDrafts(draftsFromLift(lift))
-      setUnit(lift.unit === 'lb' ? 'lb' : 'kg')
-    } else {
-      const g = initialGroup
-        ? (MUSCLE_GROUPS as readonly string[]).includes(initialGroup)
-          ? initialGroup
-          : mapLegacyMuscle(initialGroup)
-        : MUSCLE_GROUPS[0]
-      setMuscle(g)
-      setName('')
-      setWeight('')
-      setSetDrafts([newSetDraft('8'), newSetDraft('8'), newSetDraft('8')])
-      setUnit(defaultUnit)
-    }
+    const init = initialFields(lift, initialGroup, defaultUnit)
+    setMuscle(init.muscle)
+    setName(init.name)
+    setWeight(init.weight)
+    setSetDrafts(init.reps.map((r) => newSetDraft(r)))
+    setUnit(init.unit)
     setError(null)
     setBusy(false)
     setConfirmDelete(false)
@@ -145,30 +159,17 @@ export function LiftEditorSheet({
     })
   }, [open, lift, initialGroup, defaultUnit])
 
-  useEffect(() => {
-    if (!open || !visible) return
-    if (bodyRef.current) bodyRef.current.scrollTop = 0
-    const t = window.setTimeout(() => {
-      if (bodyRef.current) bodyRef.current.scrollTop = 0
-      const el = nameRef.current
-      if (!el) return
-      try {
-        el.focus({ preventScroll: true })
-      } catch {
-        /* older browsers */
-      }
-    }, 280)
-    return () => window.clearTimeout(t)
-  }, [open, visible])
-
-  useEffect(() => {
-    if (!open) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [open])
+  // Unsaved input: a flick, scrim tap or Esc must not throw it away (Cancel asks first)
+  const dirty = useMemo(() => {
+    const init = initialFields(lift, initialGroup, defaultUnit)
+    return (
+      muscle !== init.muscle ||
+      name !== init.name ||
+      weight !== init.weight ||
+      unit !== init.unit ||
+      setDrafts.map((d) => d.reps).join() !== init.reps.join()
+    )
+  }, [lift, initialGroup, defaultUnit, muscle, name, weight, unit, setDrafts])
 
   const preview = useMemo(() => {
     const sets = draftsToSets(setDrafts, weight)
@@ -188,8 +189,6 @@ export function LiftEditorSheet({
     if (!prev?.length) return null
     return formatSetsDetail(prev, lift.unit || 'kg')
   }, [lift])
-
-  if (!mounted) return null
 
   function updateReps(index: number, value: string) {
     const cleaned = value.replace(/[^\d]/g, '')
@@ -275,228 +274,227 @@ export function LiftEditorSheet({
     }
   }
 
-  const node = (
-    <div
-      className={`overlay overlay--lift ${visible ? 'is-visible' : 'is-closing'}`}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="lift-sheet-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && visible) onClose()
+  const titleId = 'lift-sheet-title'
+  const weightNum = Number(weight) || 0
+
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      dismissible={!busy && !dirty}
+      labelledBy={titleId}
+      className="sheet--lift"
+      scrollRef={bodyRef}
+      onOpened={() => {
+        try {
+          nameRef.current?.focus({ preventScroll: true })
+        } catch {
+          /* older browsers */
+        }
       }}
+      header={
+        <SheetHeader
+          title={mode === 'edit' ? 'Edit lift' : 'Add lift'}
+          titleId={titleId}
+          leading={
+            <SheetCancel disabled={busy} confirm={dirty ? 'Discard changes?' : undefined} />
+          }
+          trailing={
+            <SheetAction primary onClick={() => void submit()} disabled={busy}>
+              {busy ? 'Saving…' : mode === 'edit' ? 'Save' : 'Add'}
+            </SheetAction>
+          }
+        />
+      }
     >
-      <div className="sheet sheet--lift">
-        <header className="lift-sheet-header">
-          <h2 id="lift-sheet-title" className="lift-sheet-title">
-            {mode === 'edit' ? 'Edit lift' : 'Add lift'}
-          </h2>
-          <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
-        </header>
+      {error && (
+        <div className="sheet-error" role="alert">
+          {error}
+        </div>
+      )}
 
-        <div ref={bodyRef} className="lift-sheet-body">
-          {error && <div className="auth-error">{error}</div>}
-
-          <div className="lift-field">
-            <label className="lift-field-label" htmlFor="liftName">
-              Exercise
-            </label>
+      <div className="sheet-section">
+        <div className="list-group">
+          <label className="list-row" htmlFor="liftName">
+            <span className="list-row-label">Exercise</span>
             <input
               ref={nameRef}
               id="liftName"
-              className="lift-name-field"
+              className="list-row-input"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Bench press"
               autoComplete="off"
             />
-          </div>
+          </label>
+        </div>
+      </div>
 
-          <div className="lift-field">
-            <span className="lift-field-label" id="muscle-label">
-              Muscle
-            </span>
-            <div className="muscle-grid" role="group" aria-labelledby="muscle-label">
-              {MUSCLE_GROUPS.map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  className={`muscle-grid-btn ${muscle === g ? 'is-selected' : ''}`}
-                  onClick={() => setMuscle(g)}
-                  aria-pressed={muscle === g}
-                >
-                  {g}
-                </button>
-              ))}
+      <div className="sheet-section">
+        <div className="sheet-label" id="muscle-label">
+          Muscle
+        </div>
+        <div className="chip-row" role="group" aria-labelledby="muscle-label">
+          {MUSCLE_GROUPS.map((g) => (
+            <button
+              key={g}
+              type="button"
+              className="chip chip--button sheet-chip"
+              onClick={() => setMuscle(g)}
+              aria-pressed={muscle === g}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Shared working weight — same for every set */}
+      <div className="sheet-section">
+        <div className="sheet-label">Weight</div>
+        <div className="list-group">
+          <div className="list-row">
+            <span className="list-row-label">Unit</span>
+            <div className="segmented" role="group" aria-label="Weight unit">
+              <button
+                type="button"
+                className={unit === 'kg' ? 'active' : ''}
+                onClick={() => setUnit('kg')}
+                aria-pressed={unit === 'kg'}
+              >
+                kg
+              </button>
+              <button
+                type="button"
+                className={unit === 'lb' ? 'active' : ''}
+                onClick={() => setUnit('lb')}
+                aria-pressed={unit === 'lb'}
+              >
+                lb
+              </button>
             </div>
           </div>
-
-          {/* Shared working weight — same for every set */}
-          <div className="lift-field">
-            <div className="lift-field-label-row">
-              <span className="lift-field-label">Weight</span>
-              <div className="unit-seg" role="group" aria-label="Weight unit">
-                <button
-                  type="button"
-                  className={unit === 'kg' ? 'is-selected' : ''}
-                  onClick={() => setUnit('kg')}
-                  aria-pressed={unit === 'kg'}
-                >
-                  kg
-                </button>
-                <button
-                  type="button"
-                  className={unit === 'lb' ? 'is-selected' : ''}
-                  onClick={() => setUnit('lb')}
-                  aria-pressed={unit === 'lb'}
-                >
-                  lb
-                </button>
-              </div>
+          <div className="list-row">
+            <span className="list-row-label">Working weight</span>
+            <div className="stepper stepper--weight">
+              <button
+                type="button"
+                className="stepper-btn"
+                aria-label="Decrease weight"
+                onClick={() => nudgeWeight(-1)}
+              >
+                −
+              </button>
+              <input
+                className="stepper-input num"
+                type="text"
+                inputMode="decimal"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value.replace(/[^\d.]/g, ''))}
+                placeholder="0"
+                aria-label="Working weight"
+              />
+              <button
+                type="button"
+                className="stepper-btn"
+                aria-label="Increase weight"
+                onClick={() => nudgeWeight(1)}
+              >
+                +
+              </button>
             </div>
-            <div className="weight-stepper-wrap">
-              <div className="stepper stepper--weight">
+            <span className="list-row-unit">{unit}</span>
+          </div>
+        </div>
+        <p className="sheet-hint">Same load for all sets — only reps change below.</p>
+      </div>
+
+      <div className="sheet-section">
+        <div className="sheet-label">Reps per set</div>
+        <div className="list-group">
+          {setDrafts.map((row, index) => (
+            <div key={row.key} className="list-row set-row">
+              <span className="list-row-label">Set {index + 1}</span>
+              <div className="stepper">
                 <button
                   type="button"
                   className="stepper-btn"
-                  aria-label="Decrease weight"
-                  onClick={() => nudgeWeight(-1)}
+                  aria-label={`Decrease set ${index + 1} reps`}
+                  onClick={() => nudgeReps(index, -1)}
                 >
                   −
                 </button>
                 <input
-                  className="stepper-input"
+                  className="stepper-input num"
                   type="text"
-                  inputMode="decimal"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value.replace(/[^\d.]/g, ''))}
-                  placeholder="0"
-                  aria-label="Working weight"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={row.reps}
+                  onChange={(e) => updateReps(index, e.target.value)}
+                  aria-label={`Set ${index + 1} reps`}
                 />
                 <button
                   type="button"
                   className="stepper-btn"
-                  aria-label="Increase weight"
-                  onClick={() => nudgeWeight(1)}
+                  aria-label={`Increase set ${index + 1} reps`}
+                  onClick={() => nudgeReps(index, 1)}
                 >
                   +
                 </button>
               </div>
-              <span className="weight-stepper-unit">{unit}</span>
+              <span className="set-row-load num" aria-hidden>
+                {weightNum > 0 ? `× ${formatWeightLabel(weightNum)} ${unit}` : '× —'}
+              </span>
+              <button
+                type="button"
+                className="set-row-remove"
+                aria-label={`Remove set ${index + 1}`}
+                disabled={setDrafts.length <= 1}
+                onClick={() => removeSet(index)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden>
+                  <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm5 11H7a1 1 0 1 1 0-2h10a1 1 0 1 1 0 2Z" />
+                </svg>
+              </button>
             </div>
-            <p className="field-hint" style={{ marginTop: 8, marginBottom: 0 }}>
-              Same load for all sets — only reps change below.
-            </p>
-          </div>
-
-          <div className="lift-field">
-            <span className="lift-field-label">Reps per set</span>
-            <p className="field-hint" style={{ marginTop: 0, marginBottom: 10 }}>
-              e.g. 15, then 12, then 10
-            </p>
-
-            <div className="set-list">
-              {setDrafts.map((row, index) => (
-                <div key={row.key} className="set-row set-row--reps-only">
-                  <span className="set-row-label">Set {index + 1}</span>
-
-                  <div className="stepper">
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      aria-label={`Decrease set ${index + 1} reps`}
-                      onClick={() => nudgeReps(index, -1)}
-                    >
-                      −
-                    </button>
-                    <input
-                      className="stepper-input"
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={row.reps}
-                      onChange={(e) => updateReps(index, e.target.value)}
-                      aria-label={`Set ${index + 1} reps`}
-                    />
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      aria-label={`Increase set ${index + 1} reps`}
-                      onClick={() => nudgeReps(index, 1)}
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <span className="set-row-reps-unit">reps</span>
-
-                  <button
-                    type="button"
-                    className="set-row-remove"
-                    aria-label={`Remove set ${index + 1}`}
-                    disabled={setDrafts.length <= 1}
-                    onClick={() => removeSet(index)}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <button type="button" className="btn btn-ghost btn-full set-add-btn" onClick={addSet}>
-              + Add set
-            </button>
-          </div>
-
-          <div className={`lift-summary ${preview.hasName ? 'is-ready' : ''}`} aria-live="polite">
-            <span className="lift-summary-muscle">{preview.muscle}</span>
-            <span className="lift-summary-name">
-              {preview.hasName ? preview.name : 'Name this exercise'}
-            </span>
-            <span className="lift-summary-nums">{preview.line}</span>
-          </div>
-
-          {mode === 'edit' && prevLine && (
-            <div className="lift-prev-note">
-              <span className="lift-prev-label">Previous</span>
-              <span className="lift-prev-value">{prevLine}</span>
-            </div>
-          )}
+          ))}
+          <button type="button" className="list-row set-add-row" onClick={addSet}>
+            <svg viewBox="0 0 24 24" aria-hidden>
+              <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm5 11h-4v4a1 1 0 1 1-2 0v-4H7a1 1 0 1 1 0-2h4V7a1 1 0 1 1 2 0v4h4a1 1 0 1 1 0 2Z" />
+            </svg>
+            <span>Add set</span>
+          </button>
         </div>
+        <p className="sheet-hint">e.g. 15, then 12, then 10</p>
+      </div>
 
-        <footer className="lift-sheet-footer">
-          {onDelete ? (
+      <div className={`lift-summary ${preview.hasName ? 'is-ready' : ''}`} aria-live="polite">
+        <span className="lift-summary-muscle">{preview.muscle}</span>
+        <span className="lift-summary-name">{preview.hasName ? preview.name : 'Name this exercise'}</span>
+        <span className="lift-summary-nums num">{preview.line}</span>
+      </div>
+
+      {mode === 'edit' && prevLine && (
+        <p className="lift-prev-note">
+          Previous <span className="num">{prevLine}</span>
+        </p>
+      )}
+
+      {onDelete && (
+        <div className="sheet-section lift-delete">
+          <div className="list-group">
             <button
               type="button"
-              className="lift-delete-btn"
+              className="list-row sheet-danger-row"
+              data-confirm={confirmDelete}
               onClick={() => void handleDelete()}
               disabled={busy}
             >
-              {confirmDelete ? 'Tap again to delete' : 'Delete'}
+              {confirmDelete ? 'Tap again to delete' : 'Delete lift'}
             </button>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-ghost lift-cancel-btn"
-              onClick={onClose}
-              disabled={busy}
-            >
-              Cancel
-            </button>
-          )}
-          <button
-            type="button"
-            className="btn btn-primary lift-save-btn"
-            onClick={() => void submit()}
-            disabled={busy}
-          >
-            {busy ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Add lift'}
-          </button>
-        </footer>
-      </div>
-    </div>
+          </div>
+        </div>
+      )}
+    </Sheet>
   )
-
-  return createPortal(node, document.body)
 }

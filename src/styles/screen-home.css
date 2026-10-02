@@ -1,1 +1,42 @@
 /* Redesign overrides owned by the home screen work. Loaded last. */
+
+/* Cards without their own section header (GRIND Age, detected workout) keep 24px rhythm */
+.home-page > .health-card {
+  margin-top: 24px;
+}
+
+/* tokens.css deep-lime text on the logged day would clash with its lime fill */
+[data-theme='light'] .week-day.logged .n {
+  color: var(--accent-text);
+}
+
+/* Legend swatches follow the light-theme heatmap steps (tokens.css covers the cells) */
+[data-theme='light'] .heatmap-legend .swatch.l1 {
+  background: rgba(200, 241, 53, 0.45);
+}
+[data-theme='light'] .heatmap-legend .swatch.l2 {
+  background: rgba(150, 190, 20, 0.7);
+}
+[data-theme='light'] .heatmap-legend .swatch.l3 {
+  background: #7ea000;
+}
+
+/* Sessions legend and steps legend keep their own palettes */
+[data-theme='light'] .heatmap-legend .swatch.steps.l1 {
+  background: color-mix(in srgb, var(--c-activity) 32%, transparent);
+}
+[data-theme='light'] .heatmap-legend .swatch.steps.l2 {
+  background: color-mix(in srgb, var(--c-activity) 62%, transparent);
+}
+[data-theme='light'] .heatmap-legend .swatch.steps.l3 {
+  background: var(--c-activity);
+}
+[data-theme='light'] .heatmap-cell.steps.l1 {
+  background: color-mix(in srgb, var(--c-activity) 32%, transparent);
+}
+[data-theme='light'] .heatmap-cell.steps.l2 {
+  background: color-mix(in srgb, var(--c-activity) 62%, transparent);
+}
+[data-theme='light'] .heatmap-cell.steps.l3 {
+  background: var(--c-activity);
+}

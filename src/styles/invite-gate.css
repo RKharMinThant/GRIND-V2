@@ -3,8 +3,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 24px 4px 4px;
+  gap: 8px;
+  padding: 8px 8px 0;
   text-align: center;
   animation: scale-in var(--dur-page) var(--ease-out) both;
 }
@@ -12,14 +12,13 @@
 .invite-gate-icon {
   width: 56px;
   height: 56px;
-  border-radius: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--fill);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--muted);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   flex-shrink: 0;
 }
 
@@ -32,18 +31,18 @@
 }
 
 .invite-gate-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text);
   margin: 0;
+  font-size: var(--fs-title3);
+  line-height: var(--lh-title3);
+  font-weight: var(--fw-title3);
+  letter-spacing: var(--ls-title3);
+  color: var(--text);
 }
 
 .invite-gate-body {
-  font-size: 0.83rem;
+  max-width: 280px;
+  margin: 0 0 8px;
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
   color: var(--muted);
-  line-height: 1.55;
-  max-width: 260px;
-  margin: 0 0 6px;
 }
-

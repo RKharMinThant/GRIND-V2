@@ -48,9 +48,9 @@ export function DayCurve({ points, ariaLabel }: Props) {
   return (
     <div className="day-curve">
       <div className="chart-readout" aria-live="polite">
-        <span className="chart-readout-value">
+        <span className="chart-readout-value num">
           {shown.bpm}
-          <small> bpm</small>
+          <small>bpm</small>
         </span>
         <span className="chart-readout-meta">
           {hover ? fmtMinute(shown.minute) : 'Latest'} · range {min}–{max}

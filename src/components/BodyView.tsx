@@ -22,7 +22,7 @@ export function BodyView({ health, stepGoal, distanceUnit = DEFAULT_DISTANCE_UNI
         <div>
           <div className="page-title">Body</div>
           {status === 'connected' && (
-            <div className="body-synced" aria-live="polite">
+            <div className="body-synced t-footnote" aria-live="polite">
               {health.source === 'demo' ? 'Demo data · ' : ''}
               {/* The cards keep showing the last data while it refreshes, so say so here */}
               {health.loading ? 'Updating…' : `Synced ${relativeSync(health.connection?.lastSyncedAt ?? null)}`}
@@ -37,17 +37,17 @@ export function BodyView({ health, stepGoal, distanceUnit = DEFAULT_DISTANCE_UNI
       </div>
 
       {!health.connection ? (
-        <div className="page" style={{ display: 'grid', placeItems: 'center', minHeight: '30vh' }}>
+        <div className="body-loading">
           <div className="spinner" />
         </div>
       ) : status !== 'connected' ? (
-        <section className="health-card body-connect">
+        <section className="card body-connect">
           <div className="body-connect-mark" aria-hidden>
             <svg viewBox="0 0 24 24">
               <path d="M3 12h4l2-6 4 12 2-6h6" />
             </svg>
           </div>
-          <h2>{status === 'expired' ? 'Reconnect Fitbit' : 'Connect Fitbit'}</h2>
+          <h2 className="t-title3">{status === 'expired' ? 'Reconnect Fitbit' : 'Connect Fitbit'}</h2>
           <p>
             {status === 'expired'
               ? 'Your Fitbit connection expired. Reconnect to keep your activity, heart, sleep and vitals up to date.'

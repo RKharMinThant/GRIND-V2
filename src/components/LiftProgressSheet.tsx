@@ -1,6 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { usePresence } from '../hooks/usePresence'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { friendlyUpdatedAt } from '../lib/dates'
 import {
   compareTrackedLift,
@@ -13,6 +11,7 @@ import {
 import { bestOneRepMax, convertSets, personalBests } from '../lib/strength'
 import type { TrackedLift } from '../types/database'
 import { Sparkline } from './charts/Sparkline'
+import { Sheet, SheetAction, SheetCancel, SheetHeader } from './Sheet'
 
 type Props = {
   lift: TrackedLift | null
@@ -23,14 +22,18 @@ type Props = {
 }
 
 export function LiftProgressSheet({
-  lift,
+  lift: liftProp,
   fetchHistory,
   onClose,
   onEdit,
   onDelete,
 }: Props) {
-  const open = Boolean(lift)
-  const { mounted, visible } = usePresence(open, 380)
+  const open = Boolean(liftProp)
+  // Keep the last lift on screen while the sheet slides away
+  const lastLift = useRef<TrackedLift | null>(liftProp)
+  if (liftProp) lastLift.current = liftProp
+  const lift = liftProp ?? lastLift.current
+  const lastId = useRef<string | null>(null)
   const [history, setHistory] = useState<LiftHistoryPoint[]>([])
   const [loading, setLoading] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -38,12 +41,16 @@ export function LiftProgressSheet({
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!lift) {
-      setHistory([])
+    if (!liftProp) {
       setConfirmDelete(false)
       setBusy(false)
       setError(null)
       return
+    }
+    const lift = liftProp
+    if (lastId.current !== lift.id) {
+      lastId.current = lift.id
+      setHistory([])
     }
     setConfirmDelete(false)
     setBusy(false)
@@ -59,16 +66,7 @@ export function LiftProgressSheet({
     return () => {
       cancelled = true
     }
-  }, [lift, fetchHistory])
-
-  useEffect(() => {
-    if (!open) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [open])
+  }, [liftProp, fetchHistory])
 
   const current = useMemo(() => (lift ? getLiftSets(lift) : []), [lift])
   const previous = lift ? getPrevLiftSets(lift) : null
@@ -124,7 +122,8 @@ export function LiftProgressSheet({
     return { u, trend, bests: personalBests(source, u) }
   }, [history, lift, current, unit, curVol])
 
-  if (!mounted || !lift) return null
+  if (!lift) return null
+  const shown = lift
 
   async function handleDelete() {
     if (!lift) return
@@ -144,196 +143,187 @@ export function LiftProgressSheet({
     }
   }
 
-  const node = (
-    <div
-      className={`overlay overlay--lift ${visible ? 'is-visible' : 'is-closing'}`}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="lift-progress-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && visible) onClose()
-      }}
+  const titleId = 'lift-progress-title'
+  const arrowTone = status?.status === 'up' ? 'up' : status?.status === 'down' ? 'down' : 'flat'
+  const latest1rm = strength.trend.length >= 2 ? strength.trend[strength.trend.length - 1] : null
+
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      dismissible={!busy}
+      labelledBy={titleId}
+      className="sheet--lift"
+      header={
+        <SheetHeader
+          title="Progress"
+          leading={<SheetCancel disabled={busy}>Close</SheetCancel>}
+          trailing={
+            <SheetAction primary onClick={() => onEdit(shown)} disabled={busy || confirmDelete}>
+              Edit
+            </SheetAction>
+          }
+        />
+      }
     >
-      <div className="sheet sheet--lift sheet--progress">
-        <header className="lift-sheet-header">
-          <div>
-            <p className="lift-progress-kicker">{lift.muscle_group}</p>
-            <h2 id="lift-progress-title" className="lift-sheet-title">
-              {lift.exercise_name}
-            </h2>
-          </div>
-          <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
-        </header>
-
-        <div className="lift-sheet-body">
-          {error && <div className="auth-error">{error}</div>}
-
-          <div className={`lift-delta-banner status-${status?.status ?? 'new'}`}>
-            <span className="lift-delta-arrow" aria-hidden>
-              {status?.arrow ?? '·'}
-            </span>
-            <div>
-              <div className="lift-delta-label">{status?.deltaLabel ?? 'New'}</div>
-              <div className="lift-delta-sub">vs last log</div>
-            </div>
-          </div>
-
-          <div className="lift-compare-grid">
-            <div className="lift-compare-card">
-              <div className="lift-compare-label">Current</div>
-              <div className="lift-compare-value">{formatSetsDetail(current, unit)}</div>
-              <div className="lift-compare-meta">
-                Vol {Math.round(curVol)}
-                {unit === 'lb' ? ' lb' : ' kg'}·reps
-              </div>
-            </div>
-            <div className="lift-compare-card lift-compare-card--prev">
-              <div className="lift-compare-label">Previous</div>
-              <div className="lift-compare-value">
-                {previous?.length ? formatSetsDetail(previous, unit) : '—'}
-              </div>
-              <div className="lift-compare-meta">
-                {prevVol != null ? `Vol ${Math.round(prevVol)}` : 'No prior log'}
-              </div>
-            </div>
-          </div>
-
-          <section className="lift-chart-block">
-            <div className="lift-field-label-row">
-              <h3 className="lift-field-label" style={{ marginBottom: 0 }}>
-                Volume trend
-              </h3>
-              {loading && <span className="section-meta">Loading…</span>}
-            </div>
-            {chart.length < 2 ? (
-              <p className="field-hint" style={{ marginTop: 8 }}>
-                Update this lift again to build a trend. Each save adds a point.
-              </p>
-            ) : (
-              <div className="lift-chart" role="img" aria-label="Volume over recent updates">
-                {chart.map((p) => (
-                  <div key={p.id} className="lift-chart-col">
-                    <div className="lift-chart-track">
-                      <div className="lift-chart-bar" style={{ height: `${p.pct}%` }} />
-                    </div>
-                    <div className="lift-chart-vol">{Math.round(p.volume)}</div>
-                    <div className="lift-chart-date">{shortDate(p.recorded_at)}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="lift-chart-block">
-            <div className="lift-field-label-row">
-              <h3 className="lift-field-label" style={{ marginBottom: 0 }}>
-                Estimated 1RM
-              </h3>
-              {strength.trend.length >= 2 && (
-                <span className="strength-latest">
-                  {formatNum(strength.trend[strength.trend.length - 1])} {strength.u}
-                </span>
-              )}
-            </div>
-            {strength.trend.length < 2 ? (
-              <p className="field-hint" style={{ marginTop: 8 }}>
-                Update this lift again to see your estimated 1RM trend.
-              </p>
-            ) : (
-              <>
-                <div className="strength-trend">
-                  <Sparkline
-                    values={strength.trend.slice(-12)}
-                    height={56}
-                    ariaLabel={`Estimated one-rep max over recent updates, latest ${formatNum(
-                      strength.trend[strength.trend.length - 1],
-                    )} ${strength.u}`}
-                  />
-                </div>
-                <p className="field-hint">Estimated from your best set (Epley)</p>
-              </>
-            )}
-          </section>
-
-          <section className="lift-chart-block">
-            <h3 className="lift-field-label">Personal bests</h3>
-            <div className="strength-bests">
-              <div className="lift-compare-card">
-                <div className="lift-compare-label">Est. 1RM</div>
-                <div className="lift-compare-value">
-                  {strength.bests.oneRepMax ? `${formatNum(strength.bests.oneRepMax.value)} ${strength.u}` : '—'}
-                </div>
-                <div className="lift-compare-meta">
-                  {strength.bests.oneRepMax ? shortDate(strength.bests.oneRepMax.recorded_at) : ''}
-                </div>
-              </div>
-              <div className="lift-compare-card">
-                <div className="lift-compare-label">Heaviest</div>
-                <div className="lift-compare-value">
-                  {strength.bests.heaviest
-                    ? `${formatNum(strength.bests.heaviest.value)} × ${strength.bests.heaviest.reps}`
-                    : '—'}
-                </div>
-                <div className="lift-compare-meta">
-                  {strength.bests.heaviest ? shortDate(strength.bests.heaviest.recorded_at) : ''}
-                </div>
-              </div>
-              <div className="lift-compare-card">
-                <div className="lift-compare-label">Best volume</div>
-                <div className="lift-compare-value">
-                  {strength.bests.volume ? Math.round(strength.bests.volume.value).toLocaleString('en-US') : '—'}
-                </div>
-                <div className="lift-compare-meta">
-                  {strength.bests.volume ? shortDate(strength.bests.volume.recorded_at) : ''}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <p className="muscle-lift-updated" style={{ marginTop: 4, opacity: 0.55 }}>
-            Last updated: {friendlyUpdatedAt(lift.updated_at)}
-          </p>
+      {error && (
+        <div className="sheet-error" role="alert">
+          {error}
         </div>
+      )}
 
-        <footer className="lift-sheet-footer lift-sheet-footer--triple">
+      <div className="sheet-title-block">
+        <h2 id={titleId} className="t-title2">
+          {shown.exercise_name}
+        </h2>
+        <p className="t-subhead">{shown.muscle_group}</p>
+        <p className={`lp-delta lp-delta--${arrowTone}`}>
+          <span className="lp-delta-arrow" aria-hidden>
+            {status?.arrow ?? '·'}
+          </span>
+          <span className="lp-delta-label">{status?.deltaLabel ?? 'New'}</span>
+          <span className="lp-delta-sub">vs last log</span>
+        </p>
+      </div>
+
+      <div className="lp-pair">
+        <div className="lp-tile">
+          <div className="lp-tile-label">Current</div>
+          <div className="lp-tile-value">{formatSetsDetail(current, unit)}</div>
+          <div className="lp-tile-meta">
+            Volume <span className="num">{Math.round(curVol)}</span> {unit}·reps
+          </div>
+        </div>
+        <div className="lp-tile">
+          <div className="lp-tile-label">Previous</div>
+          <div className="lp-tile-value">{previous?.length ? formatSetsDetail(previous, unit) : '—'}</div>
+          <div className="lp-tile-meta">
+            {prevVol != null ? (
+              <>
+                Volume <span className="num">{Math.round(prevVol)}</span>
+              </>
+            ) : (
+              'No prior log'
+            )}
+          </div>
+        </div>
+      </div>
+
+      <section className="sheet-section">
+        <div className="lp-head">
+          <h3 className="t-headline">Volume</h3>
+          {loading && <span className="t-footnote lp-muted">Loading…</span>}
+        </div>
+        {chart.length < 2 ? (
+          <p className="t-footnote lp-muted">Update this lift again to build a trend. Each save adds a point.</p>
+        ) : (
+          <div className="lp-bars" role="img" aria-label="Volume over recent updates">
+            {chart.map((p, i) => (
+              <div key={p.id} className="lp-bar-col">
+                <div className="lp-bar-track">
+                  <div className="lp-bar" style={{ height: `${p.pct}%` }} />
+                </div>
+                <div className="lp-bar-vol num">{Math.round(p.volume)}</div>
+                <div className="lp-bar-date" data-edge={i === 0 ? 'start' : i === chart.length - 1 ? 'end' : undefined}>
+                  {i === 0 || i === chart.length - 1 ? shortDate(p.recorded_at) : '\u00a0'}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="sheet-section">
+        <div className="lp-head">
+          <h3 className="t-headline">Estimated 1RM</h3>
+          {latest1rm != null && (
+            <span className="lp-1rm num">
+              {formatNum(latest1rm)} {strength.u}
+            </span>
+          )}
+        </div>
+        {strength.trend.length < 2 ? (
+          <p className="t-footnote lp-muted">Update this lift again to see your estimated 1RM trend.</p>
+        ) : (
+          <>
+            <div className="lp-spark">
+              <Sparkline
+                values={strength.trend.slice(-12)}
+                tone="strength"
+                height={56}
+                ariaLabel={`Estimated one-rep max over recent updates, latest ${formatNum(
+                  strength.trend[strength.trend.length - 1],
+                )} ${strength.u}`}
+              />
+            </div>
+            <p className="sheet-hint">Estimated from your best set (Epley)</p>
+          </>
+        )}
+      </section>
+
+      <section className="sheet-section">
+        <h3 className="t-headline lp-head-solo">Personal bests</h3>
+        <div className="lp-bests">
+          <div className="lp-tile">
+            <div className="lp-tile-label">Est. 1RM</div>
+            <div className="lp-tile-num num">
+              {strength.bests.oneRepMax ? formatNum(strength.bests.oneRepMax.value) : '—'}
+              {strength.bests.oneRepMax && <small>{strength.u}</small>}
+            </div>
+            <div className="lp-tile-meta">
+              {strength.bests.oneRepMax ? shortDate(strength.bests.oneRepMax.recorded_at) : ''}
+            </div>
+          </div>
+          <div className="lp-tile">
+            <div className="lp-tile-label">Heaviest</div>
+            <div className="lp-tile-num num">
+              {strength.bests.heaviest ? formatNum(strength.bests.heaviest.value) : '—'}
+              {strength.bests.heaviest && <small>× {strength.bests.heaviest.reps}</small>}
+            </div>
+            <div className="lp-tile-meta">
+              {strength.bests.heaviest ? shortDate(strength.bests.heaviest.recorded_at) : ''}
+            </div>
+          </div>
+          <div className="lp-tile">
+            <div className="lp-tile-label">Best volume</div>
+            <div className="lp-tile-num num">
+              {strength.bests.volume ? Math.round(strength.bests.volume.value).toLocaleString('en-US') : '—'}
+            </div>
+            <div className="lp-tile-meta">
+              {strength.bests.volume ? shortDate(strength.bests.volume.recorded_at) : ''}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <p className="t-footnote lp-muted lp-updated">Last updated {friendlyUpdatedAt(shown.updated_at)}</p>
+
+      <div className="sheet-section">
+        <div className="list-group">
           <button
             type="button"
-            className="lift-delete-btn"
+            className="list-row sheet-danger-row"
+            data-confirm={confirmDelete}
             onClick={() => void handleDelete()}
             disabled={busy}
           >
-            {confirmDelete ? 'Tap again to delete' : 'Delete'}
+            {confirmDelete ? 'Tap again to delete' : 'Delete lift'}
           </button>
-          {confirmDelete ? (
+          {confirmDelete && (
             <button
               type="button"
-              className="btn btn-ghost lift-cancel-btn"
+              className="list-row"
+              style={{ justifyContent: 'center', color: 'var(--accent-ink)' }}
               onClick={() => setConfirmDelete(false)}
               disabled={busy}
             >
               Cancel
             </button>
-          ) : (
-            <button type="button" className="btn btn-ghost lift-cancel-btn" onClick={onClose}>
-              Close
-            </button>
           )}
-          <button
-            type="button"
-            className="btn btn-primary lift-save-btn"
-            onClick={() => onEdit(lift)}
-            disabled={busy || confirmDelete}
-          >
-            Edit lift
-          </button>
-        </footer>
+        </div>
       </div>
-    </div>
+    </Sheet>
   )
-
-  return createPortal(node, document.body)
 }
 
 function shortDate(iso: string): string {

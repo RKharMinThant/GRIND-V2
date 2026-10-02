@@ -41,37 +41,39 @@ export function LogsList({ logs, photoUrls, onOpenLog, onOpenCalendar }: Props) 
   }, [filtered])
 
   return (
-    <div className="page">
+    <div className="page history-page">
       <div className="page-header">
         <div className="page-title">History</div>
-        <div className="page-header-actions">
-          <div className="label">
-            {filtered.length} entr{filtered.length === 1 ? 'y' : 'ies'}
-          </div>
-          {onOpenCalendar && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm history-calendar-btn"
-              onClick={onOpenCalendar}
-              aria-label="Open calendar"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden>
-                <rect x="3" y="5" width="18" height="16" rx="2" />
-                <path d="M16 3v4M8 3v4M3 11h18" />
-              </svg>
-              Calendar
-            </button>
-          )}
-        </div>
+        {onOpenCalendar && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm history-calendar-btn"
+            onClick={onOpenCalendar}
+            aria-label="Open calendar"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden>
+              <rect x="3" y="5" width="18" height="16" rx="3" />
+              <path d="M16 3v4M8 3v4M3 11h18" />
+            </svg>
+            Calendar
+          </button>
+        )}
       </div>
 
-      <input
-        className="search-input"
-        type="search"
-        placeholder="Search workouts, fuel, notes…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+      <label className="search-field">
+        <svg viewBox="0 0 24 24" aria-hidden>
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+        <input
+          className="search-input"
+          type="search"
+          placeholder="Search workouts, fuel, notes"
+          aria-label="Search history"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </label>
 
       <div className="filter-row">
         <button
@@ -95,7 +97,12 @@ export function LogsList({ logs, photoUrls, onOpenLog, onOpenCalendar }: Props) 
 
       {groups.length === 0 ? (
         <div className="empty">
-          <div className="empty-mark">—</div>
+          <div className="empty-mark" aria-hidden>
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="5" width="18" height="16" rx="3" />
+              <path d="M16 3v4M8 3v4M3 11h18" />
+            </svg>
+          </div>
           <h3>Nothing here</h3>
           <p>
             {logs.length === 0
@@ -105,14 +112,19 @@ export function LogsList({ logs, photoUrls, onOpenLog, onOpenCalendar }: Props) 
         </div>
       ) : (
         groups.map(([key, items]) => (
-          <div className="month-group" key={key}>
-            <div className="month-group-title">{monthLabelFromKey(key)}</div>
-            <div className="logs-grid three-col">
+          <section className="month-group" key={key}>
+            <div className="section-header">
+              <h2>{monthLabelFromKey(key)}</h2>
+              <span className="month-group-count">
+                {items.length} entr{items.length === 1 ? 'y' : 'ies'}
+              </span>
+            </div>
+            <div className="list-group logs-grid">
               {items.map((log) => (
                 <LogCard key={log.id} log={log} photoUrl={photoUrls[log.id]} onOpen={onOpenLog} />
               ))}
             </div>
-          </div>
+          </section>
         ))
       )}
     </div>

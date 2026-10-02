@@ -34,10 +34,11 @@ export function WeekStrip({ logDates, onDayClick, weekStart = DEFAULT_WEEK_START
           className={`week-day ${d.logged ? 'logged' : ''} ${d.isToday ? 'today' : ''}`}
           style={{ ['--i' as string]: i } as CSSProperties}
           title={d.logged ? `${d.date} · open log` : `${d.date} · log session`}
+          aria-label={`${d.date}${d.isToday ? ' (today)' : ''}: ${d.logged ? 'open log' : 'log session'}`}
           onClick={() => onDayClick(d.date, d.logged)}
         >
-          <span>{d.label}</span>
-          <span className="n">{d.n}</span>
+          <span className="week-day-label">{d.label}</span>
+          <span className="n num">{d.n}</span>
         </button>
       ))}
     </div>

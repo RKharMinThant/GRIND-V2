@@ -1,6 +1,11 @@
+import type { CSSProperties } from 'react'
 import { toneClass, type Tone } from './tones'
 
-type Part = { label: string; value: number; tone: Tone }
+const toneStyle = (p: Part): CSSProperties | undefined =>
+  p.color ? ({ '--tone': p.color } as CSSProperties) : undefined
+
+/** `color` overrides the tone's colour (used for shades of one hue) */
+type Part = { label: string; value: number; tone: Tone; color?: string }
 
 type Props = {
   parts: Part[]
@@ -17,13 +22,13 @@ export function StackedBar({ parts, unit = 'min', ariaLabel }: Props) {
         {total > 0 &&
           parts.map((p) =>
             p.value > 0 ? (
-              <span key={p.label} className={`stacked-bar-part ${toneClass(p.tone)}`} style={{ flexGrow: p.value }} />
+              <span key={p.label} className={`stacked-bar-part ${toneClass(p.tone)}`} style={{ ...toneStyle(p), flexGrow: p.value }} />
             ) : null,
           )}
       </div>
       <div className="stacked-bar-legend">
         {parts.map((p) => (
-          <span key={p.label} className={toneClass(p.tone)}>
+          <span key={p.label} className={toneClass(p.tone)} style={toneStyle(p)}>
             <i aria-hidden />
             {p.label} <b>{p.value}</b>
             {unit ? ` ${unit}` : ''}

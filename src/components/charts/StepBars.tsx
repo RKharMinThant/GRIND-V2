@@ -22,7 +22,10 @@ export function StepBars({ days, goal }: Props) {
   return (
     <div className="step-bars">
       <div className="chart-readout" aria-live="polite">
-        <span className="chart-readout-value">{activeDay?.steps != null ? activeDay.steps.toLocaleString() : '—'}</span>
+        <span className="chart-readout-value num">
+          {activeDay?.steps != null ? activeDay.steps.toLocaleString() : '—'}
+          {activeDay?.steps != null && <small>steps</small>}
+        </span>
         <span className="chart-readout-meta">
           {activeDay ? friendlyDateShort(activeDay.date) : ''} · goal hit {hits} of {days.length} days
         </span>

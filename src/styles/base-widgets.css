@@ -354,17 +354,6 @@
   --ring-color: var(--danger);
 }
 
-/* Readiness card colours its ring by zone (until it passes a tone itself) */
-.readiness.green .ring:not([data-tone]) {
-  --ring-color: var(--accent-ink);
-}
-.readiness.yellow .ring:not([data-tone]) {
-  --ring-color: var(--warn);
-}
-.readiness.red .ring:not([data-tone]) {
-  --ring-color: var(--danger);
-}
-
 .ring-track,
 .ring-arc {
   position: absolute;

@@ -3,7 +3,7 @@ import { unlinkedWorkouts } from '../health/logic'
 import type { HealthWorkout } from '../health/types'
 import type { HealthState } from '../health/useHealth'
 import { DEFAULT_DISTANCE_UNIT, DEFAULT_WEEK_START, type DistanceUnit, type WeekStart } from '../lib/units'
-import { greetingForHour, toLocalDateString, todayHeading, weekSessionCount } from '../lib/dates'
+import { greetingForHour, toLocalDateString, weekSessionCount } from '../lib/dates'
 import type { StreakStats } from '../lib/streaks'
 import type { Log } from '../types/database'
 import type { GrindAgeState } from '../hooks/useGrindAge'
@@ -83,44 +83,74 @@ export function Dashboard({
     }
   }
 
-  return (
-    <div className="page">
-      <div className="home-greeting">
-        <div className="eyebrow">{todayHeading()}</div>
-        <h1>
-          {greetingForHour()}, <em>{firstName}</em>
-        </h1>
-      </div>
+  const dateEyebrow = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  })
 
-      <div className="hero-panel">
-        <div className="hero-streak">
-          <div className="label">Current streak</div>
-          <div className="num">{stats.current}</div>
-          <p>
-            {stats.current > 0
-              ? `${stats.current} day${stats.current > 1 ? 's' : ''} locked in.`
-              : 'Log a session to light the streak.'}
-          </p>
+  return (
+    <div className="page home-page">
+      <header className="home-greeting">
+        <div className="t-subhead home-date">{dateEyebrow}</div>
+        <h1 className="page-title">
+          {greetingForHour()}, {firstName}
+        </h1>
+      </header>
+
+      <div className="section-header">
+        <h2>This week</h2>
+      </div>
+      <section className="card home-hero" aria-label="This week">
+        <div className="home-hero-top">
+          <GoalRing current={weekCount} goal={weeklyGoal} />
+          <div className="home-hero-stats">
+            <div className="home-stat">
+              <span className="label">Week</span>
+              <span className="home-stat-value">
+                <span className="num">{weekCount}</span>
+                <span className="home-stat-unit">of {Math.max(1, weeklyGoal)} sessions</span>
+              </span>
+            </div>
+            <div className="home-stat">
+              <span className="label">Streak</span>
+              <span className="home-stat-value">
+                <span className="num">{stats.current}</span>
+                <span className="home-stat-unit">{stats.current === 1 ? 'day' : 'days'}</span>
+              </span>
+            </div>
+            <p className="home-hero-note t-footnote">
+              {stats.current > 0
+                ? `${stats.current} day${stats.current > 1 ? 's' : ''} locked in.`
+                : 'Log a session to light the streak.'}
+            </p>
+          </div>
         </div>
-        <GoalRing current={weekCount} goal={weeklyGoal} />
-        <div className="hero-actions">
-          <span className={`badge ${stats.hasToday ? 'done' : ''}`}>
-            <span className={`dot ${stats.hasToday ? '' : 'pulse'}`} />
-            {stats.hasToday ? 'Today logged' : 'Today open'}
+
+        <WeekStrip
+          weekStart={weekStart}
+          logDates={logDates}
+          onDayClick={(date, hasLog) => {
+            if (hasLog) onOpenDay(date)
+            else onLogDate(date)
+          }}
+        />
+
+        <div className="home-hero-foot">
+          <span className={`home-status${stats.hasToday ? ' done' : ''}`}>
+            <span className="status-dot" aria-hidden />
+            {stats.hasToday ? 'Logged today' : 'Not logged yet'}
           </span>
-          <button type="button" className="btn btn-primary" onClick={onLogToday}>
-            + Log session
-          </button>
           <button
             type="button"
-            className="btn btn-ghost btn-rest"
+            className="btn btn-ghost btn-sm"
             onClick={() => void handleRest()}
             disabled={restBusy}
           >
             {restBusy ? 'Logging…' : 'Rest day'}
           </button>
         </div>
-      </div>
+      </section>
 
       {health.isConnected && (
         <TodayStrip
@@ -154,27 +184,21 @@ export function Dashboard({
         />
       )}
 
-      <WeekStrip
-        weekStart={weekStart}
-        logDates={logDates}
-        onDayClick={(date, hasLog) => {
-          if (hasLog) onOpenDay(date)
-          else onLogDate(date)
-        }}
-      />
-
-      <div className="metrics">
+      <div className="section-header">
+        <h2>Totals</h2>
+      </div>
+      <div className="card metrics">
         <div className="metric">
-          <div className="label">Days</div>
-          <span className="num accent">{stats.totalDays}</span>
+          <span className="label">Total days</span>
+          <span className="num">{stats.totalDays}</span>
         </div>
         <div className="metric">
-          <div className="label">Best</div>
+          <span className="label">Best streak</span>
           <span className="num">{stats.best}</span>
         </div>
         <div className="metric">
-          <div className="label">Month</div>
-          <span className="num ice">{stats.monthDays}</span>
+          <span className="label">This month</span>
+          <span className="num">{stats.monthDays}</span>
         </div>
       </div>
 
@@ -184,11 +208,11 @@ export function Dashboard({
         steps={health.isConnected ? health.steps : undefined}
       />
 
-      <div className="page-header">
-        <div className="page-title">Recent</div>
+      <div className="section-header">
+        <h2>Recent</h2>
         {logs.length > 0 && (
-          <button type="button" className="btn btn-ghost" onClick={onViewAll}>
-            View all →
+          <button type="button" onClick={onViewAll}>
+            View all ›
           </button>
         )}
       </div>
@@ -204,7 +228,7 @@ export function Dashboard({
             </button>
             <button
               type="button"
-              className="btn btn-ghost btn-rest"
+              className="btn btn-ghost"
               onClick={() => void handleRest()}
               disabled={restBusy}
             >

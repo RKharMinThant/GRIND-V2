@@ -1,31 +1,23 @@
-/* ── Body tab ──────────────────────────────────────────────────────────────── */
+/* ── Body tab ──────────────────────────────────────────────────────────────────
+   Large Title + sync line, then Activity / Heart / Sleep / Night vitals, each a
+   Title3 section header above a card. */
 .body-synced {
-  margin-top: 4px;
-  font-size: 0.75rem;
+  margin-top: 2px;
   color: var(--muted);
 }
 
-.body-section {
-  padding: 16px 18px 18px;
+.body-section .section-header {
+  align-items: center;
 }
 
-.body-section-head {
+.body-section-meta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.body-section-title {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
 }
 
 .body-section-note {
-  font-size: 0.75rem;
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
   color: var(--muted);
 }
 
@@ -34,8 +26,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-size: 0.85rem;
+  font-size: var(--fs-subhead);
   color: var(--muted);
+}
+
+.body-loading {
+  display: grid;
+  place-items: center;
+  min-height: 30vh;
 }
 
 .body-skeleton {
@@ -66,54 +64,79 @@
   to { background-position: -200% 0; }
 }
 
+/* Label above value, 12px inside */
 .body-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  margin: 14px 0 4px;
+  margin-top: 16px;
 }
 
 .body-stats > div {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 10px 12px;
+  padding: 12px;
   border-radius: var(--radius);
   background: var(--surface-2);
   min-width: 0;
 }
 
 .body-stats .label {
-  font-size: 0.6rem;
   white-space: nowrap;
 }
 
 .body-stat-value {
-  font-family: var(--font-num);
-  font-size: 1.3rem;
-  line-height: 1;
+  font-size: var(--fs-title3);
+  line-height: 1.1;
   white-space: nowrap;
 }
 
-.body-block {
-  margin-top: 16px;
-}
-
-.body-block-title {
-  font-size: 0.78rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.body-block-title span {
+.body-stat-value small,
+.body-tile-value small {
+  margin-left: 3px;
+  font-family: var(--font);
+  font-size: var(--fs-footnote);
   font-weight: 600;
+  letter-spacing: 0;
   color: var(--muted);
 }
 
-.body-tiles {
+.body-stats + .stacked-bar {
+  margin-top: 16px;
+}
+
+.body-page .page-header .btn-sm {
+  position: relative;
+}
+
+.body-page .page-header .btn-sm::after {
+  content: '';
+  position: absolute;
+  inset: -5px -4px;
+}
+
+.body-block {
+  margin-top: 20px;
+}
+
+.body-block-title {
+  margin-bottom: 8px;
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  font-weight: 600;
+}
+
+.body-block-title span {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.body-tiles,
+.vitals-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .body-tile {
@@ -129,28 +152,21 @@
 }
 
 .body-tile-value {
-  font-family: var(--font-num);
-  font-size: 1.9rem;
-  line-height: 1;
-}
-
-.body-tile-value small {
-  font-family: var(--font);
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--muted);
+  font-size: var(--fs-title1);
+  line-height: 1.1;
 }
 
 .body-tile .sparkline {
   margin-top: 8px;
 }
 
+/* Sleep: pick a night */
 .sleep-nights {
   display: flex;
   align-items: flex-end;
   gap: 4px;
   height: 56px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .sleep-night {
@@ -165,41 +181,37 @@
 .sleep-night-bar {
   width: 100%;
   min-height: 3px;
-  border-radius: 4px 4px 2px 2px;
-  background: color-mix(in srgb, var(--ice) 35%, transparent);
-  transition: background 160ms var(--ease-out);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--c-sleep) 38%, transparent);
+  transition: background-color var(--dur-fast) var(--ease-out);
 }
 
 .sleep-night.active .sleep-night-bar {
-  background: var(--ice);
+  background: var(--c-sleep);
 }
 
-.sleep-night:hover:not(.active) .sleep-night-bar {
-  background: color-mix(in srgb, var(--ice) 55%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .sleep-night:hover:not(.active) .sleep-night-bar {
+    background: color-mix(in srgb, var(--c-sleep) 60%, transparent);
+  }
 }
 
-.vitals-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
+/* Night vitals */
 .vitals-tile {
   cursor: pointer;
-  border: 1px solid transparent;
-  transition: border-color 160ms var(--ease-out);
 }
 
 .vitals-tile.expanded {
   grid-column: 1 / -1;
-  border-color: var(--border-strong);
 }
 
 .vitals-note {
-  font-size: 0.7rem;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
   color: var(--muted);
 }
 
+/* Not connected */
 .body-connect {
   text-align: center;
   padding: 28px 22px;
@@ -207,14 +219,14 @@
 
 .body-connect h2 {
   margin: 12px 0 6px;
-  font-size: 1.15rem;
 }
 
 .body-connect p {
   margin: 0 auto 16px;
   max-width: 34ch;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--fs-callout);
+  line-height: var(--lh-callout);
 }
 
 .body-connect-mark {
@@ -230,7 +242,7 @@
   width: 24px;
   height: 24px;
   fill: none;
-  stroke: var(--chart-ink);
+  stroke: var(--accent-ink);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -238,7 +250,7 @@
 
 .body-foot {
   text-align: center;
-  margin: 4px 0 24px;
+  margin: 24px 0 8px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -246,4 +258,3 @@
     animation: none;
   }
 }
-

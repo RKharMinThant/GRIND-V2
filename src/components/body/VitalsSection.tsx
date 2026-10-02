@@ -33,7 +33,7 @@ export function VitalsSection({ health }: { health: HealthState }) {
       unit: '%',
       note: lastSpo2.low != null && lastSpo2.high != null ? `Range ${lastSpo2.low}–${lastSpo2.high}%` : 'Nightly average',
       series: spo2.map((d) => d.avg),
-      tone: 'ice',
+      tone: 'activity',
       date: lastSpo2.date,
     })
   }
@@ -47,7 +47,7 @@ export function VitalsSection({ health }: { health: HealthState }) {
       unit: ' /min',
       note: 'Breaths per minute asleep',
       series: breathing.map((d) => d.bpm),
-      tone: 'accent',
+      tone: 'sleep',
       date: lastBreath.date,
     })
   }
@@ -61,7 +61,7 @@ export function VitalsSection({ health }: { health: HealthState }) {
       unit: '°C',
       note: 'vs your baseline',
       series: temp.map((d) => d.deltaC),
-      tone: 'rem',
+      tone: 'strength',
       date: lastTemp.date,
     })
   }
@@ -94,9 +94,9 @@ export function VitalsSection({ health }: { health: HealthState }) {
               aria-expanded={expanded}
             >
               <span className="label">{t.label}</span>
-              <span className="body-tile-value">
+              <span className="body-tile-value num">
                 {t.value}
-                {t.unit && <small>{t.unit}</small>}
+                {t.unit && <small>{t.unit.trim()}</small>}
               </span>
               <span className="vitals-note">
                 {t.note}

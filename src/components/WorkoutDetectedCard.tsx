@@ -18,31 +18,39 @@ export function WorkoutDetectedCard({ workout, moreCount, onLog, onDismiss }: Pr
     minute: '2-digit',
   })
   const facts = [
+    time,
     formatDuration(d.hours, d.minutes),
     workout.calories != null ? `${workout.calories} kcal` : null,
     workout.avgHr != null ? `avg ${workout.avgHr} bpm` : null,
   ].filter(Boolean)
 
   return (
-    <section className="health-card detect-card" aria-label="Workout detected by Fitbit">
-      <div className="health-card-kicker">
-        <span className="health-dot" data-status="connected" aria-hidden />
-        Fitbit detected · {time}
-        {moreCount > 0 ? ` · +${moreCount} more` : ''}
-      </div>
-      <div className="detect-card-row">
-        <div className="detect-card-copy">
+    <section className="list-group detect-card" aria-label="Workout detected by Fitbit">
+      <div className="list-row detect-row">
+        <span className="detect-icon" aria-hidden>
+          <svg viewBox="0 0 24 24">
+            <path d="M3 12h4l2-6 4 12 2-6h6" />
+          </svg>
+        </span>
+        <div className="detect-card-copy list-row-label">
           <div className="detect-card-title">{workout.activity}</div>
-          <div className="detect-card-facts">{facts.join(' · ')}</div>
+          <div className="detect-card-facts">
+            {[...facts, ...(moreCount > 0 ? [`+${moreCount} more`] : [])].join(' · ')}
+          </div>
         </div>
-        <div className="detect-card-actions">
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => onDismiss(workout.id)}>
-            Dismiss
-          </button>
-          <button type="button" className="btn btn-primary btn-sm" onClick={() => onLog(workout)}>
-            Log it
-          </button>
-        </div>
+        <button
+          type="button"
+          className="detect-dismiss"
+          onClick={() => onDismiss(workout.id)}
+          aria-label={`Dismiss ${workout.activity}`}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden>
+            <path d="M6 6l12 12M18 6 6 18" />
+          </svg>
+        </button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => onLog(workout)}>
+          Log
+        </button>
       </div>
     </section>
   )

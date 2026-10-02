@@ -42,7 +42,13 @@ function setThemeAttributes(resolved: ResolvedTheme): void {
     meta.setAttribute('name', 'theme-color')
     document.head.appendChild(meta)
   }
-  meta.setAttribute('content', resolved === 'dark' ? '#000000' : '#F2F2F7')
+  // The marketing site (route "/") keeps its own colours; the app uses the system ones
+  const marketing = location.pathname === '/'
+  const dark = resolved === 'dark'
+  meta.setAttribute(
+    'content',
+    marketing ? (dark ? '#07080A' : '#F3F5EC') : dark ? '#000000' : '#F2F2F7',
+  )
 }
 
 function prefersReducedMotion(): boolean {
