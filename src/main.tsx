@@ -8,6 +8,9 @@ import './styles/global.css'
 /** Lazy-load the journal so `/` LCP is not blocked by the app bundle. */
 const App = lazy(() => import('./App'))
 
+/** Dev-only design preview (demo data, no login). `import.meta.env.DEV` is a build-time constant, so production drops it. */
+const DesignPreview = import.meta.env.DEV ? lazy(() => import('./dev/DesignPreview')) : null
+
 function AppFallback() {
   return (
     <div className="boot-screen" role="status" aria-label="Loading GRIND">
@@ -40,6 +43,16 @@ createRoot(document.getElementById('root')!).render(
             </Suspense>
           }
         />
+        {DesignPreview && (
+          <Route
+            path="/preview"
+            element={
+              <Suspense fallback={null}>
+                <DesignPreview />
+              </Suspense>
+            }
+          />
+        )}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

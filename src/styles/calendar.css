@@ -1,0 +1,129 @@
+/* ── Calendar ──────────────────────────────────────────────────────────────── */
+.cal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top-color: var(--highlight);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.cal-month {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.cal-dow {
+  text-align: center;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  padding-bottom: 6px;
+  font-weight: 700;
+}
+
+.cal-cell {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 600;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.cal-cell.filler {
+  background: transparent;
+  pointer-events: none;
+}
+
+.cal-cell.has-log {
+  background: var(--accent-dim);
+  border-color: rgba(200, 241, 53, 0.25);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.cal-cell.has-log.l2 {
+  background: rgba(200, 241, 53, 0.22);
+}
+.cal-cell.has-log.l3 {
+  background: rgba(200, 241, 53, 0.38);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.cal-cell.has-log:hover {
+  border-color: var(--accent);
+}
+
+.cal-cell.today {
+  box-shadow: inset 0 0 0 1.5px var(--ice);
+  color: var(--ice);
+}
+
+.cal-cell.selected {
+  border-color: var(--ice) !important;
+  box-shadow: 0 0 0 2px var(--ice-dim);
+}
+
+.cal-day-panel {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.cal-day-panel h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.cal-day-item {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+  transition: border-color 140ms ease;
+}
+
+.cal-day-item:hover {
+  border-color: var(--accent);
+}
+
+.cal-day-item strong {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.cal-day-item span {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+

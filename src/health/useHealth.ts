@@ -55,6 +55,8 @@ export function useHealth(
   logs: Log[],
   logsLoading: boolean,
   userId?: string,
+  /** `provider` replaces the env-chosen one (the dev design preview forces the demo provider). */
+  options?: { provider?: HealthProvider },
 ): HealthState {
   const logsRef = useRef(logs)
   useEffect(() => {
@@ -62,12 +64,14 @@ export function useHealth(
   }, [logs])
 
   // The one place that chooses the provider: VITE_HEALTH_PROVIDER=google for real data, else demo.
+  const forced = options?.provider
   const provider = useMemo(
     () =>
-      import.meta.env.VITE_HEALTH_PROVIDER === 'google'
+      forced ??
+      (import.meta.env.VITE_HEALTH_PROVIDER === 'google'
         ? createGoogleProvider()
-        : createMockProvider({ getLogs: () => logsRef.current }),
-    [],
+        : createMockProvider({ getLogs: () => logsRef.current })),
+    [forced],
   )
 
   const [connection, setConnection] = useState<HealthConnection | null>(null)

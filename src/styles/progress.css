@@ -1,0 +1,700 @@
+/* ── Progress page ─────────────────────────────────────────────────────────── */
+.progress-page .progress-sub {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.progress-hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 22px 20px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(145deg, var(--surface) 0%, var(--hero-mid) 100%);
+  border: 1px solid var(--border);
+  border-top-color: var(--highlight);
+  box-shadow: var(--shadow-card);
+  margin-bottom: 14px;
+}
+
+.progress-streak-num {
+  font-family: var(--font-num);
+  font-size: clamp(3rem, 12vw, 4.2rem);
+  line-height: 0.92;
+  background-image: linear-gradient(
+    145deg,
+    #f5ffb0 0%,
+    var(--accent) 42%,
+    #6ecf88 88%,
+    var(--ice) 100%
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme='light'] .progress-streak-num {
+  background-image: linear-gradient(
+    145deg,
+    #2f4a00 0%,
+    #6f9808 40%,
+    #c8f135 70%,
+    #0e8a9e 100%
+  );
+}
+
+.progress-hero-meta {
+  margin-top: 6px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.progress-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.progress-stat {
+  padding: 14px 14px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+
+.progress-stat-value {
+  font-family: var(--font-num);
+  font-size: 2rem;
+  line-height: 1;
+  margin-top: 8px;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.progress-stat-value span {
+  font-size: 1rem;
+  color: var(--muted-2);
+  margin-left: 2px;
+}
+
+.progress-stat-hint {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--muted-2);
+}
+
+.progress-meter {
+  margin-top: 10px;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.progress-meter-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), var(--ice));
+  transition: width 400ms var(--ease-out);
+}
+
+.progress-block {
+  margin-bottom: 22px;
+}
+
+.section-heading {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.week-bars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 16px 14px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.week-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.week-bar-track {
+  width: 100%;
+  height: 96px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  padding: 4px;
+}
+
+.week-bar-fill {
+  width: 100%;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--accent), #9fc412);
+  min-height: 8px;
+  transition: height 400ms var(--ease-out);
+}
+
+.week-bar-count {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.week-bar-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--muted-2);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.focus-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.focus-bar-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.focus-bar-meta {
+  color: var(--muted-2);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.focus-bar-track {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.focus-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent-ink, var(--accent)), var(--accent));
+  min-width: 4px;
+}
+
+[data-theme='dark'] .focus-bar-fill {
+  background: linear-gradient(90deg, #9fc412, var(--accent));
+}
+
+.type-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.type-pill em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme='light'] .type-pill em {
+  color: var(--accent-ink);
+}
+
+.type-pill--rest {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.progress-empty {
+  padding: 28px 18px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.92rem;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border-strong);
+  background: var(--surface);
+}
+
+.section-meta {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted-2);
+  letter-spacing: 0.02em;
+}
+
+.page-header--row {
+  align-items: flex-start;
+}
+
+.btn-sm {
+  padding: 9px 14px;
+  font-size: 0.8rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* ── Progress empty ────────────────────────────────────────────────────────── */
+.progress-empty--lifts {
+  padding: 36px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.progress-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  font-size: 1.25rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted-2);
+}
+
+.progress-empty-title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.progress-empty-copy {
+  margin: 0 0 18px;
+  max-width: 28ch;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* ── Muscle-group lift board ───────────────────────────────────────────────── */
+.muscle-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.muscle-group {
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.muscle-group-head {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 10px 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+}
+
+.muscle-group-title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.muscle-group-count {
+  font-family: var(--font-num);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted-2);
+  font-variant-numeric: tabular-nums;
+  min-width: 1.2em;
+  text-align: right;
+}
+
+.muscle-group-add {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.muscle-group-add:active {
+  transform: scale(0.94);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .muscle-group-add:hover {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--surface-2);
+  }
+}
+
+.muscle-lift-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.muscle-lift-item + .muscle-lift-item {
+  border-top: 1px solid var(--border);
+}
+
+[data-theme='light'] .muscle-lift-item + .muscle-lift-item {
+  border-top-color: rgba(28, 36, 12, 0.08);
+}
+
+.muscle-lift-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 140ms var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
+}
+
+.muscle-lift-row:active {
+  transform: scale(0.99);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .muscle-lift-row:hover {
+    background: var(--surface-2);
+  }
+}
+
+.muscle-lift-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.muscle-lift-name {
+  font-weight: 700;
+  font-size: 0.98rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.muscle-lift-nums {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-num);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.muscle-lift-arrow {
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--muted-2);
+}
+
+.muscle-lift-nums.status-up .muscle-lift-arrow {
+  color: var(--accent-ink, var(--accent));
+}
+
+[data-theme='dark'] .muscle-lift-nums.status-up .muscle-lift-arrow {
+  color: var(--accent);
+}
+
+.muscle-lift-nums.status-down .muscle-lift-arrow {
+  color: var(--danger);
+}
+
+.muscle-lift-nums.status-up {
+  color: var(--text);
+}
+
+.muscle-lift-updated {
+  margin-top: 2px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--muted-2);
+  opacity: 0.62;
+  letter-spacing: 0.01em;
+}
+
+[data-theme='light'] .muscle-lift-updated {
+  opacity: 0.55;
+  color: #6b7460;
+}
+
+.lift-status-badge {
+  flex-shrink: 0;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 1px solid transparent;
+  font-variant-numeric: tabular-nums;
+}
+
+.lift-status-badge.status-up {
+  background: var(--accent-dim);
+  color: var(--accent-ink, var(--accent));
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+[data-theme='dark'] .lift-status-badge.status-up {
+  color: var(--accent);
+}
+
+.lift-status-badge.status-down {
+  background: var(--danger-dim);
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 32%, transparent);
+}
+
+.lift-status-badge.status-same {
+  background: var(--surface-2);
+  color: var(--muted-2);
+  font-weight: 700;
+}
+
+.lift-status-badge.status-new {
+  background: var(--ice-dim);
+  color: var(--ice);
+  border-color: color-mix(in srgb, var(--ice) 30%, transparent);
+}
+
+/* Lift progress detail sheet */
+.lift-progress-kicker {
+  margin: 0 0 2px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.lift-delta-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.lift-delta-banner.status-up {
+  background: var(--accent-dim);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.lift-delta-banner.status-down {
+  background: var(--danger-dim);
+  border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+}
+
+.lift-delta-arrow {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+  width: 1.4rem;
+  text-align: center;
+}
+
+.lift-delta-banner.status-up .lift-delta-arrow {
+  color: var(--accent-ink, var(--accent));
+}
+
+[data-theme='dark'] .lift-delta-banner.status-up .lift-delta-arrow {
+  color: var(--accent);
+}
+
+.lift-delta-banner.status-down .lift-delta-arrow {
+  color: var(--danger);
+}
+
+.lift-delta-label {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.lift-delta-sub {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted-2);
+  margin-top: 2px;
+}
+
+.lift-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.lift-compare-card {
+  padding: 12px 12px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.lift-compare-card--prev {
+  opacity: 0.88;
+}
+
+.lift-compare-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  margin-bottom: 6px;
+}
+
+.lift-compare-value {
+  font-family: var(--font-num);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.lift-compare-meta {
+  margin-top: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--muted-2);
+}
+
+.lift-chart-block {
+  margin-bottom: 12px;
+}
+
+.lift-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  min-height: 120px;
+  padding: 12px 8px 8px;
+  margin-top: 8px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  overflow-x: auto;
+}
+
+.lift-chart-col {
+  flex: 1 1 0;
+  min-width: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.lift-chart-track {
+  width: 100%;
+  height: 72px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.lift-chart-bar {
+  width: 70%;
+  max-width: 22px;
+  min-height: 4px;
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(180deg, var(--accent), #9fc412);
+  transition: height 280ms var(--ease-out);
+}
+
+.lift-chart-vol {
+  font-family: var(--font-num);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.lift-chart-date {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--muted-2);
+  white-space: nowrap;
+}
+

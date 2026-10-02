@@ -1,0 +1,73 @@
+/* ── Today strip (Home) ────────────────────────────────────────────────────── */
+.today-strip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 180ms var(--ease-out), transform 180ms var(--ease-out);
+}
+
+.today-strip:hover {
+  border-color: var(--border-strong);
+}
+
+.today-strip:active {
+  transform: scale(0.99);
+}
+
+.today-strip .health-card-kicker {
+  justify-content: space-between;
+}
+
+.today-strip-more {
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-weight: 600;
+  color: var(--muted-2);
+}
+
+.today-strip-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.today-strip-tiles {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.today-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 10px 9px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  min-width: 0;
+}
+
+.today-tile .label {
+  font-size: 0.6rem;
+  white-space: nowrap;
+}
+
+.today-tile-value {
+  font-family: var(--font-num);
+  font-size: 1.35rem;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 560px) {
+  .today-strip-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+

@@ -1,0 +1,142 @@
+/* Rest day card — recovery aesthetic (not empty session) */
+.log-card--rest {
+  position: relative;
+  min-height: 168px;
+  border: 1px solid color-mix(in srgb, var(--ice) 28%, var(--border));
+  border-top-color: color-mix(in srgb, var(--ice) 45%, var(--highlight));
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--ice) 22%, transparent) 0%, transparent 55%),
+    radial-gradient(90% 70% at 0% 100%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 50%),
+    linear-gradient(165deg, var(--surface) 0%, var(--surface-2) 100%);
+  box-shadow:
+    var(--shadow-log),
+    0 0 0 1px color-mix(in srgb, var(--ice) 8%, transparent) inset;
+  overflow: hidden;
+}
+
+[data-theme='light'] .log-card--rest {
+  border-color: rgba(14, 138, 158, 0.18);
+  border-top-color: rgba(14, 138, 158, 0.28);
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(14, 138, 158, 0.12) 0%, transparent 55%),
+    radial-gradient(90% 70% at 0% 100%, rgba(200, 241, 53, 0.14) 0%, transparent 50%),
+    linear-gradient(165deg, #ffffff 0%, #eef6f4 48%, #f4f8e8 100%);
+}
+
+.log-card--rest .rest-card-glow {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  right: -28px;
+  top: -36px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ice) 35%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(2px);
+}
+
+[data-theme='light'] .log-card--rest .rest-card-glow {
+  background: radial-gradient(circle, rgba(14, 138, 158, 0.18) 0%, transparent 70%);
+}
+
+.rest-card-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px 16px 18px;
+  min-height: 168px;
+}
+
+.rest-card-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.rest-card-date {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.rest-card-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ice);
+  background: var(--ice-dim);
+  border: 1px solid color-mix(in srgb, var(--ice) 32%, transparent);
+}
+
+[data-theme='light'] .rest-card-pill {
+  color: #0a6b7a;
+  background: rgba(14, 138, 158, 0.1);
+  border-color: rgba(14, 138, 158, 0.22);
+}
+
+.rest-card-icon {
+  width: 44px;
+  height: 44px;
+  margin: 4px 0 2px;
+  color: var(--ice);
+  opacity: 0.92;
+}
+
+.rest-card-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+[data-theme='light'] .rest-card-icon {
+  color: #0e8a9e;
+}
+
+.rest-card-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--text);
+  background: linear-gradient(120deg, var(--text) 30%, var(--ice) 120%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme='light'] .rest-card-title {
+  background: linear-gradient(120deg, #12160c 20%, #0e8a9e 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.rest-card-copy {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--muted);
+  max-width: 22ch;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .log-card--rest:hover {
+    border-color: color-mix(in srgb, var(--ice) 45%, var(--border-strong));
+    box-shadow:
+      var(--shadow-log-hover),
+      0 0 24px color-mix(in srgb, var(--ice) 12%, transparent);
+  }
+}
+

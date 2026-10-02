@@ -1,0 +1,27 @@
+/* ── History calendar button ───────────────────────────────────────────────── */
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-calendar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-calendar-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sheet--calendar .cal-card {
+  margin: 0;
+}
+
