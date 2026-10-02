@@ -1,0 +1,363 @@
+/* ── Lift sheets: editor + progress ────────────────────────────────────────── */
+
+/* iOS-style stepper: −  value  + */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--fill);
+}
+
+.stepper-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 32px;
+  border-radius: 7px;
+  color: var(--accent-ink);
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 500;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.stepper-btn:active {
+  transform: scale(0.94);
+  background: var(--fill);
+}
+
+.stepper-input {
+  width: 52px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--fs-headline);
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.stepper-input::-webkit-outer-spin-button,
+.stepper-input::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.stepper-input:focus-visible {
+  outline: none;
+  background: var(--fill);
+  border-radius: 6px;
+}
+
+.stepper-input::placeholder {
+  color: var(--muted-2);
+}
+
+.stepper--weight .stepper-input {
+  width: 64px;
+}
+
+.set-row {
+  gap: 8px;
+}
+
+.set-row .list-row-label {
+  flex: 1 1 auto;
+  min-width: 52px;
+  flex-basis: auto;
+}
+
+.set-row-load {
+  flex: none;
+  min-width: 58px;
+  color: var(--muted);
+  font-size: var(--fs-footnote);
+  font-weight: 500;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.set-row-remove {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-right: -6px;
+  color: var(--danger);
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.set-row-remove svg,
+.set-add-row svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.set-row-remove:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.sheet .set-add-row {
+  justify-content: flex-start;
+  gap: 10px;
+  color: var(--accent-ink);
+}
+
+/* Preview of what will be saved */
+.lift-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.lift-summary-muscle {
+  color: var(--muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.lift-summary-name {
+  font-size: var(--fs-headline);
+  line-height: var(--lh-headline);
+  font-weight: var(--fw-headline);
+  letter-spacing: var(--ls-headline);
+}
+
+.lift-summary:not(.is-ready) .lift-summary-name {
+  color: var(--muted);
+}
+
+.lift-summary-nums {
+  color: var(--c-strength);
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+  line-height: var(--lh-subhead);
+}
+
+.lift-prev-note {
+  margin: -8px 4px 20px;
+  color: var(--muted);
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+}
+
+.lift-prev-note .num {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ── Lift progress sheet ───────────────────────────────────────────────────── */
+.lp-muted {
+  color: var(--muted);
+}
+
+.lp-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+}
+
+.lp-delta-arrow {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.lp-delta--up .lp-delta-arrow {
+  color: var(--accent-ink);
+}
+
+.lp-delta--down .lp-delta-arrow {
+  color: var(--danger);
+}
+
+.lp-delta-label {
+  font-weight: 600;
+}
+
+.lp-delta-sub {
+  color: var(--muted);
+}
+
+.lp-pair,
+.lp-bests {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.lp-pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lp-bests {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+
+.lp-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.lp-tile-label {
+  color: var(--muted);
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+}
+
+.lp-tile-value {
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.lp-tile-num {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 4px;
+  margin-top: 2px;
+  font-size: var(--fs-title2);
+  line-height: var(--lh-title2);
+  color: var(--text);
+}
+
+.lp-tile-num small {
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: var(--fs-footnote);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.lp-tile-meta {
+  min-height: 1.33em;
+  color: var(--muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.lp-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.lp-head-solo {
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.lp-1rm {
+  color: var(--c-strength);
+  font-size: var(--fs-headline);
+}
+
+.lp-bars {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  padding: 12px 12px 8px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.lp-bar-col {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lp-bar-track {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 84px;
+}
+
+.lp-bar {
+  width: 100%;
+  min-height: 4px;
+  border-radius: 4px 4px 2px 2px;
+  background: var(--c-strength);
+}
+
+.lp-bar-col:last-child .lp-bar {
+  opacity: 1;
+}
+
+.lp-bar-col:not(:last-child) .lp-bar {
+  opacity: 0.55;
+}
+
+.lp-bar-vol {
+  max-width: 100%;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+
+/* First and last dates sit under their bars and may spill a little to the inside */
+.lp-bar-date {
+  align-self: stretch;
+  color: var(--muted);
+  font-size: var(--fs-caption);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.lp-bar-date[data-edge='start'] {
+  text-align: left;
+}
+
+.lp-bar-date[data-edge='end'] {
+  text-align: right;
+}
+
+.lp-spark {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.lp-spark .sparkline {
+  --tone: var(--c-strength);
+}
+
+.lp-spark .sparkline-dot {
+  box-shadow: 0 0 0 3px var(--surface-2);
+}
+
+.lp-updated {
+  margin: -4px 4px 20px;
+}

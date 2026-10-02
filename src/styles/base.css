@@ -1,0 +1,466 @@
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+}
+
+/* Default text = iOS Body. Background is flat — no gradients, glows or grids. */
+body {
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-body);
+  letter-spacing: var(--ls-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  transition:
+    background-color var(--dur-theme) var(--ease-out),
+    color var(--dur-theme) var(--ease-out);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+
+/* ── Type scale (iOS text styles) ──────────────────────────────────────────── */
+.t-large-title {
+  font-size: var(--fs-large-title);
+  line-height: var(--lh-large-title);
+  font-weight: var(--fw-large-title);
+  letter-spacing: var(--ls-large-title);
+}
+.t-title1 {
+  font-size: var(--fs-title1);
+  line-height: var(--lh-title1);
+  font-weight: var(--fw-title1);
+  letter-spacing: var(--ls-title1);
+}
+.t-title2 {
+  font-size: var(--fs-title2);
+  line-height: var(--lh-title2);
+  font-weight: var(--fw-title2);
+  letter-spacing: var(--ls-title2);
+}
+.t-title3 {
+  font-size: var(--fs-title3);
+  line-height: var(--lh-title3);
+  font-weight: var(--fw-title3);
+  letter-spacing: var(--ls-title3);
+}
+.t-headline {
+  font-size: var(--fs-headline);
+  line-height: var(--lh-headline);
+  font-weight: var(--fw-headline);
+  letter-spacing: var(--ls-headline);
+}
+.t-body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-body);
+  letter-spacing: var(--ls-body);
+}
+.t-callout {
+  font-size: var(--fs-callout);
+  line-height: var(--lh-callout);
+  font-weight: var(--fw-callout);
+  letter-spacing: var(--ls-callout);
+}
+.t-subhead {
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  font-weight: var(--fw-subhead);
+  letter-spacing: var(--ls-subhead);
+}
+.t-footnote {
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  font-weight: var(--fw-footnote);
+  letter-spacing: var(--ls-footnote);
+}
+.t-caption {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: var(--fw-caption);
+  letter-spacing: var(--ls-caption);
+}
+
+/* Numbers: rounded, bold, tabular, never uppercase */
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-transform: none;
+}
+
+/* Existing --font-num call sites (screen files still own their sizes) */
+.body-stat-value,
+.body-tile-value,
+.empty-mark,
+.chart-readout-value,
+.today-tile-value,
+.week-day .n,
+.strength-latest,
+.strength-pr-value,
+.progress-streak-num,
+.progress-stat-value,
+.muscle-group-count,
+.muscle-lift-nums,
+.lift-compare-value,
+.lift-chart-vol,
+.stepper-input,
+.lift-summary-nums,
+.lift-prev-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Labels are sentence case — secondary text in --muted */
+.label {
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+}
+
+/* Page titles: Large Title, left-aligned, sits 8px under the top bar (via .page padding) */
+.page-title {
+  font-size: var(--fs-large-title);
+  line-height: var(--lh-large-title);
+  font-weight: var(--fw-large-title);
+  letter-spacing: var(--ls-large-title);
+  text-align: left;
+}
+
+/* ── Theme switch transitions ──────────────────────────────────────────────── */
+/* View Transitions API (Chromium / Safari 18+) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--dur-theme);
+  animation-timing-function: var(--ease-out);
+}
+
+::view-transition-old(root) {
+  animation-name: theme-fade-out;
+}
+
+::view-transition-new(root) {
+  animation-name: theme-fade-in;
+}
+
+@keyframes theme-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes theme-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Fallback + polish: interpolate surface colors while theme-animating */
+html.theme-animating,
+html.theme-animating body,
+html.theme-animating .topbar,
+html.theme-animating .dock-bar,
+html.theme-animating .card,
+html.theme-animating .list-group,
+html.theme-animating .segmented,
+html.theme-animating .hero-panel,
+html.theme-animating .metric,
+html.theme-animating .metrics,
+html.theme-animating .log-card,
+html.theme-animating .week-day,
+html.theme-animating .sheet,
+html.theme-animating .auth-card,
+html.theme-animating .menu-pop,
+html.theme-animating .cal-card,
+html.theme-animating .heatmap-card,
+html.theme-animating .empty,
+html.theme-animating .form-section,
+html.theme-animating .detail-block,
+html.theme-animating .field input,
+html.theme-animating .field textarea,
+html.theme-animating .search-input,
+html.theme-animating .btn-ghost,
+html.theme-animating .btn-icon,
+html.theme-animating .user-chip,
+html.theme-animating .theme-icon-btn,
+html.theme-animating .focus-btn,
+html.theme-animating .type-btn,
+html.theme-animating .preset-btn,
+html.theme-animating .filter-chip,
+html.theme-animating .tag,
+html.theme-animating .badge,
+html.theme-animating .stat-card,
+html.theme-animating .cal-cell {
+  transition:
+    background-color var(--dur-theme) var(--ease-out),
+    background var(--dur-theme) var(--ease-out),
+    color var(--dur-theme) var(--ease-out),
+    border-color var(--dur-theme) var(--ease-out),
+    box-shadow var(--dur-theme) var(--ease-out),
+    fill var(--dur-theme) var(--ease-out),
+    stroke var(--dur-theme) var(--ease-out) !important;
+}
+
+/* Theme toggle control feedback (still used on Auth + marketing) */
+.theme-icon-btn {
+  transition:
+    background-color 0.25s var(--ease-out),
+    color 0.25s var(--ease-out),
+    border-color 0.25s var(--ease-out),
+    transform 0.2s var(--ease-spring);
+}
+
+.theme-icon-btn:active {
+  transform: scale(0.92) rotate(-12deg);
+}
+
+/* ── Press feedback — every pressable, nothing else transitions transform ───── */
+.btn,
+.btn-icon,
+.dock-slot,
+.dock-log,
+.chip--button,
+.filter-chip,
+button.list-row,
+a.list-row,
+button.card,
+a.card,
+button.health-card,
+button.settings-card,
+.segmented button {
+  transition-property: transform, background-color, border-color, color, opacity, box-shadow;
+  transition-duration: var(--dur-press), var(--dur-fast), var(--dur-fast), var(--dur-fast),
+    var(--dur-fast), var(--dur-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.btn:active:not(:disabled),
+.btn-icon:active:not(:disabled),
+.dock-slot:active,
+.dock-log:active,
+.chip--button:active,
+.filter-chip:active,
+button.list-row:active,
+a.list-row:active,
+button.card:active,
+a.card:active,
+button.health-card:active,
+button.settings-card:active,
+.segmented button:active {
+  transform: scale(0.97);
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: var(--fs-headline);
+  line-height: var(--lh-headline);
+  font-weight: var(--fw-headline);
+  letter-spacing: var(--ls-headline);
+  border-radius: var(--radius);
+  border: none;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.btn-ghost {
+  background: var(--fill);
+  color: var(--text);
+}
+
+.btn-ice {
+  background: var(--ice-dim);
+  color: var(--ice);
+}
+
+.btn-danger {
+  background: var(--danger-dim);
+  color: var(--danger);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--fill) 70%, var(--text) 8%);
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: var(--danger);
+    color: #fff;
+  }
+}
+
+.btn-sm {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  font-weight: 600;
+  letter-spacing: var(--ls-subhead);
+}
+
+.btn-lg {
+  min-height: 50px;
+  padding: 0 22px;
+}
+
+.btn-full {
+  width: 100%;
+}
+
+.btn-icon {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--radius);
+  background: var(--fill);
+  color: var(--muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-icon:hover {
+    color: var(--text);
+  }
+}
+
+/* ── Forms ─────────────────────────────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.field label {
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  min-height: 44px;
+  background: var(--surface-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--muted-2);
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 0;
+}
+
+.field textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Layout ────────────────────────────────────────────────────────────────── */
+/* Content never hides behind the tab bar: bar height + safe area + 16px */
+.app-shell {
+  min-height: 100dvh;
+  padding-bottom: calc(var(--dock-h) + var(--safe-bottom) + 16px);
+}
+
+.page {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 8px max(var(--gutter), env(safe-area-inset-right, 0px)) 0
+    max(var(--gutter), env(safe-area-inset-left, 0px));
+}

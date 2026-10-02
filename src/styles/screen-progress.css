@@ -1,0 +1,6 @@
+/* Redesign overrides owned by the progress screen work. Loaded last. */
+
+/* Lime is brand-only; the empty mark is neutral in both themes */
+[data-theme='light'] .empty-mark {
+  color: var(--muted);
+}

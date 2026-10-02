@@ -1,0 +1,305 @@
+/* ── Home ──────────────────────────────────────────────────────────────────────
+   Apple Fitness "Summary": Large Title greeting, then Title3 section headers sitting
+   above flat cards. No gradients, glows or dashed borders. */
+
+.home-greeting {
+  margin: 0;
+}
+
+.home-date {
+  color: var(--muted);
+}
+
+.home-greeting .page-title {
+  margin-top: 2px;
+  text-wrap: balance;
+}
+
+/* Section header contents (the row itself comes from cards.css) */
+.section-header h2 {
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+.section-header-note {
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  font-weight: 400;
+  letter-spacing: var(--ls-subhead);
+  color: var(--muted);
+}
+
+/* Trailing links keep a 44px touch target without growing the row */
+.home-page .section-header button,
+.body-page .section-header button {
+  position: relative;
+}
+
+.home-page .section-header button::after,
+.body-page .section-header button::after {
+  content: '';
+  position: absolute;
+  inset: -12px -8px;
+}
+
+/* ── Hero: "This week" ─────────────────────────────────────────────────────── */
+.home-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.home-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.goal-ring-wrap {
+  position: relative;
+  flex: none;
+  line-height: 0;
+}
+
+.home-hero-stats {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-stat-value {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+}
+
+.home-stat-value .num {
+  font-size: var(--fs-title1);
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.home-stat-unit {
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.home-hero-note {
+  color: var(--muted);
+}
+
+.home-hero-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.home-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  color: var(--muted);
+}
+
+.home-status.done {
+  color: var(--text);
+}
+
+.status-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted-2);
+}
+
+.home-status.done .status-dot {
+  background: var(--ring-accent);
+}
+
+.home-hero-foot .btn-sm {
+  position: relative;
+}
+
+.home-hero-foot .btn-sm::after {
+  content: '';
+  position: absolute;
+  inset: -5px -4px;
+}
+
+/* ── Week strip (seven day buttons inside the hero) ────────────────────────── */
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--separator);
+}
+
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 56px;
+  padding: 2px 0;
+  color: var(--muted);
+}
+
+.week-day-label {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.week-day .n {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--fill);
+  color: var(--text);
+  font-size: var(--fs-subhead);
+  line-height: 1;
+}
+
+.week-day.logged .n {
+  background: var(--ring-accent);
+  color: var(--accent-text);
+}
+
+.week-day.today .week-day-label {
+  color: var(--text);
+}
+
+.week-day.today .n {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 3.5px var(--muted);
+}
+
+/* ── Totals ────────────────────────────────────────────────────────────────── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 16px 0;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 16px;
+  min-width: 0;
+}
+
+.metric + .metric {
+  border-left: 1px solid var(--separator);
+}
+
+.metric .label {
+  white-space: nowrap;
+}
+
+.metric .num {
+  font-size: var(--fs-title1);
+  line-height: 1.1;
+  color: var(--text);
+}
+
+/* ── Heatmap ───────────────────────────────────────────────────────────────── */
+.heatmap-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.heatmap-card .segmented {
+  align-self: flex-start;
+}
+
+.heatmap-wrap {
+  overflow-x: auto;
+}
+
+.heatmap {
+  display: flex;
+  gap: 4px;
+  max-width: 520px;
+}
+
+.heatmap-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.heatmap-cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--fill);
+}
+
+.heatmap-cell.l1 {
+  background: rgba(200, 241, 53, 0.3);
+}
+.heatmap-cell.l2 {
+  background: rgba(200, 241, 53, 0.62);
+}
+.heatmap-cell.l3 {
+  background: var(--accent);
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--muted);
+}
+
+.heatmap-legend .swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--fill);
+}
+
+.heatmap-legend .swatch:first-of-type {
+  margin-left: 4px;
+}
+
+.heatmap-legend .swatch:last-of-type {
+  margin-right: 4px;
+}
+
+.heatmap-legend .swatch.l1 {
+  background: rgba(200, 241, 53, 0.3);
+}
+.heatmap-legend .swatch.l2 {
+  background: rgba(200, 241, 53, 0.62);
+}
+.heatmap-legend .swatch.l3 {
+  background: var(--accent);
+}

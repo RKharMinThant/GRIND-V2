@@ -29,10 +29,10 @@ function Switch({
   onChange: (next: boolean) => void
 }) {
   return (
-    <div className="notify-row">
-      <div className="notify-text">
-        <span className="setting-row-label">{label}</span>
-        <p className="settings-note">{description}</p>
+    <div className="list-row set-switch-row">
+      <div className="set-switch-text">
+        <span className="set-switch-label">{label}</span>
+        <p className="set-switch-desc">{description}</p>
       </div>
       <button
         type="button"
@@ -80,62 +80,63 @@ export function NotificationsCard({ push, prefs, fitbitConnected, onChange }: Pr
   const rows = NOTIFICATION_TYPES.filter((t) => !t.needsFitbit || fitbitConnected)
   const error = push.error ?? saveError
 
+  const title = <h2 className="set-group-title">Notifications</h2>
+
   return (
-    <section className="settings-card" aria-label="Notifications">
-      <h2 className="settings-title">Notifications</h2>
+    <section className="set-group" aria-label="Notifications">
+      {title}
 
       {push.support === 'needs-install' && (
-        <p className="settings-note">
-          Add GRIND to your Home Screen first — iPhone only delivers notifications to installed
-          apps. Tap Share, then <strong>Add to Home Screen</strong>, and open it from there.
-        </p>
+        <div className="list-group">
+          <p className="list-row set-row-note">
+            Add GRIND to your Home Screen first — iPhone only delivers notifications to installed
+            apps. Tap Share, then <strong>Add to Home Screen</strong>, and open it from there.
+          </p>
+        </div>
       )}
 
       {push.support === 'unsupported' && (
-        <p className="settings-note">
-          This browser can&rsquo;t receive notifications. Try the app on your phone&rsquo;s Home
-          Screen, or in Chrome, Edge or Firefox on a computer.
-        </p>
+        <div className="list-group">
+          <p className="list-row set-row-note">
+            This browser can&rsquo;t receive notifications. Try the app on your phone&rsquo;s Home
+            Screen, or in Chrome, Edge or Firefox on a computer.
+          </p>
+        </div>
       )}
 
       {push.support === 'supported' && !push.subscribed && (
         <>
-          <p className="settings-note">
-            A nudge when your streak is on the line or Fitbit needs reconnecting. Nothing else.
-          </p>
-          <div className="settings-actions">
+          <div className="list-group">
             <button
               type="button"
-              className="btn btn-primary btn-sm"
+              className="list-row set-action"
               disabled={push.busy}
               onClick={() => void push.enable()}
             >
               {push.busy ? 'Enabling…' : 'Enable on this device'}
             </button>
           </div>
+          <p className="set-footer">
+            A nudge when your streak is on the line or Fitbit needs reconnecting. Nothing else.
+          </p>
         </>
       )}
 
       {push.support === 'supported' && push.subscribed && (
         <>
-          {rows.map((t) => (
-            <Switch
-              key={t.id}
-              label={t.label}
-              description={t.description}
-              checked={isNotificationOn(local, t.id)}
-              onChange={(on) => void toggle(t.id, on)}
-            />
-          ))}
-
-          {!fitbitConnected && (
-            <p className="settings-note">Connect Fitbit to get sleep, steps and recovery alerts.</p>
-          )}
-
-          <div className="settings-actions">
+          <div className="list-group">
+            {rows.map((t) => (
+              <Switch
+                key={t.id}
+                label={t.label}
+                description={t.description}
+                checked={isNotificationOn(local, t.id)}
+                onChange={(on) => void toggle(t.id, on)}
+              />
+            ))}
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
+              className="list-row set-action"
               disabled={push.busy}
               onClick={() => void push.sendTest()}
             >
@@ -143,17 +144,24 @@ export function NotificationsCard({ push, prefs, fitbitConnected, onChange }: Pr
             </button>
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
+              className="list-row set-action set-action--danger"
               disabled={push.busy}
               onClick={() => void push.disable()}
             >
               Turn off on this device
             </button>
           </div>
+          {!fitbitConnected && (
+            <p className="set-footer">Connect Fitbit to get sleep, steps and recovery alerts.</p>
+          )}
         </>
       )}
 
-      {error && <div className="settings-error">{error}</div>}
+      {error && (
+        <p className="set-error" role="alert">
+          {error}
+        </p>
+      )}
     </section>
   )
 }

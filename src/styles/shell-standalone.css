@@ -1,0 +1,31 @@
+/* ── Installed to the Home Screen (standalone) ─────────────────────────────── */
+/* The top bar and tab bar already honour the safe areas (shell.css), so the
+   standalone block only handles "feels like an app" behaviour. */
+@media (display-mode: standalone) {
+  .mkt-nav {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* No browser to bounce against */
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+
+  /* Taps shouldn't feel like a web page */
+  .dock-slot,
+  .dock-log,
+  .user-chip,
+  .btn,
+  .list-row,
+  .log-card,
+  .step-bar,
+  .sleep-night,
+  .heatmap-cell,
+  .cal-cell,
+  .week-day {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}

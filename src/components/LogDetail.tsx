@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { pickHealthFields } from '../health/logic'
-import { usePresence } from '../hooks/usePresence'
 import { friendlyDate } from '../lib/dates'
 import { formatFocusAreas, formatGrams, parseFocusAreas, type Log } from '../types/database'
 import { HealthStats } from './HealthStats'
+import { Sheet, SheetAction, SheetCancel, SheetHeader } from './Sheet'
+import { WorkoutMetrics } from './WorkoutMetrics'
 
 type Props = {
   log: Log | null
@@ -17,7 +18,6 @@ export function LogDetail({ log, photoUrl, onClose, onEdit, onDelete }: Props) {
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const open = Boolean(log)
-  const { mounted, visible } = usePresence(open, 380)
   const [displayLog, setDisplayLog] = useState<Log | null>(log)
   const [displayPhoto, setDisplayPhoto] = useState(photoUrl)
 
@@ -30,7 +30,7 @@ export function LogDetail({ log, photoUrl, onClose, onEdit, onDelete }: Props) {
     }
   }, [log, photoUrl])
 
-  if (!mounted || !displayLog) return null
+  if (!displayLog) return null
 
   const current = displayLog
   const focuses = parseFocusAreas(current.focus_areas)
@@ -53,106 +53,121 @@ export function LogDetail({ log, photoUrl, onClose, onEdit, onDelete }: Props) {
     }
   }
 
+  const health = pickHealthFields(current)
+
   return (
-    <div
-      className={`overlay ${visible ? 'is-visible' : 'is-closing'}`}
-      role="dialog"
-      aria-modal="true"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && visible) onClose()
-      }}
+    <Sheet
+      open={open}
+      onClose={onClose}
+      dismissible={!busy}
+      labelledBy="log-detail-title"
+      header={
+        <SheetHeader
+          title="Session"
+          leading={<SheetCancel disabled={busy}>Close</SheetCancel>}
+          trailing={
+            <SheetAction primary onClick={() => onEdit(current)} disabled={busy}>
+              Edit
+            </SheetAction>
+          }
+        />
+      }
     >
-      <div className="sheet">
-        <div className="sheet-header">
-          <div className="sheet-title">Session</div>
-          <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
+      {displayPhoto && (
+        <div className="detail-hero">
+          <img src={displayPhoto} alt="Proof" />
         </div>
-        <div className="sheet-body">
-          {displayPhoto && (
-            <div className="detail-hero">
-              <img src={displayPhoto} alt="Proof" />
-              <div className="scrim" />
+      )}
+      <div className="sheet-title-block">
+        <h2 id="log-detail-title" className="t-title2">
+          {current.workout}
+        </h2>
+        <p className="t-subhead">
+          {[friendlyDate(current.log_date), current.duration, current.workout_type].filter(Boolean).join(' · ')}
+        </p>
+      </div>
+
+      {focuses.length > 0 && (
+        <div className="sheet-section">
+          <div className="sheet-label">Focus</div>
+          <div className="sheet-card">
+            <div className="detail-chips">
+              {focuses.map((f) => (
+                <span key={f} className="chip">
+                  {f}
+                </span>
+              ))}
             </div>
-          )}
-          <div className="detail-title">{current.workout}</div>
-          <div className="detail-meta">
-            {[friendlyDate(current.log_date), current.duration, current.workout_type]
-              .filter(Boolean)
-              .join(' · ')}
+            {focusLabel && current.workout !== focusLabel && (
+              <p className="t-subhead detail-focus-note">{focusLabel}</p>
+            )}
           </div>
+        </div>
+      )}
 
-          {focuses.length > 0 && (
-            <div className="detail-block">
-              <div className="label">Focus</div>
-              <div className="tags" style={{ marginTop: 4 }}>
-                {focuses.map((f) => (
-                  <span key={f} className="tag focus">
-                    {f}
-                  </span>
-                ))}
-              </div>
-              {focusLabel && current.workout !== focusLabel && (
-                <p style={{ marginTop: 8, color: 'var(--muted)', fontSize: '0.85rem' }}>{focusLabel}</p>
-              )}
-            </div>
-          )}
+      {current.health_workout_id && (
+        <div className="sheet-section">
+          <div className="sheet-label">Fitbit</div>
+          <div className="sheet-card detail-fitbit">
+            <WorkoutMetrics fields={health} />
+            <HealthStats fields={health} />
+          </div>
+        </div>
+      )}
 
-          {current.health_workout_id && (
-            <div className="detail-block">
-              <div className="label">Fitbit</div>
-              <div style={{ marginTop: 6 }}>
-                <HealthStats fields={pickHealthFields(current)} />
-              </div>
+      {(protein || creatine) && (
+        <div className="sheet-section">
+          <div className="sheet-label">Supplements</div>
+          <div className="sheet-card">
+            <div className="detail-chips">
+              {protein && <span className="chip">Protein {protein}</span>}
+              {creatine && <span className="chip">Creatine {creatine}</span>}
             </div>
-          )}
+          </div>
+        </div>
+      )}
 
-          {(protein || creatine) && (
-            <div className="detail-block">
-              <div className="label">Supplements</div>
-              <div className="tags" style={{ marginTop: 4 }}>
-                {protein && <span className="tag supp">Protein {protein}</span>}
-                {creatine && <span className="tag supp">Creatine {creatine}</span>}
-              </div>
-            </div>
-          )}
+      {current.meal && (
+        <div className="sheet-section">
+          <div className="sheet-label">Fuel</div>
+          <div className="sheet-card">
+            <p>{current.meal}</p>
+          </div>
+        </div>
+      )}
+      {current.notes && (
+        <div className="sheet-section">
+          <div className="sheet-label">Notes</div>
+          <div className="sheet-card">
+            <p>{current.notes}</p>
+          </div>
+        </div>
+      )}
 
-          {current.meal && (
-            <div className="detail-block">
-              <div className="label">Fuel</div>
-              <p>{current.meal}</p>
-            </div>
-          )}
-          {current.notes && (
-            <div className="detail-block">
-              <div className="label">Notes</div>
-              <p>{current.notes}</p>
-            </div>
-          )}
-
-          <div className="sheet-actions" style={{ justifyContent: 'space-between' }}>
-            <button type="button" className="btn btn-danger" onClick={handleDelete} disabled={busy}>
-              {busy ? 'Deleting…' : confirming ? 'Confirm delete' : 'Delete'}
+      <div className="sheet-section">
+        <div className="list-group">
+          <button
+            type="button"
+            className="list-row sheet-danger-row"
+            data-confirm={confirming}
+            onClick={handleDelete}
+            disabled={busy}
+          >
+            {busy ? 'Deleting…' : confirming ? 'Confirm delete' : 'Delete session'}
+          </button>
+          {confirming && (
+            <button
+              type="button"
+              className="list-row"
+              style={{ justifyContent: 'center', color: 'var(--accent-ink)' }}
+              onClick={() => setConfirming(false)}
+              disabled={busy}
+            >
+              Cancel
             </button>
-            <div style={{ display: 'flex', gap: 10 }}>
-              {confirming && (
-                <button type="button" className="btn btn-ghost" onClick={() => setConfirming(false)}>
-                  Cancel
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => onEdit(current)}
-                disabled={busy}
-              >
-                Edit
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
-    </div>
+    </Sheet>
   )
 }

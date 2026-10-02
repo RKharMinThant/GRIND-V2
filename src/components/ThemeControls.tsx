@@ -1,7 +1,7 @@
 import type { ResolvedTheme, ThemePreference } from '../lib/theme'
 
 const LABELS: Record<ThemePreference, string> = {
-  system: 'Auto',
+  system: 'System',
   light: 'Light',
   dark: 'Dark',
 }
@@ -14,7 +14,7 @@ type SegmentProps = {
 /** Three-way switcher for menus / settings */
 export function ThemeSegment({ preference, onChange }: SegmentProps) {
   return (
-    <div className="theme-seg" role="group" aria-label="Color theme">
+    <div className="segmented segmented--full" role="group" aria-label="Color theme">
       {(['system', 'light', 'dark'] as ThemePreference[]).map((pref) => (
         <button
           key={pref}

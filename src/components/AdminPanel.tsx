@@ -178,7 +178,7 @@ export function AdminPanel({ onClose }: Props) {
   }
 
   return (
-    <div className="admin-overlay" ref={overlayRef} onClick={handleOverlayClick} role="dialog" aria-modal aria-label="Admin Panel">
+    <div className="admin-overlay" ref={overlayRef} onClick={handleOverlayClick} role="dialog" aria-modal aria-label="Admin panel">
       <div className="admin-panel">
 
         {/* ── Header ── */}
@@ -188,7 +188,7 @@ export function AdminPanel({ onClose }: Props) {
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
           </div>
-          <h2 className="admin-panel-title">Admin Panel</h2>
+          <h2 className="admin-panel-title">Admin panel</h2>
           <button type="button" className="admin-close-btn" onClick={onClose} aria-label="Close admin panel">
             <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -253,7 +253,7 @@ export function AdminPanel({ onClose }: Props) {
 
               {/* ── Generate Form ── */}
               <div className="admin-generate-section">
-                <h3 className="admin-section-title">Generate Invite Link</h3>
+                <h3 className="admin-section-title">Generate invite link</h3>
                 <form className="admin-generate-form" onSubmit={handleGenerate}>
                   <div className="field admin-field">
                     <label htmlFor="inviteNote">Label <span className="admin-field-optional">(optional)</span></label>
@@ -311,7 +311,7 @@ export function AdminPanel({ onClose }: Props) {
                         <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M5 12h14M12 5l7 7-7 7" />
                         </svg>
-                        Generate Invite Link
+                        Generate invite link
                       </>
                     )}
                   </button>
@@ -324,7 +324,7 @@ export function AdminPanel({ onClose }: Props) {
               {/* ── Invite List ── */}
               <div>
                 <h3 className="admin-section-title">
-                  All Invites
+                  All invites
                   {!loading && invites.length > 0 && (
                     <span className="admin-section-count">{invites.length}</span>
                   )}
@@ -392,7 +392,7 @@ export function AdminPanel({ onClose }: Props) {
                                       <rect x="9" y="9" width="13" height="13" rx="2" />
                                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                                     </svg>
-                                    Copy Invite Link
+                                    Copy invite link
                                   </>
                                 )}
                               </button>
@@ -501,14 +501,14 @@ export function AdminPanel({ onClose }: Props) {
             <div className="admin-stat-bar admin-stat-bar--single">
               <div className="admin-stat-card">
                 <span className="admin-stat-value">{profiles.length}</span>
-                <span className="admin-stat-label">Total Members</span>
+                <span className="admin-stat-label">Total members</span>
               </div>
             </div>
 
             {/* ── Users List ── */}
             <div className="admin-table-section">
               <h3 className="admin-section-title">
-                Registered Members
+                Registered members
                 {!loadingProfiles && profiles.length > 0 && (
                   <span className="admin-section-count">{profiles.length}</span>
                 )}

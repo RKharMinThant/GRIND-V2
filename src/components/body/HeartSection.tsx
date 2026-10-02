@@ -40,25 +40,25 @@ export function HeartSection({ health }: { health: HealthState }) {
     >
       <div className="body-tiles">
         {latestRhr && (
-          <div className="body-tile">
+          <div className="body-tile tone-heart">
             <span className="label">Resting HR</span>
-            <span className="body-tile-value">
+            <span className="body-tile-value num">
               {latestRhr.bpm}
-              <small> bpm</small>
+              <small>bpm</small>
             </span>
             <Delta value={meanDelta(rhr.map((d) => d.bpm))} unit="" lowerIsBetter />
-            <Sparkline values={rhr.map((d) => d.bpm)} tone="danger" ariaLabel="Resting heart rate, last 30 days" />
+            <Sparkline values={rhr.map((d) => d.bpm)} tone="heart" ariaLabel="Resting heart rate, last 30 days" />
           </div>
         )}
         {latestHrv && (
-          <div className="body-tile">
+          <div className="body-tile tone-heart">
             <span className="label">HRV</span>
-            <span className="body-tile-value">
+            <span className="body-tile-value num">
               {latestHrv.ms}
-              <small> ms</small>
+              <small>ms</small>
             </span>
             <Delta value={meanDelta(hrv.map((d) => d.ms))} unit=" ms" />
-            <Sparkline values={hrv.map((d) => d.ms)} tone="ice" ariaLabel="Heart rate variability, last 30 days" />
+            <Sparkline values={hrv.map((d) => d.ms)} tone="heart" ariaLabel="Heart rate variability, last 30 days" />
           </div>
         )}
       </div>
@@ -76,9 +76,9 @@ export function HeartSection({ health }: { health: HealthState }) {
           <StackedBar
             ariaLabel="Minutes in fat burn, cardio and peak zones today"
             parts={[
-              { label: 'Fat burn', value: zones.moderate, tone: 'accent' },
-              { label: 'Cardio', value: zones.vigorous, tone: 'ice' },
-              { label: 'Peak', value: zones.peak, tone: 'danger' },
+              { label: 'Fat burn', value: zones.moderate, tone: 'heart', color: 'var(--heart-light)' },
+              { label: 'Cardio', value: zones.vigorous, tone: 'heart', color: 'var(--heart-mid)' },
+              { label: 'Peak', value: zones.peak, tone: 'heart' },
             ]}
           />
         </div>

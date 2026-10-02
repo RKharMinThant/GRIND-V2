@@ -1,0 +1,12 @@
+/* ── Rest-day confirm (from the "Rest day?" notification) ──────────────────── */
+.rest-day-copy {
+  margin: 8px 4px 0;
+  color: var(--muted);
+  font-size: var(--fs-body);
+  line-height: 1.4;
+}
+
+.rest-day-copy strong {
+  color: var(--text);
+  font-weight: 600;
+}

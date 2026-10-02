@@ -1,0 +1,64 @@
+/* ── Empty state — calm, centred, no dashed frame ──────────────────────────── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 24px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.empty-mark {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--fill);
+  border: none;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-num);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.empty-mark svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.empty h3 {
+  margin-bottom: 4px;
+  font-size: var(--fs-title3);
+  line-height: var(--lh-title3);
+  font-weight: var(--fw-title3);
+  letter-spacing: var(--ls-title3);
+}
+
+.empty p {
+  max-width: 30ch;
+  margin: 0 auto 20px;
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  color: var(--muted);
+}
+
+.empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-rest {
+  border-style: none;
+}

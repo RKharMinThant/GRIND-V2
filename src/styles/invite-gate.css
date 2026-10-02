@@ -1,0 +1,48 @@
+/* ── Invite gate ──────────────────────────────────────────────────────────── */
+.invite-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 0;
+  text-align: center;
+  animation: scale-in var(--dur-page) var(--ease-out) both;
+}
+
+.invite-gate-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--fill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.invite-gate-icon svg {
+  width: 26px;
+  height: 26px;
+  stroke: currentColor;
+  fill: none;
+  flex-shrink: 0;
+}
+
+.invite-gate-title {
+  margin: 0;
+  font-size: var(--fs-title3);
+  line-height: var(--lh-title3);
+  font-weight: var(--fw-title3);
+  letter-spacing: var(--ls-title3);
+  color: var(--text);
+}
+
+.invite-gate-body {
+  max-width: 280px;
+  margin: 0 0 8px;
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  color: var(--muted);
+}

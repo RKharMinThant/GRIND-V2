@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { friendlyUpdatedAt } from '../lib/dates'
+import { friendlyDateShort, friendlyUpdatedAt } from '../lib/dates'
 import {
   compareTrackedLift,
   formatLiftLine,
@@ -105,187 +105,224 @@ export function ProgressView({
 
   return (
     <div className="page progress-page">
-      <div className="page-header page-header--row">
-        <div>
-          <div className="page-title">Progress</div>
-          <p className="progress-sub">Working sets by muscle group.</p>
-        </div>
+      <div className="page-header">
+        <div className="page-title">Progress</div>
         <button type="button" className="btn btn-primary btn-sm" onClick={() => onOpenAdd()}>
           Add lift
         </button>
       </div>
 
-      <section className="progress-block">
-        <div className="section-title-row">
-          <h2 className="section-heading">Last 4 weeks</h2>
-        </div>
+      <div className="section-header">Last 4 weeks</div>
+      <div className="card week-card">
         <div className="week-bars">
           {insights.last4Weeks.map((w) => (
             <div key={w.key} className="week-bar-col">
+              <div className="week-bar-count num">{w.count}</div>
               <div className="week-bar-track">
                 <div
                   className="week-bar-fill"
-                  style={{ height: `${Math.max(8, (w.count / maxWeek) * 100)}%` }}
+                  style={{ height: `${Math.max(6, (w.count / maxWeek) * 100)}%` }}
                 />
               </div>
-              <div className="week-bar-count">{w.count}</div>
-              <div className="week-bar-label">{w.label}</div>
+              <div className="week-bar-label t-caption">{weekLabel(w.key, w.label)}</div>
             </div>
           ))}
         </div>
-      </section>
+      </div>
 
-      <section className="progress-block">
-        <div className="section-title-row">
-          <h2 className="section-heading">Training load</h2>
-        </div>
-        <div className="load-rows">
-          <LoadRow label="Lifting volume" summary={lifting} unit={weightUnit} />
-          {cardio && <LoadRow label="Cardio (zone minutes)" summary={cardio} unit="min" />}
-        </div>
-        <p className="field-hint load-note">Last 7 days vs your 4-week average.</p>
-      </section>
+      <div className="section-header">Training load</div>
+      <div className="list-group load-group">
+        <LoadRow
+          label="Lifting volume"
+          tone="strength"
+          summary={lifting}
+          unit={weightUnit}
+        />
+        {cardio && <LoadRow label="Cardio zone minutes" tone="activity" summary={cardio} unit="min" />}
+      </div>
+      <p className="progress-note t-footnote">Last 7 days vs your 4-week average.</p>
 
-      <section className="progress-block">
-        <div className="section-title-row">
-          <h2 className="section-heading">Recent PRs</h2>
-        </div>
-        {prs.length === 0 ? (
-          <p className="field-hint">PRs show up here when you beat a previous best.</p>
-        ) : (
-          <ul className="strength-pr-list">
-            {prs.map(({ event, lift }) => (
-              <li key={`${lift.id}-${event.kind}-${event.recorded_at}`}>
-                <button type="button" className="strength-pr-row" onClick={() => onOpenLift(lift)}>
-                  <span className={`strength-pr-kind strength-pr-kind--${event.kind}`}>
-                    {PR_LABELS[event.kind]}
-                  </span>
-                  <span className="strength-pr-name">{event.liftName}</span>
-                  <span className="strength-pr-value">
-                    {formatValue(event.value)} {event.unit}
-                  </span>
-                  <span className="strength-pr-date">{shortDate(event.recorded_at)}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="progress-block">
-        <div className="section-title-row">
-          <h2 className="section-heading">Lifts</h2>
-          {totalLifts > 0 && (
-            <span className="section-meta">
-              {totalLifts} exercise{totalLifts === 1 ? '' : 's'}
-            </span>
-          )}
-        </div>
-
-        {liftsLoading && totalLifts === 0 ? (
-          <div className="progress-empty">
-            <div className="spinner" style={{ margin: '0 auto 12px' }} />
-            Loading…
-          </div>
-        ) : byMuscle.length === 0 ? (
-          <div className="progress-empty progress-empty--lifts">
-            <div className="progress-empty-icon" aria-hidden>
-              ◎
-            </div>
-            <p className="progress-empty-title">No lifts yet</p>
-            <p className="progress-empty-copy">
-              Add an exercise with sets, reps, and weight. Group by muscle so you can track progressive
-              overload over time.
-            </p>
-            <button type="button" className="btn btn-primary" onClick={() => onOpenAdd()}>
-              Add your first lift
+      <div className="section-header">Recent PRs</div>
+      {prs.length === 0 ? (
+        <p className="progress-note progress-note--solo t-footnote">
+          PRs show up here when you beat a previous best.
+        </p>
+      ) : (
+        <div className="list-group pr-group">
+          {prs.map(({ event, lift }) => (
+            <button
+              type="button"
+              key={`${lift.id}-${event.kind}-${event.recorded_at}`}
+              className="list-row pr-row"
+              onClick={() => onOpenLift(lift)}
+            >
+              <span className="icon-badge icon-badge--strength" aria-hidden>
+                <TrophyIcon />
+              </span>
+              <span className="pr-main">
+                <span className="pr-name">{event.liftName}</span>
+                <span className="pr-kind t-footnote">{PR_LABELS[event.kind]}</span>
+              </span>
+              <span className="pr-side">
+                <span className="pr-value num">
+                  {formatValue(event.value)}
+                  <span className="unit"> {event.unit}</span>
+                </span>
+                <span className="pr-date t-footnote">{shortDate(event.recorded_at)}</span>
+              </span>
             </button>
+          ))}
+        </div>
+      )}
+
+      <div className="section-header lifts-header">
+        <span>Lifts</span>
+        {totalLifts > 0 && (
+          <span className="lifts-count">
+            {totalLifts} exercise{totalLifts === 1 ? '' : 's'}
+          </span>
+        )}
+      </div>
+
+      {liftsLoading && totalLifts === 0 ? (
+        <div className="progress-empty">
+          <div className="spinner" />
+          <p className="t-subhead">Loading…</p>
+        </div>
+      ) : byMuscle.length === 0 ? (
+        <div className="progress-empty">
+          <div className="progress-empty-icon" aria-hidden>
+            <DumbbellIcon />
           </div>
-        ) : (
-          <div className="muscle-groups">
-            {byMuscle.map(({ group, lifts }) => (
-              <section key={group} className="muscle-group">
-                <header className="muscle-group-head">
-                  <h3 className="muscle-group-title">{group}</h3>
-                  <span className="muscle-group-count">{lifts.length}</span>
+          <p className="progress-empty-title t-title3">No lifts yet</p>
+          <p className="progress-empty-copy t-subhead">
+            Add an exercise with sets, reps, and weight. Group by muscle so you can track progressive
+            overload over time.
+          </p>
+          <button type="button" className="btn btn-primary" onClick={() => onOpenAdd()}>
+            Add your first lift
+          </button>
+        </div>
+      ) : (
+        byMuscle.map(({ group, lifts }) => (
+          <section key={group} className="muscle-group">
+            <div className="section-header section-header--group">
+              <h3>{group}</h3>
+              <button
+                type="button"
+                className="muscle-group-add"
+                aria-label={`Add ${group} exercise`}
+                onClick={() => onOpenAdd(group)}
+              >
+                Add
+              </button>
+            </div>
+            <div className="list-group">
+              {lifts.map((lift) => {
+                const { status, deltaLabel, arrow } = compareTrackedLift(lift)
+                const updated = friendlyUpdatedAt(lift.updated_at)
+                const line = getLiftSets(lift).length
+                  ? formatSetsDetail(getLiftSets(lift), lift.unit)
+                  : formatLiftLine(lift)
+                return (
                   <button
                     type="button"
-                    className="muscle-group-add"
-                    aria-label={`Add ${group} exercise`}
-                    onClick={() => onOpenAdd(group)}
+                    key={lift.id}
+                    className={`list-row list-row--nav muscle-lift-row status-${status}`}
+                    onClick={() => onOpenLift(lift)}
                   >
-                    <span aria-hidden>+</span>
+                    <span className="muscle-lift-main">
+                      <span className="muscle-lift-name">{lift.exercise_name}</span>
+                      <span className="muscle-lift-nums t-footnote">{line}</span>
+                      {updated && <span className="muscle-lift-updated t-caption">Updated {updated}</span>}
+                    </span>
+                    <span className={`lift-trend status-${status}`}>
+                      <span className="lift-trend-arrow" aria-hidden>
+                        {arrow}
+                      </span>
+                      <span className="lift-trend-label num">{deltaLabel}</span>
+                    </span>
                   </button>
-                </header>
-                <ul className="muscle-lift-list">
-                  {lifts.map((lift) => {
-                    const { status, deltaLabel, arrow } = compareTrackedLift(lift)
-                    const updated = friendlyUpdatedAt(lift.updated_at)
-                    const line = getLiftSets(lift).length
-                      ? formatSetsDetail(getLiftSets(lift), lift.unit)
-                      : formatLiftLine(lift)
-                    return (
-                      <li key={lift.id} className="muscle-lift-item">
-                        <button
-                          type="button"
-                          className={`muscle-lift-row status-${status}`}
-                          onClick={() => onOpenLift(lift)}
-                        >
-                          <div className="muscle-lift-main">
-                            <span className="muscle-lift-name">{lift.exercise_name}</span>
-                            <span className={`muscle-lift-nums status-${status}`}>
-                              <span className="muscle-lift-arrow" aria-hidden>
-                                {arrow}
-                              </span>
-                              {line}
-                            </span>
-                            {updated && (
-                              <span className="muscle-lift-updated">Last updated: {updated}</span>
-                            )}
-                          </div>
-                          <span className={`lift-status-badge status-${status}`}>
-                            {deltaLabel}
-                          </span>
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </section>
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
-  )
-}
-
-function LoadRow({ label, summary, unit }: { label: string; summary: LoadSummary; unit: string }) {
-  const vs = formatVsAverage(summary.ratio)
-  return (
-    <div className="load-row">
-      <div className="load-main">
-        <span className="load-label">{label}</span>
-        <span className="load-value">
-          {Math.round(summary.thisWeek).toLocaleString('en-US')} {unit}
-        </span>
-        <span className="load-vs">{vs ? `vs 4-wk avg ${vs}` : 'No 4-wk average yet'}</span>
-      </div>
-      <span
-        className={`load-chip load-chip--${summary.status}`}
-        title={LOAD_STATUS_TEXT[summary.status]}
-      >
-        {LOAD_STATUS_CHIP[summary.status]}
-      </span>
-      {(summary.status === 'ramping' || summary.status === 'lighter') && (
-        <span className="load-status-text">{LOAD_STATUS_TEXT[summary.status]}</span>
+                )
+              })}
+            </div>
+          </section>
+        ))
       )}
     </div>
   )
 }
 
+function LoadRow({
+  label,
+  tone,
+  summary,
+  unit,
+}: {
+  label: string
+  tone: 'strength' | 'activity'
+  summary: LoadSummary
+  unit: string
+}) {
+  const vs = formatVsAverage(summary.ratio)
+  const showStatus = summary.status === 'ramping' || summary.status === 'lighter'
+  return (
+    <div className={`list-row load-row load-row--${tone}`}>
+      <span className={`icon-badge icon-badge--${tone}`} aria-hidden>
+        {tone === 'strength' ? <DumbbellIcon /> : <PulseIcon />}
+      </span>
+      <div className="load-main">
+        <span className="load-label">{label}</span>
+        <span className="load-vs t-footnote">{vs ? `vs 4-wk avg ${vs}` : 'No 4-wk average yet'}</span>
+      </div>
+      <div className="load-side">
+        <span className="load-value num">
+          {Math.round(summary.thisWeek).toLocaleString('en-US')}
+          <span className="unit"> {unit}</span>
+        </span>
+        <span
+          className={`chip load-chip load-chip--${summary.status}`}
+          title={LOAD_STATUS_TEXT[summary.status]}
+        >
+          {LOAD_STATUS_CHIP[summary.status]}
+        </span>
+      </div>
+      {showStatus && <span className="load-status-text t-footnote">{LOAD_STATUS_TEXT[summary.status]}</span>}
+    </div>
+  )
+}
+
+function DumbbellIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />
+    </svg>
+  )
+}
+
+function PulseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12h4l2.5-6 4 12 2.5-6H21" />
+    </svg>
+  )
+}
+
+function TrophyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 4h8v5a4 4 0 0 1-8 0V4zM8 6H4.5a3 3 0 0 0 3 4M16 6h3.5a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4" />
+    </svg>
+  )
+}
+
+/** Older weeks come back as MM-DD; show them as "Sep 7". */
+function weekLabel(key: string, label: string): string {
+  return /^\d\d-\d\d$/.test(label) ? friendlyDateShort(key) : label
+}
+
 const PR_LABELS: Record<PrKind, string> = {
-  oneRepMax: '1RM est.',
+  oneRepMax: 'Est. 1RM',
   heaviest: 'Heaviest',
   volume: 'Volume',
 }

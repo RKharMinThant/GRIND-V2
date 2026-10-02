@@ -1,0 +1,19 @@
+/* ── Rest-day rows — the same row, visibly quieter: muted, no accent ───────── */
+.log-card--rest .log-card-title {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.log-card--rest .log-card-date,
+.log-card--rest .log-card-detail {
+  color: var(--muted);
+}
+
+.log-card--rest .log-card-media {
+  opacity: 0.6;
+}
+
+.log-card--rest {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}

@@ -38,9 +38,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap"
       rel="stylesheet"
     />
+    <script>
+      // Outfit is only for the marketing site (route "/"); the app uses the system font.
+      if (location.pathname === '/') {
+        var o = document.createElement('link')
+        o.id = 'outfit-font'
+        o.rel = 'stylesheet'
+        o.href =
+          'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap'
+        document.head.appendChild(o)
+      }
+    </script>
     <title>GRIND — Show up. Log the work. Repeat.</title>
     <!-- Prevent theme flash before React boots -->
     <script>
@@ -62,7 +73,12 @@
             meta.setAttribute('name', 'theme-color')
             document.head.appendChild(meta)
           }
-          meta.setAttribute('content', dark ? '#07080A' : '#F3F5EC')
+          // The marketing site (route "/") keeps its own colours; the app uses the system ones
+          var marketing = location.pathname === '/'
+          meta.setAttribute(
+            'content',
+            marketing ? (dark ? '#07080A' : '#F3F5EC') : dark ? '#000000' : '#F2F2F7',
+          )
         } catch (e) {
           document.documentElement.setAttribute('data-theme', 'dark')
         }

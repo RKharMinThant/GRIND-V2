@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { usePresence } from '../hooks/usePresence'
 import { friendlyDate } from '../lib/dates'
+import { Sheet, SheetCancel, SheetHeader } from './Sheet'
 
 type Props = {
   open: boolean
@@ -18,9 +18,12 @@ type Props = {
  * straight away, so a stray tap on the lock screen never records a rest day.
  */
 export function RestDaySheet({ open, date, displayName, ready, onConfirm, onClose }: Props) {
-  const { mounted, visible } = usePresence(open && Boolean(date), 380)
   const [busy, setBusy] = useState(false)
-  if (!mounted || !date) return null
+  // Keep the date on screen while the sheet slides away
+  const [shownDate, setShownDate] = useState(date)
+  if (date && date !== shownDate) setShownDate(date)
+  const day = date ?? shownDate
+  if (!day) return null
 
   const first = displayName.trim().split(/\s+/)[0]
 
@@ -38,44 +41,34 @@ export function RestDaySheet({ open, date, displayName, ready, onConfirm, onClos
   }
 
   return (
-    <div
-      className={`overlay ${visible ? 'is-visible' : 'is-closing'}`}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="rest-day-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && visible && !busy) onClose()
-      }}
+    <Sheet
+      open={open && Boolean(date)}
+      onClose={onClose}
+      dismissible={!busy}
+      className="sheet--rest"
+      labelledBy="rest-day-title"
+      header={
+        <SheetHeader
+          title={first ? `${first}, rest day?` : 'Rest day?'}
+          titleId="rest-day-title"
+          leading={<SheetCancel disabled={busy}>Not now</SheetCancel>}
+        />
+      }
+      footer={
+        <button
+          type="button"
+          className="btn btn-primary btn-lg btn-full"
+          onClick={() => void confirm()}
+          disabled={busy || !ready}
+        >
+          {busy ? 'Logging…' : ready ? 'Log rest day' : 'Loading…'}
+        </button>
+      }
     >
-      <div className="sheet sheet--rest">
-        <div className="sheet-header">
-          <div className="sheet-title" id="rest-day-title">
-            {first ? `${first}, rest day?` : 'Rest day?'}
-          </div>
-          <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close" disabled={busy}>
-            ✕
-          </button>
-        </div>
-        <div className="sheet-body">
-          <p className="rest-day-copy">
-            Log <strong>{friendlyDate(date)}</strong> as a rest day. Recovery is part of the plan, and it
-            keeps your streak going.
-          </p>
-          <div className="sheet-actions">
-            <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
-              Not now
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => void confirm()}
-              disabled={busy || !ready}
-            >
-              {busy ? 'Logging…' : ready ? 'Log rest day' : 'Loading…'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+      <p className="rest-day-copy">
+        Log <strong>{friendlyDate(day)}</strong> as a rest day. Recovery is part of the plan, and it keeps
+        your streak going.
+      </p>
+    </Sheet>
   )
 }

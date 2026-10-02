@@ -52,24 +52,20 @@ export function Heatmap({ logDates, steps, weekStart = DEFAULT_WEEK_START }: Pro
   }, [counts, today, weekStart])
 
   return (
-    <div className="section-block">
-      <div className="section-head">
-        <button
-          type="button"
-          className={`section-toggle ${open ? 'open' : ''}`}
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-        >
-          <span className="label" style={{ color: 'var(--muted)' }}>
-            {showSteps ? 'Steps' : 'Activity'} · 16 weeks
-          </span>
-          <span className="chev">▼</span>
+    <section className="section-block" aria-label={showSteps ? 'Steps' : 'Activity'}>
+      <div className="section-header">
+        <h2>
+          {showSteps ? 'Steps' : 'Activity'}
+          <span className="section-header-note"> · 16 weeks</span>
+        </h2>
+        <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+          {open ? 'Hide' : 'Show'}
         </button>
       </div>
       {open && (
-        <div className="heatmap-card">
+        <div className="card heatmap-card">
           {hasSteps && (
-            <div className="mode-seg" role="group" aria-label="Heatmap data">
+            <div className="segmented" role="group" aria-label="Heatmap data">
               {(['sessions', 'steps'] as Mode[]).map((m) => (
                 <button
                   key={m}
@@ -116,16 +112,16 @@ export function Heatmap({ logDates, steps, weekStart = DEFAULT_WEEK_START }: Pro
               ))}
             </div>
           </div>
-          <div className="heatmap-legend">
+          <div className="heatmap-legend" aria-hidden>
             {showSteps ? 'Fewer steps' : 'Less'}
-            <span className="swatch" style={{ background: 'var(--surface-2)' }} />
-            <span className={`swatch ${showSteps ? 'steps-l1' : ''}`} style={showSteps ? undefined : { background: 'rgba(200,241,53,0.22)' }} />
-            <span className={`swatch ${showSteps ? 'steps-l2' : ''}`} style={showSteps ? undefined : { background: 'rgba(200,241,53,0.5)' }} />
-            <span className={`swatch ${showSteps ? 'steps-l3' : ''}`} style={showSteps ? undefined : { background: 'var(--accent)' }} />
+            <span className="swatch" />
+            <span className={`swatch ${showSteps ? 'steps l1' : 'l1'}`} />
+            <span className={`swatch ${showSteps ? 'steps l2' : 'l2'}`} />
+            <span className={`swatch ${showSteps ? 'steps l3' : 'l3'}`} />
             {showSteps ? 'More steps' : 'More'}
           </div>
         </div>
       )}
-    </div>
+    </section>
   )
 }

@@ -1,0 +1,631 @@
+/* ── Theme switcher (Settings → Appearance) — iOS segmented look ───────────── */
+.theme-seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  padding: 2px;
+  background: var(--fill);
+  border-radius: 9px;
+  margin-bottom: 12px;
+}
+
+.theme-seg button {
+  min-height: 28px;
+  padding: 4px 6px;
+  border-radius: 7px;
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  font-weight: 600;
+  letter-spacing: var(--ls-subhead);
+  color: var(--text);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.theme-seg button.active {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+[data-theme='light'] .theme-seg button.active {
+  background: #ffffff;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.12),
+    0 3px 1px rgba(0, 0, 0, 0.04);
+}
+
+.theme-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.theme-icon-btn:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.theme-icon-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.theme-auth-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* ── Filters (chips) ───────────────────────────────────────────────────────── */
+.filter-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.filter-row::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chip {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: none;
+  background: var(--fill);
+  color: var(--text);
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  font-weight: 600;
+  letter-spacing: var(--ls-footnote);
+  text-transform: none;
+}
+
+.filter-chip.active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.search-input {
+  width: 100%;
+  min-height: 44px;
+  background: var(--fill);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: var(--muted);
+}
+
+.search-input:focus {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 0;
+}
+
+/* ── Toast — floating capsule, drops in from the top ───────────────────────── */
+.toast {
+  position: fixed;
+  top: calc(var(--safe-top) + 8px);
+  left: 50%;
+  z-index: 200;
+  max-width: min(90vw, 360px);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--material-bar);
+  -webkit-backdrop-filter: var(--material-filter);
+  backdrop-filter: var(--material-filter);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  color: var(--text);
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  font-weight: 600;
+  letter-spacing: var(--ls-subhead);
+  text-align: center;
+  opacity: 0;
+  transform: translate(-50%, -16px);
+  pointer-events: none;
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 250ms var(--ease-out);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.toast.error {
+  color: var(--danger);
+}
+
+/* ── Spinner / boot ────────────────────────────────────────────────────────── */
+.boot-screen {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  gap: 16px;
+  background: var(--bg);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--fill);
+  border-top-color: var(--accent-ink);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── Animations ────────────────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes metrics-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes menu-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.cal-day-panel {
+  animation: fade-up var(--dur-ui) var(--ease-out) both;
+}
+
+.heatmap-card {
+  animation: fade-up var(--dur-ui) var(--ease-out) both;
+}
+
+.boot-screen .logo {
+  animation: fade-up var(--dur-ui) var(--ease-out) both;
+}
+
+.boot-screen .spinner {
+  animation: spin 0.7s linear infinite, fade-in 300ms var(--ease-out) both;
+}
+
+/* ── Rings (Apple Activity style) ──────────────────────────────────────────────
+   <Ring> draws a conic-gradient arc through a donut mask: darker at 12 o'clock,
+   full colour at the head, round caps (two dots), track = the ring colour at low
+   opacity. Progress past 100% keeps the full ring and lets the head cap overlap
+   the tail with a faint shadow, as Apple does. */
+@property --ring-p {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --ring-end {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.ring {
+  --ring-color: var(--ring-accent);
+  --ring-start: color-mix(in srgb, var(--ring-color) 68%, #000);
+  --ring-track-alpha: 18%;
+  --ring-size: 96px;
+  --ring-w: 12px;
+  position: relative;
+  flex: none;
+  animation: ring-sweep 700ms var(--ease-out) both;
+}
+
+[data-theme='light'] .ring {
+  --ring-track-alpha: 14%;
+}
+
+.ring[data-tone='accent'] {
+  --ring-color: var(--ring-accent);
+}
+.ring[data-tone='heart'] {
+  --ring-color: var(--c-heart);
+}
+.ring[data-tone='sleep'] {
+  --ring-color: var(--c-sleep);
+}
+.ring[data-tone='strength'] {
+  --ring-color: var(--c-strength);
+}
+.ring[data-tone='activity'] {
+  --ring-color: var(--c-activity);
+}
+.ring[data-tone='warn'] {
+  --ring-color: var(--warn);
+}
+.ring[data-tone='danger'] {
+  --ring-color: var(--danger);
+}
+
+.ring-track,
+.ring-arc {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--ring-w) - 0.5px),
+    #000 calc(100% - var(--ring-w) + 0.5px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--ring-w) - 0.5px),
+    #000 calc(100% - var(--ring-w) + 0.5px)
+  );
+}
+
+.ring-track {
+  background: color-mix(in srgb, var(--ring-color) var(--ring-track-alpha), transparent);
+}
+
+.ring-arc {
+  background: conic-gradient(
+    from 0deg,
+    var(--ring-start) 0deg,
+    var(--ring-color) calc(var(--ring-p) * 360deg),
+    transparent calc(var(--ring-p) * 360deg)
+  );
+}
+
+/* Round caps: a dot at 12 o'clock (tail) and one at the head */
+.ring-dot {
+  position: absolute;
+  top: 0;
+  left: calc(50% - var(--ring-w) / 2);
+  width: var(--ring-w);
+  height: var(--ring-w);
+  border-radius: 50%;
+  transform-origin: 50% calc(var(--ring-size) / 2);
+}
+
+.ring-dot--start {
+  background: var(--ring-start);
+}
+
+.ring-dot--end {
+  background: var(--ring-color);
+  transform: rotate(calc(var(--ring-end) * 360deg));
+  box-shadow: 1.5px 0 3px rgba(0, 0, 0, 0.3);
+}
+
+.ring-center {
+  position: absolute;
+  inset: var(--ring-w);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.ring-label {
+  color: var(--text);
+  font-size: calc(var(--ring-size) * var(--ring-label-scale, 0.26));
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ring-sub {
+  margin-top: 2px;
+  font-size: max(0.625rem, calc(var(--ring-size) * 0.12));
+  line-height: 1.2;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+@keyframes ring-sweep {
+  from {
+    --ring-p: 0;
+    --ring-end: 0;
+  }
+}
+
+/* Metric tones for charts (Sparkline / StackedBar / VitalsSection use .tone-*) */
+.tone-heart {
+  --tone: var(--c-heart);
+}
+.tone-sleep {
+  --tone: var(--c-sleep);
+}
+.tone-strength {
+  --tone: var(--c-strength);
+}
+.tone-activity {
+  --tone: var(--c-activity);
+}
+.tone-warn {
+  --tone: var(--warn);
+}
+
+/* ── Reduced motion: cross-fades only ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .dot.pulse {
+    animation: none;
+  }
+
+  /* Entrance choreography: just show the content */
+  .page-enter,
+  .hero-panel,
+  .goal-ring-wrap,
+  .home-greeting,
+  .metrics,
+  .log-card,
+  .week-day,
+  .auth-card {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .overlay,
+  .sheet {
+    transition: none !important;
+  }
+
+  .overlay.is-visible .sheet,
+  .overlay .sheet {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* No movement on press or reveal */
+  .btn:active,
+  .btn-icon:active,
+  .dock-slot:active,
+  .dock-log:active,
+  .user-chip:active,
+  .filter-chip:active,
+  .segmented button:active,
+  button.card:active,
+  a.card:active,
+  button.health-card:active {
+    transform: none !important;
+  }
+
+  .toast {
+    transform: translate(-50%, 0);
+  }
+
+  /* …but state changes still cross-fade */
+  .toast {
+    transition: opacity var(--dur-fast) linear !important;
+  }
+
+  .topbar::before,
+  .topbar-title {
+    transition: opacity var(--dur-fast) linear !important;
+  }
+
+  .page-layer--enter,
+  .page-layer--exit {
+    animation-duration: var(--dur-fast) !important;
+  }
+
+  .ring {
+    animation: none !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+
+  html.theme-animating,
+  html.theme-animating body,
+  html.theme-animating .topbar,
+  html.theme-animating .dock-bar,
+  html.theme-animating .card,
+  html.theme-animating .hero-panel,
+  html.theme-animating .log-card {
+    transition: none !important;
+  }
+}
+
+/* ── Duration pickers (input-like tiles) ───────────────────────────────────── */
+.duration-pickers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.duration-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 2px 12px 2px 4px;
+}
+
+.duration-pick:focus-within {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 0;
+}
+
+.duration-pick select {
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--font-num);
+  font-size: var(--fs-title3);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 10px 8px;
+  outline: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 22px;
+}
+
+.duration-unit {
+  font-size: var(--fs-footnote);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* Higher contrast: inputs get a visible edge */
+@media (prefers-contrast: more) {
+  .field input,
+  .field textarea,
+  .field select,
+  .search-input,
+  .duration-pick,
+  .filter-chip,
+  .segmented,
+  .theme-seg {
+    border: 1px solid var(--border-strong);
+  }
+}
+
+@media (min-width: 720px) {
+  .logs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .logs-grid.two-col,
+  .logs-grid.three-col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 960px) {
+  .logs-grid,
+  .logs-grid.two-col,
+  .logs-grid.three-col {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

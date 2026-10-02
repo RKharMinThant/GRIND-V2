@@ -1,0 +1,260 @@
+/* ── Body tab ──────────────────────────────────────────────────────────────────
+   Large Title + sync line, then Activity / Heart / Sleep / Night vitals, each a
+   Title3 section header above a card. */
+.body-synced {
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.body-section .section-header {
+  align-items: center;
+}
+
+.body-section-meta {
+  display: flex;
+  align-items: center;
+}
+
+.body-section-note {
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  color: var(--muted);
+}
+
+.body-section-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--fs-subhead);
+  color: var(--muted);
+}
+
+.body-loading {
+  display: grid;
+  place-items: center;
+  min-height: 30vh;
+}
+
+.body-skeleton {
+  display: grid;
+  gap: 10px;
+}
+
+.body-skeleton span {
+  display: block;
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: body-shimmer 1.4s linear infinite;
+}
+
+.body-skeleton span:first-child {
+  height: 96px;
+  border-radius: var(--radius);
+}
+
+.body-skeleton span:last-child {
+  width: 60%;
+}
+
+@keyframes body-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* Label above value, 12px inside */
+.body-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.body-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  min-width: 0;
+}
+
+.body-stats .label {
+  white-space: nowrap;
+}
+
+.body-stat-value {
+  font-size: var(--fs-title3);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.body-stat-value small,
+.body-tile-value small {
+  margin-left: 3px;
+  font-family: var(--font);
+  font-size: var(--fs-footnote);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.body-stats + .stacked-bar {
+  margin-top: 16px;
+}
+
+.body-page .page-header .btn-sm {
+  position: relative;
+}
+
+.body-page .page-header .btn-sm::after {
+  content: '';
+  position: absolute;
+  inset: -5px -4px;
+}
+
+.body-block {
+  margin-top: 20px;
+}
+
+.body-block-title {
+  margin-bottom: 8px;
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  font-weight: 600;
+}
+
+.body-block-title span {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.body-tiles,
+.vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.body-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  min-width: 0;
+  text-align: left;
+  color: var(--text);
+}
+
+.body-tile-value {
+  font-size: var(--fs-title1);
+  line-height: 1.1;
+}
+
+.body-tile .sparkline {
+  margin-top: 8px;
+}
+
+/* Sleep: pick a night */
+.sleep-nights {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 56px;
+  margin-bottom: 16px;
+}
+
+.sleep-night {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding: 0;
+  cursor: pointer;
+}
+
+.sleep-night-bar {
+  width: 100%;
+  min-height: 3px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--c-sleep) 38%, transparent);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.sleep-night.active .sleep-night-bar {
+  background: var(--c-sleep);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sleep-night:hover:not(.active) .sleep-night-bar {
+    background: color-mix(in srgb, var(--c-sleep) 60%, transparent);
+  }
+}
+
+/* Night vitals */
+.vitals-tile {
+  cursor: pointer;
+}
+
+.vitals-tile.expanded {
+  grid-column: 1 / -1;
+}
+
+.vitals-note {
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  color: var(--muted);
+}
+
+/* Not connected */
+.body-connect {
+  text-align: center;
+  padding: 28px 22px;
+}
+
+.body-connect h2 {
+  margin: 12px 0 6px;
+}
+
+.body-connect p {
+  margin: 0 auto 16px;
+  max-width: 34ch;
+  color: var(--muted);
+  font-size: var(--fs-callout);
+  line-height: var(--lh-callout);
+}
+
+.body-connect-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+}
+
+.body-connect-mark svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: var(--accent-ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.body-foot {
+  text-align: center;
+  margin: 24px 0 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .body-skeleton span {
+    animation: none;
+  }
+}

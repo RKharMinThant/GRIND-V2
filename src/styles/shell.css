@@ -1,0 +1,331 @@
+/* ── Section (tab) transitions — opacity + a short slide, no blur ──────────── */
+.page-stage {
+  position: relative;
+  width: 100%;
+  min-height: 50vh;
+  overflow: clip;
+}
+
+.page-layer {
+  width: 100%;
+  will-change: transform, opacity;
+}
+
+.page-layer--enter.page-layer--forward {
+  animation: page-in-forward var(--dur-tab-in) var(--ease-out) both;
+}
+
+.page-layer--enter.page-layer--back {
+  animation: page-in-back var(--dur-tab-in) var(--ease-out) both;
+}
+
+.page-layer--exit {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page-layer--enter {
+  position: relative;
+  z-index: 1;
+}
+
+.page-layer--exit.page-layer--forward {
+  animation: page-out-forward var(--dur-tab-out) var(--ease-out) both;
+}
+
+.page-layer--exit.page-layer--back {
+  animation: page-out-back var(--dur-tab-out) var(--ease-out) both;
+}
+
+@keyframes page-in-forward {
+  from {
+    opacity: 0;
+    transform: translate3d(12px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes page-in-back {
+  from {
+    opacity: 0;
+    transform: translate3d(-12px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes page-out-forward {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(-10px, 0, 0);
+  }
+}
+
+@keyframes page-out-back {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(10px, 0, 0);
+  }
+}
+
+/* Reduced motion: cross-fade only */
+@media (prefers-reduced-motion: reduce) {
+  .page-layer--enter.page-layer--forward,
+  .page-layer--enter.page-layer--back {
+    animation: fade-in var(--dur-fast) linear both;
+  }
+
+  .page-layer--exit.page-layer--forward,
+  .page-layer--exit.page-layer--back {
+    animation: fade-out var(--dur-fast) linear both;
+  }
+}
+
+/* Legacy single-enter (unused by stage, kept for safety) */
+.page-enter {
+  animation: page-enter var(--dur-ui) var(--ease-out) both;
+}
+
+/* Title + actions row on a page (Large Title sits 8px under the top bar via .page) */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+/* ── Top bar ───────────────────────────────────────────────────────────────────
+   Transparent at the top of the page. Once the page scrolls past ~44px the shell
+   gets data-scrolled="true": the material fades in and the tab name appears. */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: calc(var(--header-h) + var(--safe-top));
+  padding: var(--safe-top) max(var(--gutter), env(safe-area-inset-right, 0px)) 0
+    max(var(--gutter), env(safe-area-inset-left, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.topbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--material-bar);
+  -webkit-backdrop-filter: var(--material-filter);
+  backdrop-filter: var(--material-filter);
+  border-bottom: 1px solid var(--border);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+  pointer-events: none;
+}
+
+.app-shell[data-scrolled='true'] .topbar::before {
+  opacity: 1;
+}
+
+.topbar-title {
+  position: absolute;
+  inset: var(--safe-top) 64px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-headline);
+  line-height: var(--lh-headline);
+  font-weight: var(--fw-headline);
+  letter-spacing: var(--ls-headline);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.app-shell[data-scrolled='true'] .topbar-title {
+  opacity: 1;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+/* Wordmark — the one place Bebas Neue lives (boot screen / auth) */
+.logo {
+  font-family: var(--font-brand);
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--accent-ink);
+  line-height: 1;
+}
+
+.logo span {
+  color: var(--text);
+}
+
+/* 34px circular avatar — opens Settings */
+.user-chip {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: var(--fill);
+  color: var(--text);
+  flex: none;
+  transition-property: transform, border-color;
+  transition-duration: var(--dur-press), var(--dur-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.user-chip:active {
+  transform: scale(0.94);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* ── Bottom tab bar (iOS) ──────────────────────────────────────────────────────
+   Anchored to the bottom edge, full width. 49px + safe area. Five slots; the
+   centre slot is the Log action. */
+.dock-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  height: calc(var(--dock-h) + var(--safe-bottom));
+  padding: 0 0 var(--safe-bottom);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: stretch;
+  background: var(--material-bar);
+  -webkit-backdrop-filter: var(--material-filter);
+  backdrop-filter: var(--material-filter);
+  border-top: 1px solid var(--border);
+}
+
+.dock-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px 2px 2px;
+  color: var(--muted);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dock-slot-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+}
+
+.dock-slot-icon svg {
+  width: 26px;
+  height: 26px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dock-slot-label {
+  font-size: var(--fs-caption2);
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.dock-slot.active {
+  color: var(--accent-ink);
+}
+
+.dock-slot.active .dock-slot-icon svg {
+  stroke-width: 2.1;
+}
+
+/* Log: 46px lime circle, centred in the bar, no label */
+.dock-log-wrap {
+  display: grid;
+  place-items: center;
+}
+
+.dock-log {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  display: grid;
+  place-items: center;
+}
+
+.dock-log-plus {
+  display: grid;
+  place-items: center;
+}
+
+.dock-log-plus svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dock-slot:hover:not(.active) {
+    color: var(--text);
+  }
+}
+
+/* Wide screens: keep the five slots near the middle instead of stretching */
+@media (min-width: 720px) {
+  .dock-bar {
+    padding-inline: calc((100% - 520px) / 2);
+  }
+}

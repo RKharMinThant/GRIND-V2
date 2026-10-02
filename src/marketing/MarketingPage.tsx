@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { BRAND_KICKER, BRAND_LINES, BRAND_PITCH, DEVELOPER_NAME, DEVELOPER_URL } from '../lib/brand'
 import { useTheme } from '../hooks/useTheme'
@@ -34,6 +35,18 @@ const FEATURES = [
 /** Phase 1–3 marketing: shell, content, product frames + reveal motion. */
 export function MarketingPage() {
   const { preference, resolved, toggleLightDark } = useTheme()
+
+  // Outfit belongs to the marketing site only. index.html loads it when the page opens
+  // on "/"; this covers arriving here via in-app navigation.
+  useEffect(() => {
+    if (document.getElementById('outfit-font')) return
+    const link = document.createElement('link')
+    link.id = 'outfit-font'
+    link.rel = 'stylesheet'
+    link.href =
+      'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap'
+    document.head.appendChild(link)
+  }, [])
 
   return (
     <div className="marketing" id="top">

@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react'
-import { usePresence } from '../hooks/usePresence'
+import { useRef, useState, type FormEvent } from 'react'
 import { ageGapLabel, formatPace, formatYears, parseMeasurement, type GrindAgeOk } from '../health/grindAge'
 import { toLocalDateString } from '../lib/dates'
 import { supabase } from '../lib/supabase'
+import { GapArrow } from './GrindAgeCard'
+import { Sheet, SheetCancel, SheetHeader } from './Sheet'
 
 type Props = {
   open: boolean
@@ -21,13 +22,16 @@ function formatValue(value: number, unit: string): string {
 }
 
 /** The breakdown behind the GRIND Age number, plus a quick way to log weight and body fat. */
-export function GrindAgeSheet({ open, data, onRefresh, onClose }: Props) {
-  const { mounted, visible } = usePresence(open && Boolean(data), 380)
+export function GrindAgeSheet({ open, data: dataProp, onRefresh, onClose }: Props) {
+  // Keep the reading on screen while the sheet slides away
+  const lastData = useRef<GrindAgeOk | null>(dataProp)
+  if (dataProp) lastData.current = dataProp
+  const data = dataProp ?? lastData.current
   const [weight, setWeight] = useState('')
   const [bodyFat, setBodyFat] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null)
-  if (!mounted || !data) return null
+  if (!data) return null
 
   const { result, pace } = data
 
@@ -59,100 +63,114 @@ export function GrindAgeSheet({ open, data, onRefresh, onClose }: Props) {
     }
   }
 
+  const gap = Math.round((result.grindAge - result.chronologicalAge) * 10) / 10
+
   return (
-    <div
-      className={`overlay ${visible ? 'is-visible' : 'is-closing'}`}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="grind-age-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && visible) onClose()
-      }}
+    <Sheet
+      open={open && Boolean(dataProp)}
+      onClose={onClose}
+      className="sheet--grind-age"
+      labelledBy="grind-age-title"
+      header={
+        <SheetHeader
+          title="GRIND Age"
+          titleId="grind-age-title"
+          trailing={<SheetCancel primary>Done</SheetCancel>}
+        />
+      }
     >
-      <div className="sheet sheet--grind-age">
-        <div className="sheet-header">
-          <div className="sheet-title" id="grind-age-title">
-            GRIND Age
-          </div>
-          <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
-        </div>
-        <div className="sheet-body">
-          <div className="grind-age-main">
-            <span className="grind-age-num">{result.grindAge.toFixed(1)}</span>
-            <div className="grind-age-meta">
-              <span>{ageGapLabel(result)}</span>
-              <span className="grind-age-pace">Real age {result.chronologicalAge.toFixed(1)}</span>
-              {pace != null && <span className="grind-age-pace">Pace of aging {formatPace(pace)}</span>}
-            </div>
-          </div>
-
-          <ul className="grind-age-factors">
-            {result.factors.map((f) => (
-              <li key={f.id} className="grind-age-factor">
-                <div className="grind-age-factor-main">
-                  <span className="grind-age-factor-label">
-                    {f.label}
-                    {f.estimated && <span className="grind-age-tag">estimate</span>}
-                  </span>
-                  <span className="grind-age-factor-value">
-                    {f.value == null ? 'Not enough data' : formatValue(f.value, f.unit)}
-                    <span className="grind-age-factor-target"> · target {f.target}</span>
-                  </span>
-                </div>
-                <span className="grind-age-years" data-tone={yearsTone(f.years)}>
-                  {f.years == null ? '—' : formatYears(f.years)}
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <form className="grind-age-form" onSubmit={(e) => void save(e)}>
-            <h3 className="grind-age-form-title">Log a measurement</h3>
-            <div className="field-row">
-              <div className="field">
-                <label htmlFor="gaWeight">Weight (kg)</label>
-                <input
-                  id="gaWeight"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
-                  min={25}
-                  max={350}
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="gaFat">Body fat % (optional)</label>
-                <input
-                  id="gaFat"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
-                  min={3}
-                  max={70}
-                  value={bodyFat}
-                  onChange={(e) => setBodyFat(e.target.value)}
-                />
-              </div>
-            </div>
-            {message && (
-              <div className={message.ok ? 'settings-note' : 'auth-error'} role="status">
-                {message.text}
-              </div>
-            )}
-            <button type="submit" className="btn btn-primary btn-full" disabled={busy || !weight.trim()}>
-              {busy ? 'Saving…' : 'Save measurement'}
-            </button>
-          </form>
-
-          <p className="settings-note grind-age-disclaimer">
-            An estimate from your own data — not medical advice. Updated weekly.
-          </p>
+      <div className="ga-summary">
+        <span className="num t-large-title grind-age-num">{result.grindAge.toFixed(1)}</span>
+        <p className="t-subhead ga-gap">
+          <GapArrow result={result} />
+          <span>{ageGapLabel(result)}</span>
+        </p>
+        <div className="ga-summary-meta">
+          <span className="chip">Real age {result.chronologicalAge.toFixed(1)}</span>
+          {pace != null && <span className="chip">Pace of aging {formatPace(pace)}</span>}
+          {Math.abs(gap) < 0.05 && <span className="chip chip--accent">On par</span>}
         </div>
       </div>
-    </div>
+
+      <div className="sheet-label">What moves it</div>
+      <ul className="list-group ga-factors">
+        {result.factors.map((f) => (
+          <li key={f.id} className="list-row ga-factor">
+            <div className="ga-factor-main">
+              <span className="ga-factor-label">
+                {f.label}
+                {f.estimated && <span className="chip ga-tag">estimate</span>}
+              </span>
+              <span className="t-footnote ga-factor-value">
+                {f.value == null ? 'Not enough data' : formatValue(f.value, f.unit)}
+                <span> · target {f.target}</span>
+              </span>
+            </div>
+            <span className="num ga-years" data-tone={yearsTone(f.years)}>
+              {f.years == null ? '—' : formatYears(f.years)}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <form className="ga-form" onSubmit={(e) => void save(e)}>
+        <div className="sheet-label">Log a measurement</div>
+        <div className="list-group">
+          <label className="list-row" htmlFor="gaWeight">
+            <span className="list-row-label">Weight</span>
+            <input
+              id="gaWeight"
+              className="list-row-input num"
+              type="number"
+              inputMode="decimal"
+              step="0.1"
+              min={25}
+              max={350}
+              placeholder="0.0"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+            />
+            <span className="list-row-unit">kg</span>
+          </label>
+          <label className="list-row" htmlFor="gaFat">
+            <span className="list-row-label">Body fat</span>
+            <input
+              id="gaFat"
+              className="list-row-input num"
+              type="number"
+              inputMode="decimal"
+              step="0.1"
+              min={3}
+              max={70}
+              placeholder="Optional"
+              value={bodyFat}
+              onChange={(e) => setBodyFat(e.target.value)}
+            />
+            <span className="list-row-unit">%</span>
+          </label>
+        </div>
+        {message && (
+          <p
+            className={message.ok ? 'sheet-note' : 'sheet-error'}
+            data-ok={message.ok}
+            role="status"
+            style={{ marginTop: 12, marginBottom: 0 }}
+          >
+            {message.text}
+          </p>
+        )}
+        <button
+          type="submit"
+          className="btn btn-primary btn-lg btn-full ga-save"
+          disabled={busy || !weight.trim()}
+        >
+          {busy ? 'Saving…' : 'Save measurement'}
+        </button>
+      </form>
+
+      <p className="t-footnote ga-disclaimer">
+        An estimate from your own data — not medical advice. Updated weekly.
+      </p>
+    </Sheet>
   )
 }

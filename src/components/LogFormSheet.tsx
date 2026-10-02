@@ -12,7 +12,6 @@ import {
   type HealthWorkout,
   type LogHealthFields,
 } from '../health/types'
-import { usePresence } from '../hooks/usePresence'
 import { friendlyDate, toLocalDateString } from '../lib/dates'
 import {
   formatDuration,
@@ -34,7 +33,8 @@ import {
   serializeFocusAreas,
   WORKOUT_TYPES,
 } from '../types/database'
-import { HealthStats } from './HealthStats'
+import { Sheet, SheetCancel, SheetHeader } from './Sheet'
+import { WorkoutMetrics } from './WorkoutMetrics'
 
 type Props = {
   open: boolean
@@ -70,16 +70,27 @@ function inferFocusesFromWorkout(workout: string): string[] {
 
 export function LogFormSheet({
   open,
-  initial,
-  defaultDate,
-  existingPhotoUrl,
+  initial: initialProp,
+  defaultDate: defaultDateProp,
+  existingPhotoUrl: existingPhotoUrlProp,
   logs = [],
   onClose,
   onSave,
   healthWorkouts,
   healthSource = 'demo',
-  attachWorkout,
+  attachWorkout: attachWorkoutProp,
 }: Props) {
+  // The parent clears these as soon as it saves; keep what the sheet opened with while it slides away
+  const incoming = {
+    initial: initialProp,
+    defaultDate: defaultDateProp,
+    existingPhotoUrl: existingPhotoUrlProp,
+    attachWorkout: attachWorkoutProp,
+  }
+  const held = useRef(incoming)
+  if (open) held.current = incoming
+  const { initial, defaultDate, existingPhotoUrl, attachWorkout } = held.current
+
   const [step, setStep] = useState(0)
   const [dir, setDir] = useState<'forward' | 'back'>('forward')
 
@@ -102,9 +113,9 @@ export function LogFormSheet({
   const [drag, setDrag] = useState(false)
   const [isRest, setIsRest] = useState(false)
   const [health, setHealth] = useState<LogHealthFields>(EMPTY_HEALTH_FIELDS)
+  const [opened, setOpened] = useState(0)
   const fileRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
-  const { mounted, visible } = usePresence(open, 380)
 
   const suggestions = useMemo(() => suggestSplits(logs, 9), [logs])
   const current = STEPS[step] ?? STEPS[0]
@@ -126,6 +137,8 @@ export function LogFormSheet({
 
   useEffect(() => {
     if (!open) return
+    setBaseline(null)
+    setOpened((n) => n + 1)
     setStep(0)
     setDir('forward')
     if (initial) {
@@ -178,6 +191,33 @@ export function LogFormSheet({
     // applyWorkout only uses setters and healthSource
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial, existingPhotoUrl, defaultDate, attachWorkout])
+
+  // Unsaved input: a flick, scrim tap or Esc must not throw it away (Cancel asks first).
+  // `baseline` is the snapshot taken once the open effect above has applied its values.
+  const snapshot = JSON.stringify([
+    logDate,
+    sessionName,
+    focuses,
+    workoutType,
+    durHours,
+    durMinutes,
+    meal,
+    notes,
+    protein,
+    creatine,
+    isRest,
+    removePhoto,
+    photoFile?.name,
+    photoFile?.size,
+    health,
+  ])
+  const [baseline, setBaseline] = useState<string | null>(null)
+  const dirty = baseline !== null && snapshot !== baseline
+  useEffect(() => {
+    if (open) setBaseline(snapshot)
+    // Only when the form (re)opens; `opened` bumps after the open effect's values have rendered
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opened])
 
   useEffect(() => {
     if (!photoFile) return
@@ -260,9 +300,6 @@ export function LogFormSheet({
       goNext()
     }
   }
-
-  // Hooks must run every render — only then can we bail out of painting
-  if (!mounted) return null
 
   function toggleFocus(area: string) {
     setIsRest(false)
@@ -369,484 +406,500 @@ export function LogFormSheet({
     }
   }
 
-  const progress = ((step + 1) / STEPS.length) * 100
+  const titleId = 'log-sheet-title'
 
   return (
-    <div
-      className={`overlay ${visible ? 'is-visible' : 'is-closing'}`}
-      role="dialog"
-      aria-modal="true"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && visible) onClose()
-      }}
-    >
-      <div className="sheet sheet--log sheet--wizard">
-        <div className="sheet-header sheet-header--wizard">
-          <div>
-            <div className="wizard-kicker">
-              {initial ? 'Edit' : 'New'} · Step {step + 1} of {STEPS.length}
-            </div>
-            <div className="sheet-title">{current.title}</div>
-            <p className="wizard-blurb">{current.blurb}</p>
-          </div>
-          <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
-            ✕
+    <Sheet
+      open={open}
+      onClose={onClose}
+      dismissible={!busy && !dirty}
+      labelledBy={titleId}
+      className="sheet--log"
+      scrollRef={bodyRef}
+      header={
+        <SheetHeader
+          title={initial ? 'Edit session' : 'New session'}
+          titleId={titleId}
+          leading={
+            <SheetCancel disabled={busy} confirm={dirty ? 'Discard this session?' : undefined} />
+          }
+        />
+      }
+      footer={
+        <div className="sheet-footer-actions">
+          {!isFirst && (
+            <button type="button" className="btn btn-ghost btn-lg" onClick={goBack} disabled={busy}>
+              Back
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn btn-primary btn-lg sheet-footer-main"
+            onClick={goNext}
+            disabled={busy || compressing}
+          >
+            {busy ? 'Saving…' : isLast ? (initial ? 'Save changes' : 'Save session') : 'Continue'}
           </button>
         </div>
-
-        <div className="wizard-progress" aria-hidden>
-          <div className="wizard-progress-bar" style={{ width: `${progress}%` }} />
-        </div>
-
-        <div className="wizard-steps" role="tablist" aria-label="Steps">
-          {STEPS.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              role="tab"
-              aria-selected={i === step}
-              className={`wizard-dot ${i === step ? 'active' : ''} ${i < step ? 'done' : ''}`}
-              onClick={() => goToStep(i)}
-              title={s.title}
-            >
-              <span className="wizard-dot-n">{i + 1}</span>
-              <span className="wizard-dot-label">{s.title}</span>
-            </button>
-          ))}
-        </div>
-
-        <div ref={bodyRef} className="sheet-body sheet-body--flat wizard-body">
-          {error && <div className="auth-error">{error}</div>}
-
-          <div
-            key={current.id}
-            className={`wizard-pane wizard-pane--${dir}`}
+      }
+    >
+      <div className="segmented segmented--full sheet-steps" role="tablist" aria-label="Steps">
+        {STEPS.map((s, i) => (
+          <button
+            key={s.id}
+            type="button"
+            role="tab"
+            aria-selected={i === step}
+            onClick={() => goToStep(i)}
           >
-            {current.id === 'when' && (
-              <>
-                <div className="field">
-                  <label htmlFor="logDate">Date</label>
+            {s.title}
+          </button>
+        ))}
+      </div>
+
+      {error && (
+        <div className="sheet-error" role="alert">
+          {error}
+        </div>
+      )}
+
+      <div key={current.id} className={`sheet-pane${dir === 'back' ? ' sheet-pane--back' : ''}`}>
+        <div className="sheet-step-head">
+          <h3 className="t-title2">{current.title}</h3>
+          <p className="t-subhead">{current.blurb}</p>
+        </div>
+
+        {current.id === 'when' && (
+          <>
+            <div className="sheet-section">
+              <div className="list-group">
+                <label className="list-row" htmlFor="logDate">
+                  <span className="list-row-label">Date</span>
                   <input
                     id="logDate"
+                    className="list-row-input"
                     type="date"
                     value={logDate}
                     onChange={(e) => setLogDate(e.target.value)}
                     required
                   />
-                </div>
-                <div className="field">
-                  <label>Duration</label>
-                  <div className="duration-pickers">
-                    <div className="duration-pick">
-                      <select
-                        id="durHours"
-                        aria-label="Hours"
-                        value={durHours}
-                        onChange={(e) => setDurHours(Number(e.target.value))}
-                      >
-                        {HOUR_OPTIONS.map((h) => (
-                          <option key={h} value={h}>
-                            {h}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="duration-unit">hr</span>
-                    </div>
-                    <div className="duration-pick">
-                      <select
-                        id="durMinutes"
-                        aria-label="Minutes"
-                        value={durMinutes}
-                        onChange={(e) => setDurMinutes(Number(e.target.value))}
-                      >
-                        {minuteOptions.map((m) => (
-                          <option key={m} value={m}>
-                            {String(m).padStart(2, '0')}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="duration-unit">min</span>
-                    </div>
-                  </div>
-                  <p className="field-hint">
-                    {durationLabel()
-                      ? `Selected: ${durationLabel()}`
-                      : 'Optional — leave at 0 if you skip duration'}
-                  </p>
-                </div>
-
-                {!isRest && health.health_workout_id && (
-                  <div className="field">
-                    <label>From Fitbit</label>
-                    <div className="health-attached">
-                      <HealthStats fields={health} compact />
-                      <button
-                        type="button"
-                        className="btn btn-icon"
-                        aria-label="Detach Fitbit workout"
-                        title="Detach"
-                        onClick={() => setHealth(EMPTY_HEALTH_FIELDS)}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {!isRest && !health.health_workout_id && dayWorkouts.length > 0 && (
-                  <div className="field">
-                    <label>Fitbit workouts on this day</label>
-                    <div className="fitbit-pick">
-                      {dayWorkouts.map((w) => {
-                        const taken = linkedElsewhere(w.id)
-                        const time = new Date(w.start).toLocaleTimeString(undefined, {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })
-                        return (
-                          <button
-                            key={w.id}
-                            type="button"
-                            className="fitbit-pick-row"
-                            disabled={taken}
-                            onClick={() => applyWorkout(w)}
-                          >
-                            <strong>{w.activity}</strong>
-                            <span>
-                              {time} · {w.durationMin} min
-                              {w.calories != null ? ` · ${w.calories} kcal` : ''}
-                            </span>
-                            {taken ? <em>Logged</em> : <em className="attach">Attach</em>}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {current.id === 'train' && (
-              <>
-                <div className="field">
-                  <label>Quick splits</label>
-                  <p className="field-hint">
-                    {logs.length > 0
-                      ? 'Your patterns first, then common templates'
-                      : 'Common splits — personalizes as you log'}
-                  </p>
-                  <div className="split-row" role="group" aria-label="Workout splits">
-                    {suggestions.map((p) => {
-                      const active = p.rest
-                        ? isRest
-                        : !isRest && patternsEqual(focuses, p.focuses) && focuses.length > 0
-                      return (
-                        <button
-                          key={p.id}
-                          type="button"
-                          className={`split-chip ${active ? 'selected' : ''} ${
-                            p.rest ? 'split-chip--rest' : ''
-                          } ${p.source === 'you' ? 'split-chip--you' : ''}`}
-                          onClick={() => applySplit(p)}
-                          aria-pressed={active}
-                        >
-                          <span className="split-chip-label">{p.label}</span>
-                          {p.source === 'you' && p.count != null && p.count > 0 && (
-                            <span className="split-chip-meta">×{p.count}</span>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {isRest ? (
-                  <div className="rest-banner">
-                    Rest day — recovery counts. Focus areas skipped.
-                  </div>
-                ) : (
-                  <div className="field">
-                    <label>Focus</label>
-                    <div className="focus-grid" role="group" aria-label="Focus areas">
-                      {FOCUS_AREAS.map((area) => (
-                        <button
-                          key={area}
-                          type="button"
-                          className={`focus-btn ${focuses.includes(area) ? 'selected' : ''}`}
-                          onClick={() => toggleFocus(area)}
-                          aria-pressed={focuses.includes(area)}
-                        >
-                          {area}
-                        </button>
-                      ))}
-                    </div>
-                    {focuses.length > 0 && (
-                      <div className="focus-summary">
-                        Selected: <strong>{focuses.join(' · ')}</strong>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="field">
-                  <label htmlFor="sessionName">Session name {isRest ? '' : '(optional)'}</label>
-                  <input
-                    id="sessionName"
-                    value={sessionName}
-                    onChange={(e) => setSessionName(e.target.value)}
-                    placeholder={
-                      isRest
-                        ? 'Rest'
-                        : focuses.length
-                          ? `Defaults to “${formatFocusAreas(serializeFocusAreas(focuses))}”`
-                          : 'e.g. Tempo run…'
-                    }
-                  />
-                </div>
-
-                {!isRest && (
-                  <div className="field">
-                    <label>Type</label>
-                    <div className="type-grid" role="group" aria-label="Workout type">
-                      {WORKOUT_TYPES.map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          className={`type-btn ${workoutType === t ? 'selected' : ''}`}
-                          onClick={() => setWorkoutType(workoutType === t ? '' : t)}
-                          aria-pressed={workoutType === t}
-                        >
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {current.id === 'fuel' && (
-              <>
-                <div className="field-row">
-                  <div className="field">
-                    <label htmlFor="protein">Protein (g)</label>
-                    <input
-                      id="protein"
-                      type="number"
-                      inputMode="decimal"
-                      min={0}
-                      step={1}
-                      value={protein}
-                      onChange={(e) => setProtein(e.target.value)}
-                      placeholder="e.g. 40"
-                    />
-                    <div className="preset-row">
-                      {PROTEIN_PRESETS.map((g) => (
-                        <button
-                          key={g}
-                          type="button"
-                          className={`preset-btn ${protein === String(g) ? 'selected' : ''}`}
-                          onClick={() => setProtein(String(g))}
-                        >
-                          {g}g
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="field">
-                    <label htmlFor="creatine">Creatine (g)</label>
-                    <input
-                      id="creatine"
-                      type="number"
-                      inputMode="decimal"
-                      min={0}
-                      step={0.5}
-                      value={creatine}
-                      onChange={(e) => setCreatine(e.target.value)}
-                      placeholder="e.g. 5"
-                    />
-                    <div className="preset-row">
-                      {CREATINE_PRESETS.map((g) => (
-                        <button
-                          key={g}
-                          type="button"
-                          className={`preset-btn ${creatine === String(g) ? 'selected' : ''}`}
-                          onClick={() => setCreatine(String(g))}
-                        >
-                          {g}g
-                        </button>
-                      ))}
-                      <button type="button" className="preset-btn" onClick={() => setCreatine('')}>
-                        Off
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className="field">
-                  <label htmlFor="meal">Meal of the day</label>
-                  <textarea
-                    id="meal"
-                    value={meal}
-                    onChange={(e) => setMeal(e.target.value)}
-                    placeholder="What you ate — meals, macros…"
-                  />
-                </div>
-                <p className="field-hint">All optional — skip if you want.</p>
-              </>
-            )}
-
-            {current.id === 'proof' && (
-              <>
-                <div className="field">
-                  <label htmlFor="notes">Notes</label>
-                  <textarea
-                    id="notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="How it felt, PRs, adjustments…"
-                    style={{ minHeight: 100 }}
-                  />
-                </div>
-                <div className="field">
-                  <label>Photo</label>
-                  {compressing ? (
-                    <div className="photo-drop photo-drop--busy">
-                      <div className="spinner" style={{ width: 28, height: 28, margin: '0 auto 10px' }} />
-                      <div style={{ fontWeight: 700 }}>Compressing…</div>
-                    </div>
-                  ) : !preview ? (
-                    <div
-                      className={`photo-drop ${drag ? 'drag' : ''}`}
-                      onDragOver={(e) => {
-                        e.preventDefault()
-                        setDrag(true)
-                      }}
-                      onDragLeave={() => setDrag(false)}
-                      onDrop={(e) => {
-                        e.preventDefault()
-                        setDrag(false)
-                        void onFile(e.dataTransfer.files[0])
-                      }}
+                </label>
+                <div className="list-row" role="group" aria-label="Duration">
+                  <span className="list-row-label">Duration</span>
+                  <span className="row-inline">
+                    <select
+                      id="durHours"
+                      className="sheet-select num"
+                      aria-label="Hours"
+                      value={durHours}
+                      onChange={(e) => setDurHours(Number(e.target.value))}
                     >
-                      <input
-                        ref={fileRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => void onFile(e.target.files?.[0])}
-                      />
-                      <div style={{ fontWeight: 700, marginBottom: 4 }}>Add proof photo</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--muted-2)' }}>
-                        Compressed to JPEG · max ~1200px
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="photo-preview photo-preview--portrait">
-                      <img src={preview} alt="Preview" />
-                      <button
-                        type="button"
-                        className="remove"
-                        onClick={() => {
-                          setPhotoFile(null)
-                          setPreview(null)
-                          if (initial?.photo_path) setRemovePhoto(true)
-                          if (fileRef.current) fileRef.current.value = ''
-                        }}
-                      >
-                        Remove
-                      </button>
-                      {photoFile && (
-                        <div className="photo-size-badge">
-                          {(photoFile.size / 1024).toFixed(0)} KB · ready
-                        </div>
-                      )}
-                    </div>
-                  )}
+                      {HOUR_OPTIONS.map((h) => (
+                        <option key={h} value={h}>
+                          {h}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="list-row-unit">hr</span>
+                    <select
+                      id="durMinutes"
+                      className="sheet-select num"
+                      aria-label="Minutes"
+                      value={durMinutes}
+                      onChange={(e) => setDurMinutes(Number(e.target.value))}
+                    >
+                      {minuteOptions.map((m) => (
+                        <option key={m} value={m}>
+                          {String(m).padStart(2, '0')}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="list-row-unit">min</span>
+                  </span>
                 </div>
-                <p className="field-hint">Optional — you can save without a photo.</p>
-              </>
+              </div>
+              <p className="sheet-hint">
+                {durationLabel()
+                  ? `Selected: ${durationLabel()}`
+                  : 'Optional — leave at 0 if you skip duration'}
+              </p>
+            </div>
+
+            {!isRest && health.health_workout_id && (
+              <div className="sheet-section">
+                <div className="sheet-label">From Fitbit</div>
+                <div className="list-group">
+                  <div className="list-row sheet-workout">
+                    <div className="sheet-workout-main">
+                      <span>Fitbit workout</span>
+                      <WorkoutMetrics fields={health} />
+                    </div>
+                    <button
+                      type="button"
+                      className="sheet-icon-btn"
+                      aria-label="Detach Fitbit workout"
+                      title="Detach"
+                      onClick={() => setHealth(EMPTY_HEALTH_FIELDS)}
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden>
+                        <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm3.7 12.3a1 1 0 0 1-1.4 1.4L12 13.4l-2.3 2.3a1 1 0 0 1-1.4-1.4l2.3-2.3-2.3-2.3a1 1 0 0 1 1.4-1.4l2.3 2.3 2.3-2.3a1 1 0 0 1 1.4 1.4L13.4 12l2.3 2.3Z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
 
-            {current.id === 'review' && (
-              <div className="review-card">
-                <button type="button" className="review-row" onClick={() => goToStep(0)}>
-                  <span className="review-label">When</span>
-                  <span className="review-value">
-                    {friendlyDate(logDate)}
-                    {durationLabel() ? ` · ${durationLabel()}` : ''}
-                  </span>
-                  <span className="review-edit">Edit</span>
-                </button>
-                {!isRest && health.health_workout_id && (
-                  <button type="button" className="review-row" onClick={() => goToStep(0)}>
-                    <span className="review-label">Fitbit</span>
-                    <span className="review-value">
-                      <HealthStats fields={health} compact />
-                    </span>
-                    <span className="review-edit">Edit</span>
-                  </button>
-                )}
-                <button type="button" className="review-row" onClick={() => goToStep(1)}>
-                  <span className="review-label">Train</span>
-                  <span className="review-value">
-                    {workoutTitle() || '—'}
-                    {!isRest && workoutType ? ` · ${workoutType}` : ''}
-                    {isRest ? ' · Rest' : ''}
-                  </span>
-                  <span className="review-edit">Edit</span>
-                </button>
-                <button type="button" className="review-row" onClick={() => goToStep(2)}>
-                  <span className="review-label">Fuel</span>
-                  <span className="review-value">
-                    {[
-                      formatGrams(parseGrams(protein)) ? `P ${formatGrams(parseGrams(protein))}` : null,
-                      formatGrams(parseGrams(creatine))
-                        ? `Cr ${formatGrams(parseGrams(creatine))}`
-                        : null,
-                      meal.trim() ? 'Meal logged' : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ') || 'Skipped'}
-                  </span>
-                  <span className="review-edit">Edit</span>
-                </button>
-                <button type="button" className="review-row" onClick={() => goToStep(3)}>
-                  <span className="review-label">Proof</span>
-                  <span className="review-value">
-                    {[notes.trim() ? 'Notes' : null, preview ? 'Photo' : null]
-                      .filter(Boolean)
-                      .join(' · ') || 'Skipped'}
-                  </span>
-                  <span className="review-edit">Edit</span>
-                </button>
-                {preview && (
-                  <div className="review-photo">
-                    <img src={preview} alt="Proof preview" />
+            {!isRest && !health.health_workout_id && dayWorkouts.length > 0 && (
+              <div className="sheet-section">
+                <div className="sheet-label">Fitbit workouts on this day</div>
+                <div className="list-group">
+                  {dayWorkouts.map((w) => {
+                    const taken = linkedElsewhere(w.id)
+                    const time = new Date(w.start).toLocaleTimeString(undefined, {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })
+                    return (
+                      <button
+                        key={w.id}
+                        type="button"
+                        className="list-row sheet-workout"
+                        disabled={taken}
+                        onClick={() => applyWorkout(w)}
+                      >
+                        <span className="sheet-workout-main">
+                          <span>{w.activity}</span>
+                          <span className="sheet-workout-sub">
+                            {time} · {w.durationMin} min
+                            {w.calories != null ? ` · ${w.calories} kcal` : ''}
+                          </span>
+                        </span>
+                        <span className={`list-row-trail${taken ? ' list-row-trail--muted' : ''}`}>
+                          {taken ? 'Logged' : 'Attach'}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {current.id === 'train' && (
+          <>
+            <div className="sheet-section">
+              <div className="sheet-label">Quick splits</div>
+              <div className="chip-row" role="group" aria-label="Workout splits">
+                {suggestions.map((p) => {
+                  const active = p.rest
+                    ? isRest
+                    : !isRest && patternsEqual(focuses, p.focuses) && focuses.length > 0
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`chip chip--button sheet-chip${p.rest ? ' sheet-chip--muted' : ''}`}
+                      onClick={() => applySplit(p)}
+                      aria-pressed={active}
+                    >
+                      <span>{p.label}</span>
+                      {p.source === 'you' && p.count != null && p.count > 0 && (
+                        <span className="sheet-chip__meta">×{p.count}</span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="sheet-hint">
+                {logs.length > 0
+                  ? 'Your patterns first, then common templates'
+                  : 'Common splits — personalizes as you log'}
+              </p>
+            </div>
+
+            {isRest ? (
+              <div className="sheet-banner">Rest day — recovery counts. Focus areas skipped.</div>
+            ) : (
+              <div className="sheet-section">
+                <div className="sheet-label">Focus</div>
+                <div className="chip-row" role="group" aria-label="Focus areas">
+                  {FOCUS_AREAS.map((area) => (
+                    <button
+                      key={area}
+                      type="button"
+                      className="chip chip--button sheet-chip"
+                      onClick={() => toggleFocus(area)}
+                      aria-pressed={focuses.includes(area)}
+                    >
+                      {area}
+                    </button>
+                  ))}
+                </div>
+                {focuses.length > 0 && (
+                  <div className="sheet-summary-line">
+                    Selected: <strong>{focuses.join(' · ')}</strong>
                   </div>
                 )}
               </div>
             )}
-          </div>
-        </div>
 
-        <div className="wizard-footer">
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={goBack}
-            disabled={busy}
-          >
-            {isFirst ? 'Cancel' : '← Back'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={goNext}
-            disabled={busy || compressing}
-          >
-            {busy ? 'Saving…' : isLast ? (initial ? 'Save changes' : 'Save session →') : 'Continue →'}
-          </button>
-        </div>
+            <div className="field">
+              <label htmlFor="sessionName">Session name {isRest ? '' : '(optional)'}</label>
+              <input
+                id="sessionName"
+                value={sessionName}
+                onChange={(e) => setSessionName(e.target.value)}
+                placeholder={
+                  isRest
+                    ? 'Rest'
+                    : focuses.length
+                      ? `Defaults to “${formatFocusAreas(serializeFocusAreas(focuses))}”`
+                      : 'e.g. Tempo run…'
+                }
+              />
+            </div>
+
+            {!isRest && (
+              <div className="sheet-section">
+                <div className="sheet-label">Type</div>
+                <div className="chip-row" role="group" aria-label="Workout type">
+                  {WORKOUT_TYPES.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className="chip chip--button sheet-chip"
+                      onClick={() => setWorkoutType(workoutType === t ? '' : t)}
+                      aria-pressed={workoutType === t}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {current.id === 'fuel' && (
+          <>
+            <div className="sheet-section">
+              <div className="sheet-label">Protein</div>
+              <div className="list-group">
+                <label className="list-row" htmlFor="protein">
+                  <span className="list-row-label">Amount</span>
+                  <input
+                    id="protein"
+                    className="list-row-input num"
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step={1}
+                    value={protein}
+                    onChange={(e) => setProtein(e.target.value)}
+                    placeholder="e.g. 40"
+                  />
+                  <span className="list-row-unit">g</span>
+                </label>
+              </div>
+              <div className="chip-row" style={{ marginTop: 10 }}>
+                {PROTEIN_PRESETS.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    className="chip chip--button sheet-chip sheet-chip--small"
+                    aria-pressed={protein === String(g)}
+                    onClick={() => setProtein(String(g))}
+                  >
+                    {g} g
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="sheet-section">
+              <div className="sheet-label">Creatine</div>
+              <div className="list-group">
+                <label className="list-row" htmlFor="creatine">
+                  <span className="list-row-label">Amount</span>
+                  <input
+                    id="creatine"
+                    className="list-row-input num"
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step={0.5}
+                    value={creatine}
+                    onChange={(e) => setCreatine(e.target.value)}
+                    placeholder="e.g. 5"
+                  />
+                  <span className="list-row-unit">g</span>
+                </label>
+              </div>
+              <div className="chip-row" style={{ marginTop: 10 }}>
+                {CREATINE_PRESETS.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    className="chip chip--button sheet-chip sheet-chip--small"
+                    aria-pressed={creatine === String(g)}
+                    onClick={() => setCreatine(String(g))}
+                  >
+                    {g} g
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="chip chip--button sheet-chip sheet-chip--small sheet-chip--muted"
+                  onClick={() => setCreatine('')}
+                >
+                  Off
+                </button>
+              </div>
+            </div>
+
+            <div className="field">
+              <label htmlFor="meal">Meal of the day</label>
+              <textarea
+                id="meal"
+                value={meal}
+                onChange={(e) => setMeal(e.target.value)}
+                placeholder="What you ate — meals, macros…"
+              />
+            </div>
+            <p className="sheet-hint">All optional — skip if you want.</p>
+          </>
+        )}
+
+        {current.id === 'proof' && (
+          <>
+            <div className="field">
+              <label htmlFor="notes">Notes</label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="How it felt, PRs, adjustments…"
+                style={{ minHeight: 100 }}
+              />
+            </div>
+            <div className="sheet-section">
+              <div className="sheet-label">Photo</div>
+              {compressing ? (
+                <div className="list-group">
+                  <div className="list-row" style={{ minHeight: 56 }} role="status">
+                    <span className="list-row-label">Compressing…</span>
+                    <div className="spinner" style={{ width: 22, height: 22, borderWidth: 2 }} />
+                  </div>
+                </div>
+              ) : !preview ? (
+                <div
+                  className={`list-group sheet-photo-add${drag ? ' is-drag' : ''}`}
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    setDrag(true)
+                  }}
+                  onDragLeave={() => setDrag(false)}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    setDrag(false)
+                    void onFile(e.dataTransfer.files[0])
+                  }}
+                >
+                  <div className="list-row">
+                    <span className="list-row-label" style={{ color: 'var(--accent-ink)' }}>
+                      Add proof photo
+                    </span>
+                    <span className="list-row-value t-footnote">Compressed to JPEG · max ~1200px</span>
+                  </div>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    aria-label="Add proof photo"
+                    onChange={(e) => void onFile(e.target.files?.[0])}
+                  />
+                </div>
+              ) : (
+                <div className="photo-preview photo-preview--portrait">
+                  <img src={preview} alt="Preview" />
+                  <button
+                    type="button"
+                    className="remove"
+                    onClick={() => {
+                      setPhotoFile(null)
+                      setPreview(null)
+                      if (initial?.photo_path) setRemovePhoto(true)
+                      if (fileRef.current) fileRef.current.value = ''
+                    }}
+                  >
+                    Remove
+                  </button>
+                  {photoFile && (
+                    <div className="photo-size-badge">{(photoFile.size / 1024).toFixed(0)} KB · ready</div>
+                  )}
+                </div>
+              )}
+              <p className="sheet-hint">Optional — you can save without a photo.</p>
+            </div>
+          </>
+        )}
+
+        {current.id === 'review' && (
+          <>
+            <div className="list-group">
+              <button type="button" className="list-row list-row--nav" onClick={() => goToStep(0)}>
+                <span className="sheet-review-label">When</span>
+                <span className="sheet-review-value">
+                  {friendlyDate(logDate)}
+                  {durationLabel() ? ` · ${durationLabel()}` : ''}
+                </span>
+              </button>
+              {!isRest && health.health_workout_id && (
+                <button type="button" className="list-row list-row--nav" onClick={() => goToStep(0)}>
+                  <span className="sheet-review-label">Fitbit</span>
+                  <span className="sheet-review-value">
+                    <WorkoutMetrics fields={health} />
+                  </span>
+                </button>
+              )}
+              <button type="button" className="list-row list-row--nav" onClick={() => goToStep(1)}>
+                <span className="sheet-review-label">Train</span>
+                <span className="sheet-review-value">
+                  {workoutTitle() || '—'}
+                  {!isRest && workoutType ? ` · ${workoutType}` : ''}
+                  {isRest ? ' · Rest' : ''}
+                </span>
+              </button>
+              <button type="button" className="list-row list-row--nav" onClick={() => goToStep(2)}>
+                <span className="sheet-review-label">Fuel</span>
+                <span className="sheet-review-value">
+                  {[
+                    formatGrams(parseGrams(protein)) ? `P ${formatGrams(parseGrams(protein))}` : null,
+                    formatGrams(parseGrams(creatine)) ? `Cr ${formatGrams(parseGrams(creatine))}` : null,
+                    meal.trim() ? 'Meal logged' : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ') || 'Skipped'}
+                </span>
+              </button>
+              <button type="button" className="list-row list-row--nav" onClick={() => goToStep(3)}>
+                <span className="sheet-review-label">Proof</span>
+                <span className="sheet-review-value">
+                  {[notes.trim() ? 'Notes' : null, preview ? 'Photo' : null].filter(Boolean).join(' · ') ||
+                    'Skipped'}
+                </span>
+              </button>
+            </div>
+            {preview && (
+              <div className="review-photo">
+                <img src={preview} alt="Proof preview" />
+              </div>
+            )}
+          </>
+        )}
       </div>
-    </div>
+    </Sheet>
   )
 }

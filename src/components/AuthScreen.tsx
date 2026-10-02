@@ -180,7 +180,10 @@ export function AuthScreen({
         <div className="auth-form-wrap">
           <div className="theme-auth-row">
             <Link to="/" className="auth-site-link">
-              ← Site
+              <svg viewBox="0 0 12 20" aria-hidden>
+                <path d="M10 2 2 10l8 8" />
+              </svg>
+              Site
             </Link>
             <ThemeIconButton
               resolved={resolvedTheme}
@@ -211,7 +214,10 @@ export function AuthScreen({
             {confirmEmail ? (
               <div className="confirm-panel" role="status">
                 <div className="confirm-icon" aria-hidden>
-                  ✉
+                  <svg viewBox="0 0 24 24">
+                    <rect x="3" y="5" width="18" height="14" rx="2.5" />
+                    <path d="m4 7.5 8 6 8-6" />
+                  </svg>
                 </div>
                 <h2 className="confirm-title">Confirm your email</h2>
                 <p className="confirm-body">
@@ -227,43 +233,25 @@ export function AuthScreen({
                   <div className="confirm-success">Confirmation email resent. Check your inbox again.</div>
                 )}
                 <button type="button" className="btn btn-primary btn-full btn-lg" onClick={goToSignIn}>
-                  I confirmed — Sign In →
+                  I confirmed — sign in
                 </button>
                 <button
                   type="button"
-                  className="btn btn-ghost btn-full"
-                  style={{ marginTop: 10 }}
+                  className="auth-link"
                   onClick={() => void handleResend()}
                   disabled={resendStatus === 'sending'}
                 >
                   {resendStatus === 'sending' ? 'Sending…' : 'Resend confirmation email'}
                 </button>
-                <p className="auth-footer" style={{ marginTop: 16 }}>
+                <p className="auth-switch">
                   Wrong address?{' '}
-                  <button type="button" className="link-btn" onClick={() => switchMode('register')}>
+                  <button type="button" className="auth-link auth-link--inline" onClick={() => switchMode('register')}>
                     Create account again
                   </button>
                 </p>
               </div>
             ) : (
               <>
-                <div className="auth-tabs">
-                  <button
-                    type="button"
-                    className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
-                    onClick={() => switchMode('login')}
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    type="button"
-                    className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
-                    onClick={() => switchMode('register')}
-                  >
-                    Create Account
-                  </button>
-                </div>
-
                 {error && <div className="auth-error">{error}</div>}
 
                 {mode === 'register' && !inviteCode ? (
@@ -281,77 +269,92 @@ export function AuthScreen({
                     </p>
                     <button
                       type="button"
-                      className="btn btn-ghost btn-full"
+                      className="auth-link"
                       onClick={() => switchMode('login')}
                     >
-                      ← Back to sign in
+                      Back to sign in
                     </button>
                   </div>
                 ) : (
                   <form className="auth-form" onSubmit={handleSubmit}>
-                    {mode === 'register' && (
-                      <div className="field">
-                        <label htmlFor="displayName">Display name</label>
+                    <div className="list-group">
+                      {mode === 'register' && (
+                        <label className="list-row auth-row" htmlFor="displayName">
+                          <span className="auth-row-label">Name</span>
+                          <input
+                            id="displayName"
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            placeholder="How you show up"
+                            autoComplete="nickname"
+                          />
+                        </label>
+                      )}
+
+                      <label className="list-row auth-row" htmlFor="email">
+                        <span className="auth-row-label">Email</span>
                         <input
-                          id="displayName"
-                          value={displayName}
-                          onChange={(e) => setDisplayName(e.target.value)}
-                          placeholder="How you show up"
-                          autoComplete="nickname"
-                        />
-                      </div>
-                    )}
-
-                    <div className="field">
-                      <label htmlFor="email">Email</label>
-                      <input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@email.com"
-                        autoComplete="email"
-                        required
-                      />
-                    </div>
-
-                    <div className="field">
-                      <label htmlFor="password">Password</label>
-                      <input
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder={mode === 'register' ? 'min 6 characters' : '••••••••'}
-                        autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                        required
-                        minLength={6}
-                      />
-                    </div>
-
-                    {mode === 'register' && (
-                      <div className="field">
-                        <label htmlFor="confirm">Confirm password</label>
-                        <input
-                          id="confirm"
-                          type="password"
-                          value={confirm}
-                          onChange={(e) => setConfirm(e.target.value)}
-                          placeholder="repeat password"
-                          autoComplete="new-password"
+                          id="email"
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="you@email.com"
+                          autoComplete="email"
                           required
                         />
-                      </div>
-                    )}
+                      </label>
+
+                      <label className="list-row auth-row" htmlFor="password">
+                        <span className="auth-row-label">Password</span>
+                        <input
+                          id="password"
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder={mode === 'register' ? 'min 6 characters' : 'Required'}
+                          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                          required
+                          minLength={6}
+                        />
+                      </label>
+
+                      {mode === 'register' && (
+                        <label className="list-row auth-row" htmlFor="confirm">
+                          <span className="auth-row-label">Confirm</span>
+                          <input
+                            id="confirm"
+                            type="password"
+                            value={confirm}
+                            onChange={(e) => setConfirm(e.target.value)}
+                            placeholder="repeat password"
+                            autoComplete="new-password"
+                            required
+                          />
+                        </label>
+                      )}
+                    </div>
 
                     <button
                       type="submit"
                       className="btn btn-primary btn-full btn-lg"
                       disabled={busy}
                     >
-                      {busy ? 'Please wait…' : mode === 'login' ? 'Sign In →' : 'Create Account →'}
+                      {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
                     </button>
                   </form>
+                )}
+
+                {!(mode === 'register' && !inviteCode) && (
+                  <p className="auth-switch">
+                    {mode === 'login' ? 'Have an invite?' : 'Already have an account?'}{' '}
+                    <button
+                      type="button"
+                      className="auth-link auth-link--inline"
+                      onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
+                    >
+                      {mode === 'login' ? 'Create account' : 'Sign in'}
+                    </button>
+                  </p>
                 )}
 
                 <div className="auth-footer">Private logs · photo proof · streaks that stick.</div>

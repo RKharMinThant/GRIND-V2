@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { toLocalDateString } from '../lib/dates'
 import { relativeSync } from '../health/logic'
 import type { PushState } from '../hooks/usePush'
@@ -49,6 +49,30 @@ type Props = {
 
 const APP_VERSION = __APP_VERSION__
 
+/** iOS group: footnote header above an inset grouped list, optional footnote below. */
+function Group({
+  title,
+  label,
+  footer,
+  tight,
+  children,
+}: {
+  title?: string
+  label: string
+  footer?: ReactNode
+  /** Followed by its own action button, so the gap below is 16px instead of 32px */
+  tight?: boolean
+  children: ReactNode
+}) {
+  return (
+    <section className={`set-group${tight ? ' set-group--tight' : ''}`} aria-label={label}>
+      {title && <h2 className="set-group-title">{title}</h2>}
+      <div className="list-group">{children}</div>
+      {footer && <p className="set-footer">{footer}</p>}
+    </section>
+  )
+}
+
 function Segment<T extends string | number>({
   label,
   value,
@@ -61,9 +85,9 @@ function Segment<T extends string | number>({
   onChange: (value: T) => void
 }) {
   return (
-    <div className="setting-row">
-      <span className="setting-row-label">{label}</span>
-      <div className="mode-seg" role="group" aria-label={label}>
+    <div className="list-row">
+      <span className="list-row-label">{label}</span>
+      <div className="segmented" role="group" aria-label={label}>
         {options.map((o) => (
           <button
             key={String(o.value)}
@@ -140,59 +164,72 @@ export function SettingsView({
 
   return (
     <div className="page settings-page">
-      <div className="page-header">
-        <div className="settings-head">
-          <button type="button" className="btn btn-icon" onClick={onBack} aria-label="Back">
-            ←
-          </button>
-          <div className="page-title">Settings</div>
-        </div>
+      <div className="set-head">
+        <button type="button" className="set-back" onClick={onBack} aria-label="Back">
+          <svg viewBox="0 0 12 20" aria-hidden>
+            <path d="M10 2 2 10l8 8" />
+          </svg>
+          Back
+        </button>
+        <h1 className="page-title">Settings</h1>
       </div>
 
-      <section className="settings-card" aria-label="Profile">
-        <h2 className="settings-title">Profile</h2>
-        <div className="field">
-          <label htmlFor="setName">Display name</label>
-          <input id="setName" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
-        </div>
-        <div className="field-row">
-          <div className="field">
-            <label htmlFor="setGoal">Weekly session goal</label>
-            <input
-              id="setGoal"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={14}
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="setSteps">Daily step goal</label>
-            <input
-              id="setSteps"
-              type="number"
-              inputMode="numeric"
-              min={1000}
-              max={100000}
-              step={500}
-              value={stepGoal}
-              onChange={(e) => setStepGoal(e.target.value)}
-            />
-          </div>
-        </div>
-        <div className="field">
-          <label htmlFor="setBirth">Birth date</label>
+      <Group
+        title="Profile"
+        label="Profile"
+        tight
+        footer="Used only to work out your GRIND Age."
+      >
+        <label className="list-row set-field" htmlFor="setName">
+          <span className="list-row-label">Name</span>
+          <input
+            id="setName"
+            className="set-input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={40}
+            autoComplete="nickname"
+          />
+        </label>
+        <label className="list-row set-field" htmlFor="setGoal">
+          <span className="list-row-label">Weekly goal</span>
+          <input
+            id="setGoal"
+            className="set-input num-input"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={14}
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+          />
+        </label>
+        <label className="list-row set-field" htmlFor="setSteps">
+          <span className="list-row-label">Daily step goal</span>
+          <input
+            id="setSteps"
+            className="set-input num-input"
+            type="number"
+            inputMode="numeric"
+            min={1000}
+            max={100000}
+            step={500}
+            value={stepGoal}
+            onChange={(e) => setStepGoal(e.target.value)}
+          />
+        </label>
+        <label className="list-row set-field" htmlFor="setBirth">
+          <span className="list-row-label">Birth date</span>
           <input
             id="setBirth"
+            className="set-input"
             type="date"
             min="1900-01-01"
             max={toLocalDateString()}
             value={birth}
             onChange={(e) => setBirth(e.target.value)}
           />
-        </div>
+        </label>
         <Segment
           label="Sex"
           value={sex ?? ('' as 'male' | 'female' | '')}
@@ -202,33 +239,40 @@ export function SettingsView({
           ]}
           onChange={(v) => v && void save({ sex: v }, true)}
         />
-        <p className="settings-note">Used only to work out your GRIND Age.</p>
-        {error && <div className="auth-error">{error}</div>}
-        <button
-          type="button"
-          className="btn btn-primary btn-full"
+      </Group>
 
-          disabled={saving}
-          onClick={() =>
-            void save({
-              display_name: name.trim() || displayName,
-              weekly_goal: Math.min(14, Math.max(1, Number(goal) || 4)),
-              daily_step_goal: Math.min(100000, Math.max(1000, Math.round((Number(stepGoal) || 10000) / 500) * 500)),
-              ...(birth && birth !== (birthDate ?? '') ? { birth_date: birth } : {}),
-            })
-          }
-        >
-          {saving ? 'Saving…' : saved ? 'Saved' : 'Save profile'}
-        </button>
-      </section>
+      {error && (
+        <p className="set-error" role="alert">
+          {error}
+        </p>
+      )}
+      <button
+        type="button"
+        className="btn btn-primary btn-full set-save"
+        disabled={saving}
+        onClick={() =>
+          void save({
+            display_name: name.trim() || displayName,
+            weekly_goal: Math.min(14, Math.max(1, Number(goal) || 4)),
+            daily_step_goal: Math.min(100000, Math.max(1000, Math.round((Number(stepGoal) || 10000) / 500) * 500)),
+            ...(birth && birth !== (birthDate ?? '') ? { birth_date: birth } : {}),
+          })
+        }
+      >
+        {saving ? 'Saving…' : saved ? 'Saved' : 'Save profile'}
+      </button>
 
-      <section className="settings-card" aria-label="Appearance">
-        <h2 className="settings-title">Appearance</h2>
-        <ThemeSegment preference={themePreference} onChange={onThemeChange} />
-      </section>
+      <Group title="Appearance" label="Appearance">
+        <div className="list-row set-row-control">
+          <ThemeSegment preference={themePreference} onChange={onThemeChange} />
+        </div>
+      </Group>
 
-      <section className="settings-card" aria-label="Units and week">
-        <h2 className="settings-title">Units &amp; week</h2>
+      <Group
+        title="Units & week"
+        label="Units and week"
+        footer="New lifts start in your chosen unit; existing lifts keep theirs."
+      >
         <Segment
           label="Distance"
           value={distanceUnit}
@@ -256,60 +300,60 @@ export function SettingsView({
           ]}
           onChange={(v) => void save({ week_start: v }, true)}
         />
-        <p className="settings-note">New lifts start in your chosen unit; existing lifts keep theirs.</p>
-      </section>
+      </Group>
 
       {health.enabled && (
-        <section className="settings-card" aria-label="Fitbit">
-          <h2 className="settings-title">Fitbit</h2>
-          <div className="setting-row">
-            <span className="setting-row-label">
-              <span className="health-dot" data-status={status} aria-hidden />
+        <Group
+          title="Fitbit"
+          label="Fitbit"
+          footer={
+            status === 'connected'
+              ? `Source: ${health.source === 'demo' ? 'demo data' : 'Google Health'}.`
+              : 'Workouts, sleep, heart rate and steps.'
+          }
+        >
+          <div className="list-row">
+            <span className="list-row-label set-status">
+              <span className="set-dot" data-status={status} aria-hidden />
               {status === 'connected' ? 'Connected' : status === 'expired' ? 'Connection expired' : 'Not connected'}
             </span>
-            <span className="settings-note">
-              {status === 'connected'
-                ? `${health.source === 'demo' ? 'Demo data' : 'Google Health'} · synced ${relativeSync(
-                    connection?.lastSyncedAt ?? null,
-                  )}`
-                : 'Workouts, sleep, heart rate and steps'}
-            </span>
-          </div>
-          <div className="settings-actions">
-            {status === 'connected' ? (
-              <>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => void health.sync()}
-                  disabled={health.loading}
-                >
-                  {health.loading ? 'Syncing…' : 'Sync now'}
-                </button>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => void health.disconnect()}>
-                  Disconnect
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={() => void health.connect()}
-                disabled={health.connecting || !connection}
-              >
-                {health.connecting ? 'Connecting…' : status === 'expired' ? 'Reconnect' : 'Connect Fitbit'}
-              </button>
+            {status === 'connected' && (
+              <span className="list-row-value">Synced {relativeSync(connection?.lastSyncedAt ?? null)}</span>
             )}
           </div>
+          {status === 'connected' ? (
+            <>
+              <button
+                type="button"
+                className="list-row set-action"
+                onClick={() => void health.sync()}
+                disabled={health.loading}
+              >
+                {health.loading ? 'Syncing…' : 'Sync now'}
+              </button>
+              <button type="button" className="list-row set-action set-action--danger" onClick={() => void health.disconnect()}>
+                Disconnect
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="list-row set-action"
+              onClick={() => void health.connect()}
+              disabled={health.connecting || !connection}
+            >
+              {health.connecting ? 'Connecting…' : status === 'expired' ? 'Reconnect' : 'Connect Fitbit'}
+            </button>
+          )}
           {health.error && (
-            <div className="settings-error">
-              <span>{health.error}</span>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => void health.sync()}>
+            <div className="list-row set-row-error">
+              <span className="list-row-label">{health.error}</span>
+              <button type="button" className="set-inline-btn" onClick={() => void health.sync()}>
                 Retry
               </button>
             </div>
           )}
-        </section>
+        </Group>
       )}
 
       {/* onChange goes straight to the profile update so a failure surfaces on the switch itself */}
@@ -320,52 +364,52 @@ export function SettingsView({
         onChange={(next) => onUpdateProfile({ notification_prefs: next })}
       />
 
-      <section className="settings-card" aria-label="Data">
-        <h2 className="settings-title">Data</h2>
-        <p className="settings-note">
-          {logs.length} session{logs.length === 1 ? '' : 's'} · {lifts.length} lift
-          {lifts.length === 1 ? '' : 's'}
-        </p>
-        <div className="settings-actions">
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() =>
-              downloadText(exportFilename('json'), buildExportJson(logs, lifts), 'application/json')
-            }
-          >
-            Export JSON
-          </button>
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() => downloadText(exportFilename('csv'), logsToCsv(logs), 'text/csv')}
-          >
-            Sessions as CSV
-          </button>
-        </div>
-      </section>
+      <Group
+        title="Data"
+        label="Data"
+        footer={`${logs.length} session${logs.length === 1 ? '' : 's'} · ${lifts.length} lift${
+          lifts.length === 1 ? '' : 's'
+        }`}
+      >
+        <button
+          type="button"
+          className="list-row set-action"
+          onClick={() =>
+            downloadText(exportFilename('json'), buildExportJson(logs, lifts), 'application/json')
+          }
+        >
+          Export JSON
+        </button>
+        <button
+          type="button"
+          className="list-row set-action"
+          onClick={() => downloadText(exportFilename('csv'), logsToCsv(logs), 'text/csv')}
+        >
+          Sessions as CSV
+        </button>
+      </Group>
 
-      <section className="settings-card" aria-label="Account">
-        <h2 className="settings-title">Account</h2>
-        <div className="setting-row">
-          <span className="setting-row-label">Signed in as</span>
-          <span className="settings-note">{email}</span>
+      <Group title="Account" label="Account">
+        <div className="list-row">
+          <span className="list-row-label">Signed in as</span>
+          <span className="list-row-value set-email">{email}</span>
         </div>
-        <div className="settings-actions">
-          {isAdmin && onAdminPanel && (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={onAdminPanel}>
-              Admin panel
-            </button>
-          )}
-          <button type="button" className="btn btn-ghost btn-sm" onClick={onSignOut}>
-            Sign out
+        {isAdmin && onAdminPanel && (
+          <button type="button" className="list-row list-row--nav" onClick={onAdminPanel}>
+            <span className="list-row-label">Admin panel</span>
           </button>
-        </div>
-        <p className="settings-note settings-about">
-          GRIND v{APP_VERSION} · <a href="/">grind marketing site</a>
-        </p>
-      </section>
+        )}
+      </Group>
+
+      <Group label="Sign out">
+        <button type="button" className="list-row set-action set-action--center set-action--danger" onClick={onSignOut}>
+          Sign out
+        </button>
+      </Group>
+
+      <p className="set-about t-caption">
+        GRIND v{APP_VERSION} · <a href="/">grind marketing site</a>
+      </p>
     </div>
   )
 }

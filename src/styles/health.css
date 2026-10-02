@@ -1,0 +1,777 @@
+/* ── Fitbit / health ───────────────────────────────────────────────────────── */
+.health-row {
+  margin: 0 0 12px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.health-row-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.health-row-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: var(--fs-subhead);
+}
+
+.health-row-meta {
+  font-size: var(--fs-footnote);
+  color: var(--muted);
+}
+
+.health-row-meta.warn,
+.health-row-error {
+  color: var(--danger);
+}
+
+.health-row-error {
+  font-size: var(--fs-footnote);
+  margin-top: 8px;
+}
+
+.health-row-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.health-row-actions .btn {
+  flex: 1;
+}
+
+.health-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted-2);
+}
+
+.health-dot[data-status='connected'] {
+  background: var(--ring-accent);
+}
+
+.health-dot[data-status='expired'] {
+  background: var(--danger);
+}
+
+/* ── Workout detected (list-row) ───────────────────────────────────────────── */
+.detect-card {
+  margin-top: 24px;
+}
+
+.detect-row {
+  gap: 12px;
+  padding-block: 12px;
+}
+
+.detect-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  color: var(--accent-ink);
+}
+
+.detect-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.detect-card-copy {
+  min-width: 0;
+}
+
+.detect-card-title {
+  font-size: var(--fs-headline);
+  line-height: var(--lh-headline);
+  font-weight: var(--fw-headline);
+  letter-spacing: var(--ls-headline);
+}
+
+.detect-card-facts {
+  margin-top: 1px;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  color: var(--muted);
+}
+
+.detect-dismiss {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: -6px -6px -6px 0;
+  color: var(--muted-2);
+}
+
+.detect-dismiss svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* ── Readiness ─────────────────────────────────────────────────────────────── */
+.rec-card--error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: var(--fs-subhead);
+}
+
+.readiness {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.readiness-copy {
+  min-width: 0;
+}
+
+.readiness-zone {
+  font-size: var(--fs-title3);
+  line-height: var(--lh-title3);
+  font-weight: 700;
+  letter-spacing: var(--ls-title3);
+}
+
+.readiness-line {
+  margin: 2px 0 0;
+  font-size: var(--fs-subhead);
+  line-height: var(--lh-subhead);
+  color: var(--muted);
+}
+
+.readiness.green .readiness-zone {
+  color: var(--accent-ink);
+}
+
+.readiness.yellow .readiness-zone {
+  color: var(--warn-ink);
+}
+
+.readiness.red .readiness-zone {
+  color: var(--danger);
+}
+
+.readiness--building {
+  display: block;
+  margin-bottom: 16px;
+  font-size: var(--fs-subhead);
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Sleep tile spans the card; resting HR and HRV sit side by side beneath it */
+.rec-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rec-tile {
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  padding: 12px;
+  min-width: 0;
+}
+
+.rec-tile--sleep {
+  grid-column: 1 / -1;
+}
+
+.rec-num {
+  margin-top: 4px;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-title2);
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.rec-tile--sleep .rec-num {
+  color: var(--c-sleep);
+}
+
+.rec-tile--heart .rec-num {
+  color: var(--c-heart);
+}
+
+.rec-num small {
+  margin-left: 3px;
+  font-family: var(--font);
+  font-size: var(--fs-footnote);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.rec-delta {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  color: var(--muted);
+}
+
+.rec-delta.good {
+  color: var(--accent-ink);
+}
+
+.rec-delta.bad {
+  color: var(--danger);
+}
+
+.sleep-bar {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.sleep-seg.deep {
+  background: var(--sleep-deep);
+}
+
+.sleep-seg.rem {
+  background: var(--sleep-rem);
+}
+
+.sleep-seg.light {
+  background: var(--sleep-light);
+}
+
+.sleep-seg.awake {
+  background: var(--sleep-awake);
+}
+
+.sleep-legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  color: var(--muted);
+}
+
+.sleep-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: 0;
+}
+
+.sleep-legend .deep::before {
+  background: var(--sleep-deep);
+}
+
+.sleep-legend .rem::before {
+  background: var(--sleep-rem);
+}
+
+.rec-hint {
+  margin-top: 12px;
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+}
+
+.rec-hint.low {
+  color: var(--danger);
+}
+
+.rec-foot {
+  margin: 12px 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--muted);
+}
+
+/* ── Steps heatmap tiers (Heatmap steps mode) ──────────────────────────────── */
+.heatmap-cell.steps.l1,
+.heatmap-legend .swatch.steps.l1 {
+  background: color-mix(in srgb, var(--c-activity) 32%, transparent);
+}
+
+.heatmap-cell.steps.l2,
+.heatmap-legend .swatch.steps.l2 {
+  background: color-mix(in srgb, var(--c-activity) 62%, transparent);
+}
+
+.heatmap-cell.steps.l3,
+.heatmap-legend .swatch.steps.l3 {
+  background: var(--c-activity);
+}
+
+/* ── Tracker stats on a logged session (HealthStats) ───────────────────────── */
+.health-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.health-stats-facts {
+  font-weight: 600;
+  font-size: var(--fs-subhead);
+}
+
+.health-stats.compact .health-stats-facts {
+  font-size: var(--fs-footnote);
+}
+
+.health-stats-demo {
+  font-size: var(--fs-caption);
+  color: var(--muted-2);
+}
+
+.zone-bar {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.zone-seg.fat {
+  background: var(--heart-light);
+}
+
+.zone-seg.cardio {
+  background: var(--heart-mid);
+}
+
+.zone-seg.peak {
+  background: var(--c-heart);
+}
+
+.zone-legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: var(--fs-footnote);
+  color: var(--muted);
+}
+
+.zone-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.zone-legend .fat::before {
+  background: var(--heart-light);
+}
+
+.zone-legend .cardio::before {
+  background: var(--heart-mid);
+}
+
+.zone-legend .peak::before {
+  background: var(--c-heart);
+}
+
+.health-attached {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.fitbit-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fitbit-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.82rem;
+  transition: border-color 160ms var(--ease-out);
+}
+
+.fitbit-pick-row span {
+  color: var(--muted);
+  flex: 1;
+  min-width: 0;
+}
+
+.fitbit-pick-row em {
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted-2);
+}
+
+.fitbit-pick-row em.attach {
+  color: var(--text);
+}
+
+.fitbit-pick-row:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.fitbit-pick-row:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tag.health {
+  background: var(--ice-dim);
+  color: var(--c-activity);
+}
+
+/* ── Chart palette ─────────────────────────────────────────────────────────── */
+/* One hue, three weights — used where a bar is split into intensities or stages */
+:root {
+  --activity-light: color-mix(in srgb, var(--c-activity) 36%, transparent);
+  --activity-mid: color-mix(in srgb, var(--c-activity) 66%, transparent);
+  --heart-light: color-mix(in srgb, var(--c-heart) 36%, transparent);
+  --heart-mid: color-mix(in srgb, var(--c-heart) 66%, transparent);
+  --sleep-deep: color-mix(in srgb, var(--c-sleep) 68%, #000);
+  --sleep-rem: var(--c-sleep);
+  --sleep-light: color-mix(in srgb, var(--c-sleep) 52%, #fff);
+  --sleep-awake: var(--muted-2);
+}
+
+.tone-accent { --tone: var(--accent-ink); }
+.tone-accent-soft { --tone: color-mix(in srgb, var(--accent-ink) 40%, transparent); }
+.tone-ice { --tone: var(--c-activity); }
+.tone-ice-soft { --tone: var(--activity-mid); }
+.tone-danger { --tone: var(--danger); }
+.tone-rem { --tone: var(--c-sleep); }
+.tone-muted { --tone: var(--muted-2); }
+
+.chart-empty {
+  margin: 8px 0;
+  font-size: var(--fs-subhead);
+  color: var(--muted);
+}
+
+.chart-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.chart-readout-value {
+  font-size: var(--fs-title1);
+  line-height: 1.1;
+}
+
+.chart-readout-value small {
+  margin-left: 4px;
+  font-family: var(--font);
+  font-size: var(--fs-subhead);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.chart-readout-meta {
+  font-size: var(--fs-footnote);
+  color: var(--muted);
+}
+
+/* Step bars */
+.step-bars-plot {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 136px;
+  padding-top: 18px;
+}
+
+.step-bars-plot.dense {
+  gap: 3px;
+}
+
+.step-bars-goal {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1.5px dashed var(--muted-2);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.step-bars-goal span {
+  position: absolute;
+  right: 0;
+  top: -17px;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.step-bar {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding: 0;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.step-bar-fill {
+  width: 100%;
+  border-radius: 6px 6px 3px 3px;
+  background: var(--activity-mid);
+  transform-origin: bottom;
+  animation: bar-grow 600ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 18ms);
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.step-bars-plot.dense .step-bar-fill {
+  border-radius: 3px 3px 1px 1px;
+}
+
+.step-bar.hit .step-bar-fill {
+  background: var(--c-activity);
+}
+
+.step-bar.active .step-bar-fill {
+  background: var(--c-activity);
+}
+
+.step-bars-plot:has(.step-bar.active) .step-bar:not(.active) .step-bar-fill {
+  opacity: 0.6;
+}
+
+@keyframes bar-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+.step-bars-axis {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.step-bars-axis span {
+  flex: 1;
+  text-align: center;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Sparkline */
+.sparkline {
+  position: relative;
+  width: 100%;
+}
+
+.sparkline svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.sparkline-line {
+  fill: none;
+  stroke: var(--tone, var(--accent-ink));
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sparkline-dot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--tone, var(--accent-ink));
+  box-shadow: 0 0 0 3px var(--surface-2);
+}
+
+/* Day curve */
+.day-curve-plot {
+  position: relative;
+  height: 110px;
+  touch-action: pan-y;
+  cursor: crosshair;
+  background-image: linear-gradient(to right, var(--separator) 0.5px, transparent 0.5px);
+  background-size: 25% 100%;
+}
+
+.day-curve-plot svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.day-curve-area {
+  fill: color-mix(in srgb, var(--c-heart) 14%, transparent);
+}
+
+.day-curve-line {
+  fill: none;
+  stroke: var(--c-heart);
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+}
+
+.day-curve-cursor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--text);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.day-curve-axis,
+.hypnogram-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Hypnogram */
+.hypnogram-plot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hypnogram-lane {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.hypnogram-lane-label {
+  font-size: var(--fs-caption);
+  color: var(--muted);
+}
+
+.hypnogram-track {
+  position: relative;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--surface-2);
+}
+
+.hypnogram-seg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  animation: chart-fade 500ms var(--ease-out) both;
+}
+
+.stage-awake { background: var(--sleep-awake); }
+.stage-rem { background: var(--sleep-rem); }
+.stage-light { background: var(--sleep-light); }
+.stage-deep { background: var(--sleep-deep); }
+
+.hypnogram-axis {
+  padding-left: 52px;
+}
+
+@keyframes chart-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Stacked bar */
+.stacked-bar-track {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.stacked-bar-part {
+  background: var(--tone);
+  min-width: 3px;
+}
+
+.stacked-bar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 8px;
+  font-size: var(--fs-footnote);
+  line-height: var(--lh-footnote);
+  color: var(--muted);
+}
+
+.stacked-bar-legend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: 0;
+  background: var(--tone);
+}
+
+.stacked-bar-legend b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-bar-fill,
+  .hypnogram-seg {
+    animation: none;
+  }
+}

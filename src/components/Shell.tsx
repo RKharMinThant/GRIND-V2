@@ -1,15 +1,15 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { ThemePreference } from '../lib/theme'
-import { ThemeIconButton } from './ThemeControls'
 
 export type Tab = 'home' | 'history' | 'progress' | 'calendar' | 'body' | 'settings'
 
 type Props = {
   tab: Tab
   displayName: string
-  themePreference: ThemePreference
-  resolvedTheme: 'light' | 'dark'
-  onThemeCycle: () => void
+  /** Appearance now lives in Settings → Appearance; these are accepted so call sites don't break. */
+  themePreference?: ThemePreference
+  resolvedTheme?: 'light' | 'dark'
+  onThemeCycle?: () => void
   onTab: (t: Tab) => void
   onNewLog: () => void
   onOpenSettings: () => void
@@ -19,6 +19,19 @@ type Props = {
   showBody?: boolean
   children: ReactNode
 }
+
+/** Shown centred in the top bar once the page has scrolled under it */
+const TAB_TITLES: Record<Tab, string> = {
+  home: 'Summary',
+  history: 'History',
+  progress: 'Progress',
+  calendar: 'Calendar',
+  body: 'Body',
+  settings: 'Settings',
+}
+
+/** Scroll distance (px) after which the top bar picks up its material */
+const SCROLL_THRESHOLD = 44
 
 function IconHome() {
   return (
@@ -63,12 +76,17 @@ function IconCalendar() {
   )
 }
 
+function IconPlus() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  )
+}
+
 export function Shell({
   tab,
   displayName,
-  themePreference,
-  resolvedTheme,
-  onThemeCycle,
   onTab,
   onNewLog,
   onOpenSettings,
@@ -79,11 +97,22 @@ export function Shell({
 }: Props) {
   const initial = (displayName[0] || 'G').toUpperCase()
 
+  // The top bar is clear at the top of the page and gains a material once the
+  // page scrolls past it. setState bails out when the value is unchanged, so
+  // this does not re-render on every scroll event.
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > SCROLL_THRESHOLD)
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    return () => window.removeEventListener('scroll', update)
+  }, [tab])
+
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-scrolled={scrolled ? 'true' : 'false'}>
       <header className="topbar">
-        <div className="logo">
-          GRIND<span>.</span>
+        <div className="topbar-title" aria-hidden={!scrolled}>
+          {TAB_TITLES[tab]}
         </div>
         <div className="topbar-right">
           {isAdmin && (
@@ -99,11 +128,6 @@ export function Shell({
               </svg>
             </button>
           )}
-          <ThemeIconButton
-            resolved={resolvedTheme}
-            preference={themePreference}
-            onCycle={onThemeCycle}
-          />
           <button
             type="button"
             className={`user-chip ${tab === 'settings' ? 'active' : ''}`}
@@ -111,95 +135,93 @@ export function Shell({
             aria-label="Open settings"
             aria-current={tab === 'settings' ? 'page' : undefined}
           >
-            <div className="avatar">{initial}</div>
-            <span>{displayName}</span>
+            <span className="avatar" aria-hidden>
+              {initial}
+            </span>
           </button>
         </div>
       </header>
 
       <main className="app-main">{children}</main>
 
-      {/* 5-up: Home · History · Log · Progress · Calendar */}
-      <div className="dock-wrap">
-        <nav className="dock-bar dock-bar--five" aria-label="Main">
+      {/* iOS tab bar: Home · History · Log · Progress · Calendar|Body */}
+      <nav className="dock-bar" aria-label="Main">
+        <button
+          type="button"
+          className={`dock-slot ${tab === 'home' ? 'active' : ''}`}
+          onClick={() => onTab('home')}
+          aria-current={tab === 'home' ? 'page' : undefined}
+        >
+          <span className="dock-slot-icon">
+            <IconHome />
+          </span>
+          <span className="dock-slot-label">Home</span>
+        </button>
+
+        <button
+          type="button"
+          className={`dock-slot ${tab === 'history' ? 'active' : ''}`}
+          onClick={() => onTab('history')}
+          aria-current={tab === 'history' ? 'page' : undefined}
+        >
+          <span className="dock-slot-icon">
+            <IconHistory />
+          </span>
+          <span className="dock-slot-label">History</span>
+        </button>
+
+        <div className="dock-log-wrap">
           <button
             type="button"
-            className={`dock-slot ${tab === 'home' ? 'active' : ''}`}
-            onClick={() => onTab('home')}
-            aria-current={tab === 'home' ? 'page' : undefined}
+            className="dock-log"
+            onClick={onNewLog}
+            title="Log session"
+            aria-label="Log session"
           >
-            <span className="dock-slot-icon">
-              <IconHome />
+            <span className="dock-log-plus" aria-hidden>
+              <IconPlus />
             </span>
-            <span className="dock-slot-label">Home</span>
           </button>
+        </div>
 
+        <button
+          type="button"
+          className={`dock-slot ${tab === 'progress' ? 'active' : ''}`}
+          onClick={() => onTab('progress')}
+          aria-current={tab === 'progress' ? 'page' : undefined}
+        >
+          <span className="dock-slot-icon">
+            <IconProgress />
+          </span>
+          <span className="dock-slot-label">Progress</span>
+        </button>
+
+        {showBody ? (
           <button
             type="button"
-            className={`dock-slot ${tab === 'history' ? 'active' : ''}`}
-            onClick={() => onTab('history')}
-            aria-current={tab === 'history' ? 'page' : undefined}
+            className={`dock-slot ${tab === 'body' ? 'active' : ''}`}
+            onClick={() => onTab('body')}
+            aria-current={tab === 'body' ? 'page' : undefined}
           >
             <span className="dock-slot-icon">
-              <IconHistory />
+              <IconBody />
             </span>
-            <span className="dock-slot-label">History</span>
+            <span className="dock-slot-label">Body</span>
           </button>
-
-          <div className="dock-log-wrap">
-            <button
-              type="button"
-              className="dock-log"
-              onClick={onNewLog}
-              title="Log session"
-              aria-label="Log session"
-            >
-              <span className="dock-log-plus" aria-hidden>
-                +
-              </span>
-            </button>
-            <span className="dock-log-caption">Log</span>
-          </div>
-
+        ) : (
           <button
             type="button"
-            className={`dock-slot ${tab === 'progress' ? 'active' : ''}`}
-            onClick={() => onTab('progress')}
-            aria-current={tab === 'progress' ? 'page' : undefined}
+            className={`dock-slot ${tab === 'calendar' ? 'active' : ''}`}
+            onClick={() => onTab('calendar')}
+            aria-current={tab === 'calendar' ? 'page' : undefined}
           >
             <span className="dock-slot-icon">
-              <IconProgress />
+              <IconCalendar />
             </span>
-            <span className="dock-slot-label">Progress</span>
+            <span className="dock-slot-label">Calendar</span>
           </button>
-
-          {showBody ? (
-            <button
-              type="button"
-              className={`dock-slot ${tab === 'body' ? 'active' : ''}`}
-              onClick={() => onTab('body')}
-              aria-current={tab === 'body' ? 'page' : undefined}
-            >
-              <span className="dock-slot-icon">
-                <IconBody />
-              </span>
-              <span className="dock-slot-label">Body</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              className={`dock-slot ${tab === 'calendar' ? 'active' : ''}`}
-              onClick={() => onTab('calendar')}
-              aria-current={tab === 'calendar' ? 'page' : undefined}
-            >
-              <span className="dock-slot-icon">
-                <IconCalendar />
-              </span>
-              <span className="dock-slot-label">Calendar</span>
-            </button>
-          )}
-        </nav>
-      </div>
+        )}
+      </nav>
     </div>
   )
 }
