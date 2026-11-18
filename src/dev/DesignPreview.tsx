@@ -1,5 +1,5 @@
 // Dev-only design preview: every screen with demo data, no login and no network.
-//   /preview?screen=home|history|progress|calendar|body|settings|auth
+//   /preview?screen=home|history|progress|calendar|body|settings|auth|oauth-consent
 //           |sheet-log|sheet-lift|sheet-lift-edit|sheet-lift-progress|sheet-detail
 //           |grindage|grindage-new|sheet-rest|sheet-calendar   (sheet-grindage = grindage)
 //           |instrument   (hero primitives: ArcGauge, Ring glow, CountUp)
@@ -18,6 +18,7 @@ import { LiftEditorSheet } from '../components/LiftEditorSheet'
 import { LiftProgressSheet } from '../components/LiftProgressSheet'
 import { LogDetail } from '../components/LogDetail'
 import { LogFormSheet } from '../components/LogFormSheet'
+import { OAuthConsent } from '../components/OAuthConsent'
 import { LogsList } from '../components/LogsList'
 import { ProgressView } from '../components/ProgressView'
 import { RestDaySheet } from '../components/RestDaySheet'
@@ -31,6 +32,7 @@ import { useHealth } from '../health/useHealth'
 import type { GrindAgeState } from '../hooks/useGrindAge'
 import { toLocalDateString } from '../lib/dates'
 import type { ThemePreference } from '../lib/theme'
+import type { AgentGrant } from '../hooks/useAgentGrants'
 import type { Log, TrackedLift } from '../types/database'
 import * as fx from './fixtures'
 
@@ -42,6 +44,7 @@ const SCREENS = [
   'body',
   'settings',
   'auth',
+  'oauth-consent',
   'sheet-log',
   'sheet-lift',
   'sheet-lift-edit',
@@ -75,6 +78,12 @@ const TAB_FOR_SCREEN: Partial<Record<Screen, Tab>> = {
   'sheet-lift-progress': 'progress',
   instrument: 'home',
 }
+
+/** Stable reference: SettingsView re-runs its grants load when this changes. */
+const DEMO_GRANTS: AgentGrant[] = [
+  { clientId: 'demo-chatgpt', name: 'ChatGPT', grantedAt: new Date(Date.now() - 2 * 86_400_000).toISOString() },
+  { clientId: 'demo-cursor', name: 'Cursor', grantedAt: new Date(Date.now() - 20 * 86_400_000).toISOString() },
+]
 
 const noop = () => {}
 const asyncNoop = async () => {}
@@ -228,6 +237,21 @@ export default function DesignPreview() {
 
   if (screen === 'instrument') return <InstrumentPreview />
 
+  if (screen === 'oauth-consent') {
+    return (
+      <OAuthConsent
+        email={fx.profile.email}
+        details={{
+          clientName: 'ChatGPT',
+          redirectUri: 'https://chatgpt.com/connector/oauth/abc123',
+        }}
+        onApprove={asyncNoop}
+        onDeny={asyncNoop}
+        onSignOut={noop}
+      />
+    )
+  }
+
   if (screen === 'auth') {
     return (
       <AuthScreen
@@ -335,6 +359,7 @@ export default function DesignPreview() {
               health={health}
               logs={fx.logs}
               lifts={fx.lifts}
+              agentGrants={DEMO_GRANTS}
               onSignOut={noop}
               onBack={() => setTab(settingsFrom)}
             />
