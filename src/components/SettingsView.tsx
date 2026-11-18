@@ -52,7 +52,7 @@ type Props = {
 
 const APP_VERSION = __APP_VERSION__
 
-const MCP_URL = `${(import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? 'https://your-project.supabase.co'}/functions/v1/mcp`
+const MCP_URL = 'https://grind.andrewmarcello.me/mcp'
 
 function connectedLabel(iso: string | null): string | null {
   if (!iso) return null

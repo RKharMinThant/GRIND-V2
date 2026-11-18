@@ -56,12 +56,15 @@ function buildServer(ctx: Ctx): McpServer {
 const key = anonKey()
 // Explicit, so the advertised metadata never depends on how the request URL was proxied
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+// The public address agents connect to: the app's domain, proxied here by a Vercel rewrite.
+// Agents check the advertised resource matches the URL they were given.
+const PUBLIC_URL = Deno.env.get('MCP_PUBLIC_URL') ?? 'https://grind.andrewmarcello.me/mcp'
 
 export const handler = pipeline(
   [
     // 1. Serves /oauth-protected-resource and adds the WWW-Authenticate challenge to 401s
     withOAuthProtectedResource({
-      resourceServer: `${SUPABASE_URL}/functions/v1/mcp`,
+      resourceServer: PUBLIC_URL,
       authorizationServer: `${SUPABASE_URL}/auth/v1`,
     }),
     // 2. Verifies the user's access token and scopes a client to them (RLS applies)

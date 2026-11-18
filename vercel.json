@@ -3,14 +3,49 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Content-Security-Policy", "value": "frame-ancestors 'none'" }
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'none'"
+        }
       ]
     }
   ],
   "rewrites": [
-    { "source": "/privacy-policy", "destination": "/privacy-policy.html" },
-    { "source": "/tncs", "destination": "/tncs.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/mcp",
+      "destination": "https://whyjvtzdklbxkhhswcmj.supabase.co/functions/v1/mcp"
+    },
+    {
+      "source": "/mcp/:path*",
+      "destination": "https://whyjvtzdklbxkhhswcmj.supabase.co/functions/v1/mcp/:path*"
+    },
+    {
+      "source": "/.well-known/oauth-protected-resource/mcp",
+      "destination": "https://whyjvtzdklbxkhhswcmj.supabase.co/functions/v1/mcp/oauth-protected-resource"
+    },
+    {
+      "source": "/.well-known/oauth-protected-resource",
+      "destination": "https://whyjvtzdklbxkhhswcmj.supabase.co/functions/v1/mcp/oauth-protected-resource"
+    },
+    {
+      "source": "/.well-known/oauth-authorization-server",
+      "destination": "https://whyjvtzdklbxkhhswcmj.supabase.co/.well-known/oauth-authorization-server/auth/v1"
+    },
+    {
+      "source": "/privacy-policy",
+      "destination": "/privacy-policy.html"
+    },
+    {
+      "source": "/tncs",
+      "destination": "/tncs.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
