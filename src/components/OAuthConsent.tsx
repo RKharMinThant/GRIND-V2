@@ -32,7 +32,7 @@ function redirectHost(uri: string): string | null {
   }
 }
 
-const KNOWN_HOSTS = ['chatgpt.com', 'claude.ai', 'claude.com', 'cursor.com', 'localhost', '127.0.0.1']
+const KNOWN_HOSTS = ['chatgpt.com', 'openai.com', 'claude.ai', 'claude.com', 'cursor.com', 'meta.ai', 'meta.com', 'localhost', '127.0.0.1']
 const KNOWN_SCHEMES = ['cursor:', 'vscode:']
 const BLOCKED_SCHEMES = ['javascript:', 'data:', 'vbscript:', 'file:', 'blob:']
 
