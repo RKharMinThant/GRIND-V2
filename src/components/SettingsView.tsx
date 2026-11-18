@@ -1,6 +1,7 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { toLocalDateString } from '../lib/dates'
 import { relativeSync } from '../health/logic'
+import { useAgentGrants, type AgentGrant } from '../hooks/useAgentGrants'
 import type { PushState } from '../hooks/usePush'
 import type { HealthState } from '../health/useHealth'
 import { buildExportJson, downloadText, exportFilename, logsToCsv } from '../lib/exportData'
@@ -43,11 +44,106 @@ type Props = {
   lifts: TrackedLift[]
   isAdmin?: boolean
   onAdminPanel?: () => void
+  /** Design preview only: skips the grants fetch. Must be a stable reference. */
+  agentGrants?: AgentGrant[]
   onSignOut: () => void
   onBack: () => void
 }
 
 const APP_VERSION = __APP_VERSION__
+
+const MCP_URL = 'https://grind.andrewmarcello.me/mcp'
+
+function connectedLabel(iso: string | null): string | null {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  const days = Math.floor((Date.now() - d.getTime()) / 86_400_000)
+  if (days <= 0) return 'Connected today'
+  if (days === 1) return 'Connected yesterday'
+  if (days < 7) return `Connected ${days} days ago`
+  return `Connected ${d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
+}
+
+/** MCP endpoint + one row per agent the user has authorised. */
+function ConnectedAgents({ override }: { override?: AgentGrant[] }) {
+  const { grants, status, error, revokingId, refresh, revoke } = useAgentGrants(override)
+  const [copied, setCopied] = useState(false)
+  const timer = useRef<number | undefined>(undefined)
+
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+
+  async function copyUrl() {
+    try {
+      await navigator.clipboard.writeText(MCP_URL)
+      setCopied(true)
+      window.clearTimeout(timer.current)
+      timer.current = window.setTimeout(() => setCopied(false), 1600)
+    } catch {
+      /* clipboard blocked: the URL is selectable in the row */
+    }
+  }
+
+  return (
+    <Group
+      title="Connected agents"
+      label="Connected agents"
+      footer="Connect ChatGPT, Cursor, Claude or any MCP app: add a custom connector with this URL and sign in."
+    >
+      <div className="list-row">
+        <span className="set-mcp-url" title={MCP_URL}>
+          {MCP_URL}
+        </span>
+        <button type="button" className="set-inline-btn" onClick={() => void copyUrl()} aria-label="Copy connector URL">
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+      </div>
+      {status === 'loading' && (
+        <div className="list-row set-skeleton-row" aria-busy="true" aria-label="Loading connected agents">
+          <span className="set-skeleton" />
+        </div>
+      )}
+      {status === 'ready' && grants.length === 0 && (
+        <div className="list-row">
+          <span className="list-row-label set-muted">No agents connected yet</span>
+        </div>
+      )}
+      {status === 'ready' &&
+        grants.map((g) => {
+          const when = connectedLabel(g.grantedAt)
+          return (
+            <div className="list-row" key={g.clientId}>
+              <span className="set-agent">
+                <span className="set-agent-name">{g.name}</span>
+                {when && <span className="set-row-note">{when}</span>}
+              </span>
+              <button
+                type="button"
+                className="set-inline-btn set-inline-btn--danger"
+                disabled={revokingId === g.clientId}
+                aria-label={`Disconnect ${g.name}`}
+                onClick={() => {
+                  if (window.confirm(`Disconnect ${g.name}? It will lose access to your GRIND data.`)) {
+                    void revoke(g)
+                  }
+                }}
+              >
+                {revokingId === g.clientId ? 'Disconnecting…' : 'Disconnect'}
+              </button>
+            </div>
+          )
+        })}
+      {(status === 'error' || (status === 'ready' && error)) && (
+        <div className="list-row set-row-error" role="alert">
+          <span className="list-row-label">{error ?? 'Could not load connected agents'}</span>
+          <button type="button" className="set-inline-btn" onClick={() => void refresh()}>
+            Retry
+          </button>
+        </div>
+      )}
+    </Group>
+  )
+}
 
 /** iOS group: footnote header above an inset grouped list, optional footnote below. */
 function Group({
@@ -125,6 +221,7 @@ export function SettingsView({
   lifts,
   isAdmin,
   onAdminPanel,
+  agentGrants,
   onSignOut,
   onBack,
 }: Props) {
@@ -363,6 +460,8 @@ export function SettingsView({
         fitbitConnected={status === 'connected'}
         onChange={(next) => onUpdateProfile({ notification_prefs: next })}
       />
+
+      <ConnectedAgents override={agentGrants} />
 
       <Group
         title="Data"

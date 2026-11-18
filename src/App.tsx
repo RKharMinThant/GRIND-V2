@@ -10,6 +10,7 @@ import { LiftEditorSheet } from './components/LiftEditorSheet'
 import { LiftProgressSheet } from './components/LiftProgressSheet'
 import { LogDetail } from './components/LogDetail'
 import { LogFormSheet } from './components/LogFormSheet'
+import { OAuthConsentRoute } from './components/OAuthConsent'
 import { LogsList } from './components/LogsList'
 import { ProgressView } from './components/ProgressView'
 import { GrindAgePage } from './components/GrindAgePage'
@@ -277,6 +278,12 @@ export default function App() {
         onThemeCycle={toggleLightDark}
       />
     )
+  }
+
+  // Supabase sends the user here with ?authorization_id=…; the query is left in place
+  // so signing in or out comes straight back to this screen.
+  if (window.location.pathname.replace(/\/+$/, '') === '/app/oauth/consent') {
+    return <OAuthConsentRoute email={user.email ?? ''} onSignOut={() => void signOut()} />
   }
 
   return (
