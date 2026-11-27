@@ -2,7 +2,7 @@
 // Tool groups: profile (get_profile, update_settings), logs (list/get/create/update/delete_log,
 // log_rest_day), summaries (get_week_summary, get_training_load, get_recent_prs), lifts (board +
 // history), measurements, and Fitbit health (get_health_summary, get_readiness, get_body_section,
-// get_grind_age; rate-limited by mcp_take). No photo access.
+// get_grind_age; rate-limited by mcp_take), and photos (add_log_photo only: upload, never view).
 // Deploy: `npm run mcp:deploy` (= supabase functions deploy mcp --no-verify-jwt). The function
 // verifies the OAuth-issued access token itself (and re-checks the session on every request, so a
 // revoked grant stops working at once); unauthenticated calls get the `WWW-Authenticate: Bearer
@@ -19,6 +19,7 @@ import { registerHealthTools } from './tools/health.ts'
 import { registerLiftTools } from './tools/lifts.ts'
 import { registerLogTools } from './tools/logs.ts'
 import { registerMeasurementTools } from './tools/measurements.ts'
+import { registerPhotoTools } from './tools/photos.ts'
 import { registerProfileTools } from './tools/profile.ts'
 import { registerSummaryTools } from './tools/summaries.ts'
 
@@ -26,7 +27,7 @@ const INSTRUCTIONS =
   `GRIND is the user's personal workout and health journal. It holds session logs (one row per workout or rest day), a lift board (tracked exercises with per-set reps and weight plus a progress history), body measurements, and optional Fitbit data from Google Health.
 Conventions: dates are the user's local calendar date as YYYY-MM-DD. Date-sensitive tools accept an optional IANA time_zone; otherwise they use the time zone of the user's phone, or UTC, and report the zone they used. Body weight is always kg. Each lift has its own weight unit (kg or lb). Durations are minutes; protein and creatine are grams. A rest day is a log whose workout is "Rest", and it counts toward the streak and the weekly session count, as in the app.
 Start with get_week_summary for "how am I doing" questions, list_logs for history and list_lifts / get_lift_progress for strength.
-Deletes are permanent: before any delete_* call, tell the user exactly what will be removed and wait for a clear yes. Also confirm update_settings changes. Fitbit tools fail when Fitbit isn't connected; the user connects it in GRIND Settings (not possible here). Photos are not available through this server.`
+Deletes are permanent: before any delete_* call, tell the user exactly what will be removed and wait for a clear yes. Also confirm update_settings changes. Fitbit tools fail when Fitbit isn't connected; the user connects it in GRIND Settings (not possible here). Photos: add_log_photo can attach one image to a log that has none; photos can't be viewed, replaced or removed through this server.`
 
 const env = (k: string) => Deno.env.get(k) || undefined
 
@@ -50,6 +51,7 @@ function buildServer(ctx: Ctx): McpServer {
   registerLiftTools(server, ctx) // list_lifts, get_lift_progress, create_lift, log_lift_session, update_lift, delete_lift, delete_lift_entry
   registerMeasurementTools(server, ctx) // add_measurement, list_measurements, delete_measurement
   registerHealthTools(server, ctx) // get_health_summary, get_readiness, get_body_section, get_grind_age
+  registerPhotoTools(server, ctx) // add_log_photo (upload only)
   return server
 }
 
@@ -90,6 +92,7 @@ export const handler = pipeline(
     // A fresh server per request: Edge Functions are stateless
     return createMcpHandler(() => buildServer(ctx), {
       onerror: (e) => console.error('mcp error', e.message), // message only
+      maxRequestBodySize: 6 * 1024 * 1024, // room for a 3 MB image as base64 (default is 4 MiB)
     }).fetch(req)
   },
 )

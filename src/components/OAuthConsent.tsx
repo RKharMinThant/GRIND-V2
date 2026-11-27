@@ -19,6 +19,7 @@ type Props = {
 const PERMISSIONS = [
   'Read your workouts, lifts, measurements and Fitbit health data',
   'Log, edit and delete sessions, lifts and measurements',
+  'Add a photo to a log that has none (it can’t view, replace or remove photos)',
   'Change your goals, units and notification settings',
 ]
 
@@ -150,7 +151,7 @@ export function OAuthConsent({ email, details, onApprove, onDeny, onSignOut }: P
           ))}
         </ul>
         <p className="oauth-note">
-          It acts as you inside GRIND. It can’t see your workout photos or your password. You can
+          It acts as you inside GRIND. It can’t view, replace or remove your workout photos, or see your password. You can
           disconnect it any time in Settings → Connected agents.
         </p>
 

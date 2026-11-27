@@ -401,3 +401,158 @@ export const escapeLike = (s: string): string => s.replace(/[\\%_]/g, (c) => `\\
 export function sanitizeSearch(q: string): string {
   return q.replace(/[^\p{L}\p{N} '-]/gu, ' ').replace(/\s+/g, ' ').trim()
 }
+
+// ---------------------------------------------------------------- photos (add_log_photo)
+
+export const MAX_PHOTO_BYTES = 5 * 1024 * 1024
+/** Base64 bodies must fit the MCP request body limit and the proxy in front of it. */
+export const MAX_BASE64_PHOTO_BYTES = 3 * 1024 * 1024
+
+export type SniffedImage = { mime: 'image/jpeg' | 'image/png' | 'image/webp'; ext: 'jpg' | 'png' | 'webp' }
+
+/** Identifies JPEG, PNG and WebP by magic bytes. HEIC and everything else gives null (browsers can't show HEIC). */
+export function sniffImage(bytes: Uint8Array): SniffedImage | null {
+  const at = (i: number, ...v: number[]) => v.every((b, k) => bytes[i + k] === b)
+  if (bytes.length >= 3 && at(0, 0xff, 0xd8, 0xff)) return { mime: 'image/jpeg', ext: 'jpg' }
+  if (bytes.length >= 8 && at(0, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return { mime: 'image/png', ext: 'png' }
+  if (bytes.length >= 12 && at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) {
+    return { mime: 'image/webp', ext: 'webp' }
+  }
+  return null
+}
+
+function ipv4Blocked(o: number[]): boolean {
+  const [a, b, c] = o
+  if (a === 0 || a === 10 || a === 127) return true
+  if (a === 100 && b >= 64 && b <= 127) return true // CGNAT
+  if (a === 169 && b === 254) return true
+  if (a === 172 && b >= 16 && b <= 31) return true
+  if (a === 192 && b === 168) return true
+  if (a === 192 && b === 0 && (c === 0 || c === 2)) return true // IETF protocol / TEST-NET-1
+  if (a === 192 && b === 88 && c === 99) return true // 6to4 relay
+  if (a === 198 && (b === 18 || b === 19)) return true // benchmarking
+  if (a === 198 && b === 51 && c === 100) return true // TEST-NET-2
+  if (a === 203 && b === 0 && c === 113) return true // TEST-NET-3
+  if (a >= 224) return true // multicast, reserved, broadcast
+  return false
+}
+
+/** Parses a clean dotted quad (each part 0-255, decimal, no leading zeros except "0"). */
+function parseCleanQuad(s: string): number[] | null {
+  const parts = s.split('.')
+  if (parts.length !== 4) return null
+  const out: number[] = []
+  for (const p of parts) {
+    if (!/^(0|[1-9]\d{0,2})$/.test(p)) return null
+    const n = Number(p)
+    if (n > 255) return null
+    out.push(n)
+  }
+  return out
+}
+
+/** Expands an IPv6 literal to 8 16-bit groups, or null if it isn't valid. Handles an embedded v4 tail. */
+function parseIpv6(s: string): number[] | null {
+  let str = s
+  if (!/^[0-9a-f:.]+$/i.test(str) || !str.includes(':')) return null
+  const lastColon = str.lastIndexOf(':')
+  const tail = str.slice(lastColon + 1)
+  let v4: number[] | null = null
+  if (tail.includes('.')) {
+    v4 = parseCleanQuad(tail)
+    if (!v4) return null
+    str = `${str.slice(0, lastColon + 1)}${((v4[0] << 8) | v4[1]).toString(16)}:${((v4[2] << 8) | v4[3]).toString(16)}`
+  }
+  const dbl = str.split('::')
+  if (dbl.length > 2) return null
+  const toGroups = (x: string) => (x === '' ? [] : x.split(':'))
+  const head = toGroups(dbl[0])
+  const rest = dbl.length === 2 ? toGroups(dbl[1]) : []
+  const total = head.length + rest.length
+  if (dbl.length === 1 ? total !== 8 : total > 7) return null
+  const groups = [...head, ...Array(8 - total).fill('0'), ...rest]
+  if (dbl.length === 1 && groups.length !== 8) return null
+  const out: number[] = []
+  for (const g of groups) {
+    if (!/^[0-9a-f]{1,4}$/i.test(g)) return null
+    out.push(parseInt(g, 16))
+  }
+  return out
+}
+
+function ipv6Blocked(g: number[]): boolean {
+  const v4 = (hi: number, lo: number) => [hi >> 8, hi & 255, lo >> 8, lo & 255]
+  if (g.every((x) => x === 0)) return true // ::
+  if (g.slice(0, 7).every((x) => x === 0) && g[7] === 1) return true // ::1
+  // IPv4-mapped ::ffff:a.b.c.d and the deprecated IPv4-compatible ::a.b.c.d
+  if (g.slice(0, 5).every((x) => x === 0) && (g[5] === 0xffff || g[5] === 0)) return ipv4Blocked(v4(g[6], g[7]))
+  // NAT64 64:ff9b::/96 embeds a v4 address
+  if (g[0] === 0x64 && g[1] === 0xff9b && g.slice(2, 6).every((x) => x === 0)) return ipv4Blocked(v4(g[6], g[7]))
+  // 6to4 2002::/16 embeds a v4 address
+  if (g[0] === 0x2002) return ipv4Blocked(v4(g[1], g[2]))
+  if ((g[0] & 0xfe00) === 0xfc00) return true // unique local fc00::/7
+  if ((g[0] & 0xffc0) === 0xfe80) return true // link-local fe80::/10
+  if ((g[0] & 0xffc0) === 0xfec0) return true // deprecated site-local fec0::/10
+  if ((g[0] & 0xff00) === 0xff00) return true // multicast
+  if (g[0] === 0x2001 && g[1] === 0x0db8) return true // documentation
+  if (g[0] === 0x0100 && g.slice(1, 4).every((x) => x === 0)) return true // discard 100::/64
+  // Only global unicast 2000::/3 is allowed through; everything else is reserved
+  if ((g[0] & 0xe000) !== 0x2000) return true
+  return false
+}
+
+/** True when a hostname must not be fetched on behalf of an agent (SSRF guard). Literal checks only; resolve DNS separately. */
+export function isBlockedHost(hostname: string): boolean {
+  let h = hostname.trim().toLowerCase()
+  if (h.startsWith('[') && h.endsWith(']')) h = h.slice(1, -1)
+  h = h.replace(/\.$/, '') // trailing root dot
+  if (!h) return true
+  if (h.includes(':')) {
+    const zone = h.indexOf('%')
+    if (zone !== -1) return true // zone ids have no place in a URL host
+    const g = parseIpv6(h)
+    return g ? ipv6Blocked(g) : true
+  }
+  if (h === 'localhost' || h.endsWith('.localhost')) return true
+  if (h.endsWith('.local') || h.endsWith('.internal')) return true
+  if (!h.includes('.')) return true // bare names, and plain integers like 2130706433
+  // Anything made only of digits, dots and x (octal, hex, short and integer forms) must be a clean quad
+  if (/^[0-9a-fx.]+$/.test(h) && /^(0x[0-9a-f]*|[0-9]+)(\.(0x[0-9a-f]*|[0-9]+))*$/.test(h)) {
+    const q = parseCleanQuad(h)
+    return q ? ipv4Blocked(q) : true
+  }
+  // Looks numeric-ish but not a clean name: a final label that is all digits/hex-prefixed is never a real TLD
+  const last = h.slice(h.lastIndexOf('.') + 1)
+  if (/^(\d+|0x[0-9a-f]*)$/.test(last)) return true
+  return false
+}
+
+/**
+ * Decodes a raw base64 string or a data:image/...;base64, URL. Rejects input over 3 MB decoded from the
+ * length alone, before decoding. Throws a plain Error with a message safe to show the agent.
+ */
+export function decodeBase64Image(input: string, maxBytes = MAX_BASE64_PHOTO_BYTES): Uint8Array {
+  let s = input.trim()
+  const m = s.match(/^data:image\/[a-z0-9.+-]+;base64,/i)
+  if (m) s = s.slice(m[0].length)
+  else if (/^data:/i.test(s)) throw new Error('Only base64 image data is accepted.')
+  s = s.replace(/\s+/g, '')
+  if (!s) throw new Error('The image data is empty.')
+  // Accept URL-safe base64 too
+  s = s.replaceAll('-', '+').replaceAll('_', '/')
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(s)) throw new Error("That isn't valid base64 image data.")
+  if (s.length % 4 === 1) throw new Error("That isn't valid base64 image data.")
+  const pad = s.endsWith('==') ? 2 : s.endsWith('=') ? 1 : 0
+  const estimate = Math.floor((s.length * 3) / 4) - pad
+  if (estimate > maxBytes) throw new Error('The image is larger than 3 MB. Use image_url for larger photos.')
+  let bin: string
+  try {
+    bin = atob(s.replace(/=+$/, ''))
+  } catch {
+    throw new Error("That isn't valid base64 image data.")
+  }
+  const out = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i)
+  if (out.length > maxBytes) throw new Error('The image is larger than 3 MB. Use image_url for larger photos.')
+  return out
+}

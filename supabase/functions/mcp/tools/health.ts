@@ -12,6 +12,7 @@ import {
   ok,
   resolveZone,
   snake,
+  take,
   TimeZone,
   ToolError,
 } from '../common.ts'
@@ -74,13 +75,6 @@ const readinessOut = (r: Readiness | null) =>
     sleep: r.sleep,
     baseline_days: r.baselineDays,
   }
-
-/** One slot from the caller's rate-limit bucket (mcp_take, migration 021). Fails closed on a DB error. */
-async function take(c: Ctx, bucket: string, max: number, windowSeconds: number): Promise<boolean> {
-  const { data, error } = await c.db.rpc('mcp_take', { bucket, max_per_window: max, window_seconds: windowSeconds })
-  if (error) throw new ToolError('db_error', 'Something went wrong. Try again.')
-  return data === true
-}
 
 /** Every Fitbit call fans out to Google Health, so agents get 30 per 10 minutes across all health tools. */
 async function takeHealth(c: Ctx) {

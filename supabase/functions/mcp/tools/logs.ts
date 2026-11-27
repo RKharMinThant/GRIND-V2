@@ -233,7 +233,7 @@ export function registerLogTools(server: McpServer, ctx: Ctx) {
   defineTool(server, ctx, 'update_log', {
     title: 'Edit a log',
     description:
-      'Edits an existing log. Only the fields you pass change; pass null to clear an optional field, or an empty focus_areas list to remove all focus areas. If the title was generated from focus areas and you change the focus areas without a new title, the title is regenerated, as in the app. The photo is never changed.',
+      'Edits an existing log. Only the fields you pass change; pass null to clear an optional field, or an empty focus_areas list to remove all focus areas. If the title was generated from focus areas and you change the focus areas without a new title, the title is regenerated, as in the app. Photos are never changed here (add_log_photo can attach one to a log that has none).',
     input: {
       id: Uuid.describe('Log id'),
       date: LocalDate.optional().describe('New log date, YYYY-MM-DD'),
@@ -316,7 +316,7 @@ export function registerLogTools(server: McpServer, ctx: Ctx) {
   defineTool(server, ctx, 'delete_log', {
     title: 'Delete a log',
     description:
-      'Permanently deletes one log (a photo file, if any, is not removed here). This cannot be undone and lowers the streak and weekly count if it was the only log that day. Only call after the user has confirmed; lift progress is not affected.',
+      'Permanently deletes one log (a photo file, if any, stays stored but unreachable). This cannot be undone and lowers the streak and weekly count if it was the only log that day. Only call after the user has confirmed; lift progress is not affected.',
     input: { id: Uuid.describe('Log id'), confirm: Confirm },
     hints: { ro: false, destructive: true, idempotent: true },
     run: async ({ id }, c) => {
@@ -327,12 +327,11 @@ export function registerLogTools(server: McpServer, ctx: Ctx) {
       if (!row) throw new ToolError('not_found', 'No log with that id.')
       const del = await c.db.from('logs').delete().eq('id', id).eq('user_id', c.userId)
       if (del.error) throw mapPgError(del.error)
-      // OAuth tokens can't touch the log-photos bucket (migration 021), and the app has no orphan
-      // cleanup, so the file is only removed when the user deletes the log in GRIND.
+      // Agent tokens can't touch existing photo files (migration 021), so the file stays in storage.
       return ok({ deleted: true, id, date: row.log_date, workout: row.workout,
         photo_removed: false,
         ...(row.photo_path
-          ? { note: "The log's photo file is not removed through this server; it is cleaned up when the user deletes a log in the GRIND app." }
+          ? { note: "The log's photo file stays stored but is no longer reachable from any log. It is not removed through this server." }
           : {}),
       })
     },

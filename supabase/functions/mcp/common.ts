@@ -194,6 +194,15 @@ export function checkMeasurementDate(date: string, today: string) {
   if (date < '2000-01-01' || date > today) throw bad(`Date must be between 2000-01-01 and ${today}.`)
 }
 
+// ---------------------------------------------------------------- rate limit
+
+/** One slot from the caller's rate-limit bucket (mcp_take, migration 021). Fails closed on a DB error. */
+export async function take(c: Ctx, bucket: string, max: number, windowSeconds: number): Promise<boolean> {
+  const { data, error } = await c.db.rpc('mcp_take', { bucket, max_per_window: max, window_seconds: windowSeconds })
+  if (error) throw new ToolError('db_error', 'Something went wrong. Try again.')
+  return data === true
+}
+
 // ---------------------------------------------------------------- paging
 
 // deno-lint-ignore no-explicit-any

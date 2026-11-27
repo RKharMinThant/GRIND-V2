@@ -27,6 +27,9 @@ import {
   wholeYears,
   zoneOffsetMinutes,
   type HistoryPoint,
+  decodeBase64Image,
+  isBlockedHost,
+  sniffImage,
 } from './domain.ts'
 
 describe('dates', () => {
@@ -206,5 +209,74 @@ describe('training load', () => {
     expect(formatVsAverage(0.88)).toBe('-12%')
     expect(formatVsAverage(1)).toBe('0%')
     expect(formatVsAverage(null)).toBeNull()
+  })
+})
+
+describe('sniffImage', () => {
+  const pad = (...b: number[]) => new Uint8Array([...b, 0, 0, 0, 0, 0, 0, 0, 0])
+  it('recognises JPEG, PNG and WebP', () => {
+    expect(sniffImage(pad(0xff, 0xd8, 0xff, 0xe0))).toEqual({ mime: 'image/jpeg', ext: 'jpg' })
+    expect(sniffImage(pad(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a))).toEqual({ mime: 'image/png', ext: 'png' })
+    const webp = new Uint8Array([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x57, 0x45, 0x42, 0x50])
+    expect(sniffImage(webp)).toEqual({ mime: 'image/webp', ext: 'webp' })
+  })
+  it('rejects HEIC, GIF, text, RIFF-not-WebP, short and empty input', () => {
+    const heic = new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63])
+    expect(sniffImage(heic)).toBeNull()
+    expect(sniffImage(new TextEncoder().encode('GIF89a......'))).toBeNull()
+    expect(sniffImage(new TextEncoder().encode('<svg xmlns=...>'))).toBeNull()
+    expect(sniffImage(new Uint8Array([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x57, 0x41, 0x56, 0x45]))).toBeNull()
+    expect(sniffImage(new Uint8Array([0xff, 0xd8]))).toBeNull()
+    expect(sniffImage(new Uint8Array([]))).toBeNull()
+  })
+})
+
+describe('isBlockedHost', () => {
+  const blocked = [
+    'localhost', 'LOCALHOST', 'foo.localhost', 'printer.local', 'db.internal', 'intranet', 'metadata',
+    '127.0.0.1', '127.1.2.3', '10.0.0.1', '172.16.0.1', '172.31.255.255', '192.168.1.1', '169.254.169.254',
+    '100.64.0.1', '100.127.255.255', '0.0.0.0', '0.1.2.3', '224.0.0.1', '255.255.255.255', '240.0.0.1',
+    '198.18.0.1', '192.0.2.1',
+    '::1', '[::1]', '::', '[::]', 'fe80::1', '[fe80::1]', 'fc00::1', 'fd12:3456::1', 'ff02::1',
+    '::ffff:127.0.0.1', '[::ffff:10.0.0.1]', '::ffff:7f00:1', '::ffff:a9fe:a9fe', '0:0:0:0:0:ffff:192.168.0.1',
+    '64:ff9b::7f00:1', '2002:7f00:1::', '2001:db8::1', '[::ffff:169.254.169.254]',
+    '2130706433', '0x7f.1', '0x7f000001', '017700000001', '0177.0.0.1', '127.1', '1.2.3', '10.1',
+    '127.0.0.1.', 'localhost.', '08.0.0.1', '01.1.1.1', '256.1.1.1', '1.2.3.4.5', '', '[nonsense]', 'fe80::1%eth0',
+  ]
+  it.each(blocked)('blocks %s', (h) => expect(isBlockedHost(h)).toBe(true))
+
+  const allowed = ['example.com', 'images.example.co.uk', 'a.b.c.d.e', '8.8.8.8', '1.1.1.1', '172.15.0.1', '172.32.0.1',
+    '100.63.0.1', '100.128.0.1', '[2606:4700:4700::1111]', '2606:4700:4700::1111', 'cdn.example.com.']
+  it.each(allowed)('allows %s', (h) => expect(isBlockedHost(h)).toBe(false))
+})
+
+describe('decodeBase64Image', () => {
+  const b64 = (b: number[]) => btoa(String.fromCharCode(...b))
+  it('decodes raw base64, data URLs and whitespace', () => {
+    const bytes = [0xff, 0xd8, 0xff, 1, 2, 3, 4]
+    expect([...decodeBase64Image(b64(bytes))]).toEqual(bytes)
+    expect([...decodeBase64Image(`data:image/jpeg;base64,${b64(bytes)}`)]).toEqual(bytes)
+    expect([...decodeBase64Image(`  ${b64(bytes).slice(0, 4)}\n${b64(bytes).slice(4)} `)]).toEqual(bytes)
+  })
+  it('rejects bad input with friendly errors', () => {
+    expect(() => decodeBase64Image('')).toThrow(/empty/)
+    expect(() => decodeBase64Image('data:image/png;base64,')).toThrow(/empty/)
+    expect(() => decodeBase64Image('not base64!!')).toThrow(/valid base64/)
+    expect(() => decodeBase64Image('data:text/plain;base64,AAAA')).toThrow(/base64 image/)
+    expect(() => decodeBase64Image('A')).toThrow(/valid base64/)
+  })
+  it('rejects over 3 MB from the length, before decoding', () => {
+    const atobSpy = globalThis.atob
+    let called = false
+    globalThis.atob = ((s: string) => { called = true; return atobSpy(s) }) as typeof atob
+    try {
+      expect(() => decodeBase64Image('A'.repeat(4_300_000))).toThrow(/3 MB/)
+      expect(called).toBe(false)
+    } finally {
+      globalThis.atob = atobSpy
+    }
+    expect(decodeBase64Image('A'.repeat(4 * 1000)).length).toBe(3000)
+    expect(decodeBase64Image('A'.repeat(4 * 1024 * 1024)).length).toBe(3 * 1024 * 1024) // exactly 3 MB is fine
+    expect(() => decodeBase64Image('A'.repeat(4 * 1024 * 1024 + 4))).toThrow(/3 MB/)
   })
 })
